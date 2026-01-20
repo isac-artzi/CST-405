@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CST-405 Class Activity: Adding Array Support to Minimal Compiler</title>
+    <style>
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            margin: -20px -20px 30px -20px;
+            border-radius: 0 0 15px 15px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 2.2em;
+        }
+
+        .header p {
+            margin: 0;
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .section {
+            background: white;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-left: 5px solid #667eea;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-top: 0;
+            font-size: 1.5em;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+
+        .section h3 {
+            color: #555;
+            margin-top: 25px;
+            font-size: 1.2em;
+        }
+
+        .todo-box {
+            background: #fff3cd;
+            border: 2px solid #ffeaa7;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border-left: 5px solid #fdcb6e;
+        }
+
+        .todo-box h4 {
+            margin: 0 0 10px 0;
+            color: #856404;
+            font-weight: bold;
+        }
+
+        .code-example {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .code-example .comment {
+            color: #68d391;
+        }
+
+        .code-example .keyword {
+            color: #90cdf4;
+        }
+
+        .code-example .string {
+            color: #f6ad55;
+        }
+
+        .current-grammar {
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+        }
+
+        .new-grammar {
+            background: #e3f2fd;
+            border: 2px solid #2196f3;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+        }
+
+        .warning {
+            background: #ffebee;
+            border: 2px solid #f44336;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border-left: 5px solid #f44336;
+        }
+
+        .info {
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border-left: 5px solid #4caf50;
+        }
+
+        .file-ref {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            border-radius: 5px;
+            display: inline-block;
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        ol {
+            counter-reset: step-counter;
+            list-style: none;
+            padding-left: 0;
+        }
+
+        ol li {
+            counter-increment: step-counter;
+            margin: 15px 0;
+            padding-left: 40px;
+            position: relative;
+        }
+
+        ol li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: #667eea;
+            color: white;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.8em;
+        }
+
+        .step-section {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .completion-checklist {
+            background: #f9f9f9;
+            border: 2px solid #ddd;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .completion-checklist ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .completion-checklist li {
+            padding: 8px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .completion-checklist li::before {
+            content: "☐";
+            position: absolute;
+            left: 0;
+            font-size: 1.2em;
+            color: #666;
+        }
+
+        @media print {
+            body {
+                background-color: white;
+                max-width: none;
+                margin: 0;
+                padding: 20px;
+            }
+
+            .header {
+                background: #667eea !important;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+            }
+
+            .section {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+
+            .code-example {
+                background: #f5f5f5 !important;
+                color: #333 !important;
+                border: 1px solid #ddd;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>CST-405 Class Activity</h1>
+        <p>Adding Array Support to the Minimal Compiler</p>
+        <p><em>A Hands-On Compiler Extension Exercise</em></p>
+    </div>
+
+    <div class="section">
+        <h2>🎯 Learning Objectives</h2>
+        <p>By the end of this activity, students will:</p>
+        <ul>
+            <li><strong>Understand</strong> how language features propagate through all compiler phases</li>
+            <li><strong>Implement</strong> array declarations and array indexing in a real compiler</li>
+            <li><strong>Modify</strong> lexer, parser, AST, symbol table, TAC, optimization, and code generation</li>
+            <li><strong>Experience</strong> the interconnected nature of compiler design</li>
+            <li><strong>Debug</strong> issues that span multiple compiler phases</li>
+        </ul>
+
+        <div class="info">
+            <strong>Time Required:</strong> 2-3 hours<br>
+            <strong>Difficulty Level:</strong> Intermediate<br>
+            <strong>Prerequisites:</strong> Understanding of basic compiler phases, C programming
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>📋 Current Grammar Review</h2>
+
+        <h3>Current Language Features</h3>
+        <div class="current-grammar">
+            <strong>Our minimal language currently supports:</strong>
+            <div class="code-example"><span class="keyword">int</span> x;                    <span class="comment">// Variable declarations</span>
+x = <span class="string">10</span>;                   <span class="comment">// Assignment statements</span>
+<span class="keyword">int</span> y;
+y = x + <span class="string">5</span>;                <span class="comment">// Expressions with addition</span>
+<span class="keyword">print</span>(y);                <span class="comment">// Print statements</span></div>
+        </div>
+
+        <h3>Current Grammar Rules</h3>
+        <div class="code-example"><span class="comment">/* Current EBNF Grammar */</span>
+program     ::= stmt_list
+stmt_list   ::= stmt | stmt_list stmt
+stmt        ::= decl | assign | print_stmt
+decl        ::= <span class="keyword">'int'</span> ID <span class="string">';'</span>
+assign      ::= ID <span class="string">'='</span> expr <span class="string">';'</span>
+print_stmt  ::= <span class="keyword">'print'</span> <span class="string">'('</span> expr <span class="string">')'</span> <span class="string">';'</span>
+expr        ::= NUM | ID | expr <span class="string">'+'</span> expr</div>
+
+        <h3>Target Language Features</h3>
+        <div class="new-grammar">
+            <strong>After this activity, our language will support:</strong>
+            <div class="code-example"><span class="keyword">int</span> x[<span class="string">10</span>];               <span class="comment">// Array declarations</span>
+<span class="keyword">int</span> y;
+x[<span class="string">0</span>] = <span class="string">5</span>;                <span class="comment">// Array element assignment</span>
+x[<span class="string">1</span>] = <span class="string">10</span>;
+y = x[<span class="string">0</span>] + x[<span class="string">1</span>];        <span class="comment">// Array element access in expressions</span>
+<span class="keyword">print</span>(y);               <span class="comment">// Output: 15</span></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🔧 Implementation Steps</h2>
+        <p>We'll modify the compiler in the correct order, ensuring each phase can handle arrays:</p>
+
+        <ol>
+            <li><strong>Update Grammar</strong> - Define new language rules</li>
+            <li><strong>Update Lexer</strong> - Recognize new tokens</li>
+            <li><strong>Update Parser</strong> - Parse new syntax</li>
+            <li><strong>Update AST</strong> - Represent arrays in syntax tree</li>
+            <li><strong>Update Symbol Table</strong> - Track array variables</li>
+            <li><strong>Update TAC Generation</strong> - Generate intermediate code for arrays</li>
+            <li><strong>Update TAC Optimization</strong> - Optimize array operations</li>
+            <li><strong>Update Code Generation</strong> - Generate MIPS assembly for arrays</li>
+        </ol>
+    </div>
+
+    <div class="step-section">
+        <h2>Step 1: Update Grammar</h2>
+
+        <h3>New Grammar Rules Needed</h3>
+        <div class="new-grammar">
+            <div class="code-example"><span class="comment">/* Extended EBNF Grammar */</span>
+program     ::= stmt_list
+stmt_list   ::= stmt | stmt_list stmt
+stmt        ::= decl | assign | print_stmt
+
+<span class="comment">/* Updated declaration to support arrays */</span>
+decl        ::= <span class="keyword">'int'</span> ID <span class="string">';'</span>                    <span class="comment">// Regular variable</span>
+            |   <span class="keyword">'int'</span> ID <span class="string">'['</span> NUM <span class="string">']'</span> <span class="string">';'</span>         <span class="comment">// Array declaration</span>
+
+<span class="comment">/* Updated assignment to support array elements */</span>
+assign      ::= ID <span class="string">'='</span> expr <span class="string">';'</span>                 <span class="comment">// Regular assignment</span>
+            |   ID <span class="string">'['</span> expr <span class="string">']'</span> <span class="string">'='</span> expr <span class="string">';'</span>    <span class="comment">// Array element assignment</span>
+
+print_stmt  ::= <span class="keyword">'print'</span> <span class="string">'('</span> expr <span class="string">')'</span> <span class="string">';'</span>
+
+<span class="comment">/* Updated expression to support array access */</span>
+expr        ::= NUM
+            |   ID                              <span class="comment">// Variable access</span>
+            |   ID <span class="string">'['</span> expr <span class="string">']'</span>                 <span class="comment">// Array element access</span>
+            |   expr <span class="string">'+'</span> expr</div>
+        </div>
+
+        <div class="todo-box">
+            <h4>🎯 TODO 1: Grammar Analysis</h4>
+            <p><strong>Task:</strong> Analyze the grammar changes above and answer these questions:</p>
+            <ol>
+                <li>What new tokens do we need to add to the lexer?</li>
+                <li>How many new AST node types will we need?</li>
+                <li>What potential parsing conflicts might arise?</li>
+                <li>How will this affect precedence and associativity rules?</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="step-section">
+        <h2>Step 2: Update Lexer (scanner.l)</h2>
+
+        <h3>Current Lexer Tokens</h3>
+        <div class="current-grammar">
+            <strong>File:</strong> <span class="file-ref">scanner.l</span>
+            <div class="code-example"><span class="string">"int"</span>           { <span class="keyword">return</span> INT; }
+<span class="string">"print"</span>         { <span class="keyword">return</span> PRINT; }
+<span class="string">"+"</span>             { <span class="keyword">return</span> <span class="string">'+'</span>; }
+<span class="string">"="</span>             { <span class="keyword">return</span> <span class="string">'='</span>; }
+<span class="string">";"</span>             { <span class="keyword">return</span> <span class="string">';'</span>; }
+<span class="string">"("</span>             { <span class="keyword">return</span> <span class="string">'('</span>; }
+<span class="string">")"</span>             { <span class="keyword">return</span> <span class="string">')'</span>; }</div>
+        </div>
+
+        <div class="todo-box">
+            <h4>🎯 TODO 2: Add Array Tokens</h4>
+            <p><strong>File to modify:</strong> <span class="file-ref">scanner.l</span></p>
+            <p><strong>Task:</strong> Add the new tokens needed for array syntax:</p>
+            <ol>
+                <li>Add recognition for square brackets <code>[</code> and <code>]</code></li>
+                <li>Verify that number recognition works for array sizes</li>
+                <li>Test the lexer with array syntax examples</li>
+            </ol>
+
+            <p><strong>Implementation hint:</strong> Add these lines in the token recognition section:</p>
+            <div class="code-example"><span class="string">"["</span>             { <span class="keyword">return</span> <span class="string">'['</span>; }
+<span class="string">"]"</span>             { <span class="keyword">return</span> <span class="string">']'</span>; }</div>
+        </div>
+    </div>
+
+    <div class="step-section">
+        <h2>Step 3: Update Parser (parser.y)</h2>
+
+        <h3>Current Parser Structure</h3>
+        <div class="current-grammar">
+            <strong>File:</strong> <span class="file-ref">parser.y</span>
+            <div class="code-example"><span class="comment">/* Current grammar rules */</span>
+decl: INT ID <span class="string">';'</span> { $$ = createDecl($2); free($2); };
+
+assign: ID <span class="string">'='</span> expr <span class="string">';'</span> { $$ = createAssign($1, $3); free($1); };
+
+expr: NUM { $$ = createNum($1); }
+    | ID { $$ = createVar($1); free($1); }
+    | expr <span class="string">'+'</span> expr { $$ = createBinOp(<span class="string">'+'</span>, $1, $3); };</div>
+        </div>
+
+        <div class="todo-box">
+            <h4>🎯 TODO 3: Update Parser Rules</h4>
+            <p><strong>File to modify:</strong> <span class="file-ref">parser.y</span></p>
+            <p><strong>Tasks:</strong></p>
+
+            <ol>
+                <li><strong>Add array declaration rule:</strong>
+                    <div class="code-example">decl: INT ID <span class="string">';'</span> { $$ = createDecl($2); free($2); }
+    | INT ID <span class="string">'['</span> NUM <span class="string">']'</span> <span class="string">';'</span> {
+        <span class="comment">/* TODO: Create array declaration node */</span>
+        $$ = createArrayDecl($2, $4);
+        free($2);
+    };</div>
+                </li>
+
+                <li><strong>Add array assignment rule:</strong>
+                    <div class="code-example">assign: ID <span class="string">'='</span> expr <span class="string">';'</span> { $$ = createAssign($1, $3); free($1); }
+      | ID <span class="string">'['</span> expr <span class="string">']'</span> <span class="string">'='</span> expr <span class="string">';'</span> {
+          <span class="comment">/* TODO: Create array assignment node */</span>
+          $$ = createArrayAssign($1, $3, $6);
+          free($1);
+      };</div>
+                </li>
+
+                <li><strong>Add array access in expressions:</strong>
+                    <div class="code-example">expr: NUM { $$ = createNum($1); }
+    | ID { $$ = createVar($1); free($1); }
+    | ID <span class="string">'['</span> expr <span class="string">']'</span> {
+        <span class="comment">/* TODO: Create array access node */</span>
+        $$ = createArrayAccess($1, $3);
+        free($1);
+    }
+    | expr <span class="string">'+'</span> expr { $$ = createBinOp(<span class="string">'+'</span>, $1, $3); };</div>
+                </li>
+            </ol>
+
+            <div class="warning">
+                <strong>⚠️ Important:</strong> You'll need to implement the new AST creation functions
+                (<code>createArrayDecl</code>, <code>createArrayAssign</code>, <code>createArrayAccess</code>)
+                in the next step!
+            </div>
+        </div>
+    </div>
+
+    <div class="step-section">
+        <h2>Step 4: Update AST Structure (ast.h and ast.c)</h2>
+
+        <h3>Current AST Node Types</h3>
+        <div class="current-grammar">
+            <strong>File:</strong> <span class="file-ref">ast.h</span>
+            <div class="code-example">
+<span class="keyword">typedef enum</span> {
+    NODE_NUM,       <span class="comment">/* Numeric literal (e.g., 42) */</span>
+    NODE_VAR,       <span class="comment">/* Variable reference (e.g., x) */</span>
+    NODE_BINOP,     <span class="comment">/* Binary operation (e.g., x + y) */</span>
+    NODE_DECL,      <span class="comment">/* Variable declaration (e.g., int x) */</span>
+    NODE_ASSIGN,    <span class="comment">/* Assignment statement (e.g., x = 10) */</span>
+    NODE_PRINT,     <span class="comment">/* Print statement (e.g., print(x)) */</span>
+    NODE_STMT_LIST  <span class="comment">/* List of statements */</span>
+} NodeType;
+            </div>
+        </div>
+
+        <div class="todo-box">
+            <h4>🎯 TODO 4A: Add New AST Node Types</h4>
+            <p><strong>File to modify:</strong> <span class="file-ref">ast.h</span></p>
+            <p><strong>Task:</strong> Add three new node types to the NodeType enum:</p>
+
+            <div class="code-example">
+<span class="keyword">typedef enum</span> {
+    NODE_NUM,
+    NODE_VAR,
+    NODE_BINOP,
+    NODE_DECL,
+    NODE_ASSIGN,
+    NODE_PRINT,
+    NODE_STMT_LIST,
+    <span class="comment">/* TODO: Add these new node types */</span>
+    NODE_ARRAY_DECL,    <span class="comment">/* Array declaration (e.g., int x[10]) */</span>
+    NODE_ARRAY_ASSIGN,  <span class="comment">/* Array assignment (e.g., x[5] = 10) */</span>
+    NODE_ARRAY_ACCESS   <span class="comment">/* Array access (e.g., x[5]) */</span>
+} NodeType;
+            </div>
+        </div>
+
+        <div class="todo-box">
+            <h4>🎯 TODO 4B: Add Array Data Structures</h4>
+            <p><strong>File to modify:</strong> <span class="file-ref">ast.h</span></p>
+            <p><strong>Task:</strong> Add new structures to the ASTNode union for array operations:</p>
+
+            <div class="code-example">
+<span class="keyword">union</span> {
+    <span class="comment">/* ... existing fields ... */</span>
+
+    <span class="comment">/* TODO: Add array declaration structure (NODE_ARRAY_DECL) */</span>
+    <span class="keyword">struct</span> {
+        <span class="keyword">char</span>* name;              <span class="comment">/* Array name */</span>
+        <span class="keyword">int</span> size;               <span class="comment">/* Array size */</span>
+    } array_decl;
+
+    <span class="comment">/* TODO: Add array assignment structure (NODE_ARRAY_ASSIGN) */</span>
+    <span class="keyword">struct</span> {
+        <span class="keyword">char</span>* name;              <span class="comment">/* Array name */</span>
+        <span class="keyword">struct</span> ASTNode* index;   <span class="comment">/* Index expression */</span>
+        <span class="keyword">struct</span> ASTNode* value;   <span class="comment">/* Value to assign */</span>
+    } array_assign;
+
+    <span class="comment">/* TODO: Add array access structure (NODE_ARRAY_ACCESS) */</span>
+    <span class="keyword">struct</span> {
+        <span class="keyword">char</span>* name;              <span class="comment">/* Array name */</span>
+        <span class="keyword">struct</span> ASTNode* index;   <span class="comment">/* Index expression */</span>
+    } array_access;
+} data;
+            </div>
+        </div>
+
+        <div class="todo-box">
+            <h4>🎯 TODO 4C: Add Function Declarations</h4>
+            <p><strong>File to modify:</strong> <span class="file-ref">ast.h</span></p>
+            <p><strong>Task:</strong> Declare the new AST creation functions:</p>
+
+            <div class="code-example">
+<span class="comment">/* TODO: Add these function declarations */</span>
+ASTNode* createArrayDecl(<span class="keyword">char</span>* name, <span class="keyword">int</span> size);
+ASTNode* createArrayAssign(<span class="keyword">char</span>* name, ASTNode* index, ASTNode* value);
+ASTNode* createArrayAccess(<span class="keyword">char</span>* name, ASTNode* index);
+            </div>
+        </div>
+
+        <div class="todo-box">
+            <h4>🎯 TODO 4D: Implement AST Creation Functions</h4>
+            <p><strong>File to modify:</strong> <span class="file-ref">ast.c</span></p>
+            <p><strong>Task:</strong> Implement the three new AST creation functions:</p>
+
+            <div class="code-example">
+<span class="comment">/* TODO: Implement array declaration creation */</span>
+ASTNode* createArrayDecl(<span class="keyword">char</span>* name, <span class="keyword">int</span> size) {
+    ASTNode* node = malloc(<span class="keyword">sizeof</span>(ASTNode));
+    node->type = NODE_ARRAY_DECL;
+    node->data.array_decl.name = strdup(name);
+    node->data.array_decl.size = size;
+    <span class="keyword">return</span> node;
+}
+
+<span class="comment">/* TODO: Implement array assignment creation */</span>
+ASTNode* createArrayAssign(<span class="keyword">char</span>* name, ASTNode* index, ASTNode* value) {
+    ASTNode* node = malloc(<span class="keyword">sizeof</span>(ASTNode));
+    node->type = NODE_ARRAY_ASSIGN;
+    node->data.array_assign.name = strdup(name);
+    node->data.array_assign.index = index;
+    node->data.array_assign.value = value;
+    <span class="keyword">return</span> node;
+}
+
+<span class="comment">/* TODO: Implement array access creation */</span>
+ASTNode* createArrayAccess(<span class="keyword">char</span>* name, ASTNode* index) {
+    ASTNode* node = malloc(<span class="keyword">sizeof</span>(ASTNode));
+    node->type = NODE_ARRAY_ACCESS;
+    node->data.array_access.name = strdup(name);
+    node->data.array_access.index = index;
+    <span class="keyword">return</span> node;
+}
+            </div>
+        </div>
+
+        <div class="todo-box">
+            <h4>🎯 TODO 4E: Update AST Printing</h4>
+            <p><strong>File to modify:</strong> <span class="file-ref">ast.c</span> (in the <code>printAST</code> function)</p>
+            <p><strong>Task:</strong> Add cases for the new node types in the switch statement:</p>
+
+            <div class="code-example">
+<span class="keyword">case</span> NODE_ARRAY_DECL:
+    printf(<span class="string">"%*sARRAY_DECL: %s[%d]\n"</span>,
+           level*2, <span class="string">""</span>, node->data.array_decl.name, node->data.array_decl.size);
+    <span class="keyword">break</span>;
+
+<span class="keyword">case</span> NODE_ARRAY_ASSIGN:
+    printf(<span class="string">"%*sARRAY_ASSIGN: %s[] =\n"</span>, level*2, <span class="string">""</span>, node->data.array_assign.name);
+    printf(<span class="string">"%*sIndex:\n"</span>, level*2, <span class="string">""</span>);
+    printAST(node->data.array_assign.index, level+1);
+    printf(<span class="string">"%*sValue:\n"</span>, level*2, <span class="string">""</span>);
+    printAST(node->data.array_assign.value, level+1);
+    <span class="keyword">break</span>;
+
+<span class="keyword">case</span> NODE_ARRAY_ACCESS:
+    printf(<span class="string">"%*sARRAY_ACCESS: %s[]\n"</span>, level*2, <span class="string">""</span>, node->data.array_access.name);
+    printf(<span class="string">"%*sIndex:\n"</span>, level*2, <span class="string">""</span>);
+    printAST(node->data.array_access.index, level+1);
+    <span class="keyword">break</span>;
+            </div>
+        </div>
+    </div>
+
+    <div class="step-section">
+        <h2>Step 5: Update Symbol Table (symtab.h and symtab.c)</h2>
+
+        <h3>Current Symbol Table Structure</h3>
+        <div class="current-grammar">
+            <strong>File:</strong> <span class="file-ref">symtab.h</span>
+            <div class="code-example">
+<span class="comment">/* Current symbol entry - only supports single variables */</span>
+<span class="keyword">typedef struct</span> {
+    <span class="keyword">char</span>* name;     <span class="comment">/* Variable identifier */</span>
+    <span class="keyword">int</span> offset;    <span class="comment">/* Stack offset in bytes */</span>
+} Symbol;
+            </div>
+        </div>
+
+        <div class="todo-box">
+            <h4>🎯 TODO 5A: Extend Symbol Table Entry</h4>
+            <p><strong>File to modify:</strong> <span class="file-ref">symtab.h</span></p>
+            <p><strong>Task:</strong> Add array support to the Symbol structure:</p>
+
+            <div class="code-example">
+<span class="comment">/* TODO: Extended symbol entry to support arrays */</span>
+<span class="keyword">typedef struct</span> {
+    <span class="keyword">char</span>* name;        <span class="comment">/* Variable/array identifier */</span>
+    <span class="keyword">int</span> offset;       <span class="comment">/* Stack offset in bytes */</span>
+    <span class="keyword">int</span> isArray;      <span class="comment">/* 1 if array, 0 if regular variable */</span>
+    <span class="keyword">int</span> arraySize;    <span class="comment">/* Size of array (0 for regular variables) */</span>
+} Symbol;
+            </div>
+        </div>
+
+        <div class="todo-box">
+            <h4>🎯 TODO 5B: Add Array Symbol Table Functions</h4>
+            <p><strong>File to modify:</strong> <span class="file-ref">symtab.h</span></p>
+            <p><strong>Task:</strong> Declare new functions for array support:</p>
+
+            <div class="code-example">
+<span class="comment">/* TODO: Add these function declarations */</span>
+<span class="keyword">int</span> addArrayVar(<span class="keyword">char</span>* name, <span class="keyword">int</span> size);    <span class="comment">/* Add array to symbol table */</span>
+<span class="keyword">int</span> isArrayVar(<span class="keyword">char</span>* name);               <span class="comment">/* Check if variable is array */</span>
+<span class="keyword">int</span> getArraySize(<span class="keyword">char</span>* name);             <span class="comment">/* Get array size */</span>
+            </div>
+        </div>
+
+        <div class="todo-box">
+            <h4>🎯 TODO 5C: Implement Array Symbol Table Functions</h4>
+            <p><strong>File to modify:</strong> <span class="file-ref">symtab.c</span></p>
+            <p><strong>Task:</strong> Implement the new symbol table functions:</p>
+
+            <div class="code-example">
+<span class="comment">/* TODO: Add array variable to symbol table */</span>
+<span class="keyword">int</span> addArrayVar(<span class="keyword">char</span>* name, <span class="keyword">int</span> size) {
+    <span class="keyword">if</span> (isVarDeclared(name)) {
+        printf(<span class="string">"SYMBOL TABLE: Failed to add array '%s' - already declared\n"</span>, name);
+        <span class="keyword">return</span> -1;
+    }
+
+    <span class="comment">/* Add array entry */</span>
+    symtab.vars[symtab.count].name = strdup(name);
+    symtab.vars[symtab.count].offset = symtab.nextOffset;
+    symtab.vars[symtab.count].isArray = 1;
+    symtab.vars[symtab.count].arraySize = size;
+
+    <span class="comment">/* Arrays need size * 4 bytes (4 bytes per int) */</span>
+    symtab.nextOffset += size * 4;
+    symtab.count++;
+
+    printf(<span class="string">"SYMBOL TABLE: Added array '%s[%d]' at offset %d\n"</span>,
+           name, size, symtab.vars[symtab.count - 1].offset);
+    printSymTab();
+
+    <span class="keyword">return</span> symtab.vars[symtab.count - 1].offset;
+}
+
+<span class="comment">/* TODO: Check if variable is an array */</span>
+<span class="keyword">int</span> isArrayVar(<span class="keyword">char</span>* name) {
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = 0; i < symtab.count; i++) {
+        <span class="keyword">if</span> (strcmp(symtab.vars[i].name, name) == 0) {
+            <span class="keyword">return</span> symtab.vars[i].isArray;
+        }
+    }
+    <span class="keyword">return</span> 0;  <span class="comment">/* Not found or not an array */</span>
+}
+
+<span class="comment">/* TODO: Get array size */</span>
+<span class="keyword">int</span> getArraySize(<span class="keyword">char</span>* name) {
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = 0; i < symtab.count; i++) {
+        <span class="keyword">if</span> (strcmp(symtab.vars[i].name, name) == 0) {
+            <span class="keyword">return</span> symtab.vars[i].arraySize;
+        }
+    }
+    <span class="keyword">return</span> 0;  <span class="comment">/* Not found */</span>
+}
+            </div>
+        </div>
+
+        <div class="todo-box">
+            <h4>🎯 TODO 5D: Update Symbol Table Printing</h4>
+            <p><strong>File to modify:</strong> <span class="file-ref">symtab.c</span> (in the <code>printSymTab</code> function)</p>
+            <p><strong>Task:</strong> Update the printing to show array information:</p>
+
+            <div class="code-example">
+<span class="keyword">for</span> (<span class="keyword">int</span> i = 0; i < symtab.count; i++) {
+    <span class="keyword">if</span> (symtab.vars[i].isArray) {
+        printf(<span class="string">"  [%d] %s[%d] -> offset %d\n"</span>,
+   i, symtab.vars[i].name, symtab.vars[i].arraySize, symtab.vars[i].offset);
+    } <span class="keyword">else</span> {
+        printf(<span class="string">"  [%d] %s -> offset %d\n"</span>,
+   i, symtab.vars[i].name, symtab.vars[i].offset);
+    }
+}
+            </div>
+        </div>
+    </div>
+
+    <div class="step-section">
+        <h2>Step 6: Update TAC Generation (tac.h and tac.c)</h2>
+
+        <h3>Current TAC Instruction Types</h3>
+        <div class="current-grammar">
+            <strong>File:</strong> <span class="file-ref">tac.h</span>
+            <div class="code-example">
+<span class="keyword">typedef enum</span> {
+    TAC_ADD,     <span class="comment">/* Addition: result = arg1 + arg2 */</span>
+    TAC_ASSIGN,  <span class="comment">/* Assignment: result = arg1 */</span>
+    TAC_PRINT,   <span class="comment">/* Print: print(arg1) */</span>
+    TAC_DECL     <span class="comment">/* Declaration: declare result */</span>
+} TACOp;
+            </div>
+        </div>
+
+        <div class="todo-box">
+            <h4>🎯 TODO 6A: Add Array TAC Instructions</h4>
+            <p><strong>File to modify:</strong> <span class="file-ref">tac.h</span></p>
+            <p><strong>Task:</strong> Add new TAC operations for arrays:</p>
+
+            <div class="code-example">
+<span class="keyword">typedef enum</span> {
+    TAC_ADD,
+    TAC_ASSIGN,
+    TAC_PRINT,
+    TAC_DECL,
+    <span class="comment">/* TODO: Add array-specific TAC operations */</span>
+    TAC_ARRAY_DECL,    <span class="comment">/* Array declaration: declare array[size] */</span>
+    TAC_ARRAY_ASSIGN,  <span class="comment">/* Array assignment: array[index] = value */</span>
+    TAC_ARRAY_ACCESS   <span class="comment">/* Array access: temp = array[index] */</span>
+} TACOp;
+            </div>
+        </div>
+
+        <div class="todo-box">
+            <h4>🎯 TODO 6B: Update TAC Generation Switch Statement</h4>
+            <p><strong>File to modify:</strong> <span class="file-ref">tac.c</span> (in the <code>generateTAC</code> function)</p>
+            <p><strong>Task:</strong> Add cases for the new AST node types:</p>
+
+            <div class="code-example">
+<span class="keyword">switch</span>(node->type) {
+    <span class="comment">/* ... existing cases ... */</span>
+
+    <span class="keyword">case</span> NODE_ARRAY_DECL:
+        <span class="comment">/* TODO: Generate TAC for array declaration */</span>
+        appendTAC(createTAC(TAC_ARRAY_DECL, <span class="keyword">NULL</span>, <span class="keyword">NULL</span>, node->data.array_decl.name));
+        <span class="keyword">break</span>;
+
+    <span class="keyword">case</span> NODE_ARRAY_ASSIGN: {
+        <span class="comment">/* TODO: Generate TAC for array assignment */</span>
+        <span class="keyword">char</span>* indexExpr = generateTACExpr(node->data.array_assign.index);
+        <span class="keyword">char</span>* valueExpr = generateTACExpr(node->data.array_assign.value);
+        appendTAC(createTAC(TAC_ARRAY_ASSIGN, indexExpr, valueExpr,
+               node->data.array_assign.name));
+        <span class="keyword">break</span>;
+    }
+}
+            </div>
+        </div>
+
+        <div class="todo-box">
+            <h4>🎯 TODO 6C: Update TAC Expression Generation</h4>
+            <p><strong>File to modify:</strong> <span class="file-ref">tac.c</span> (in the <code>generateTACExpr</code> function)</p>
+            <p><strong>Task:</strong> Add case for array access in expressions:</p>
+
+            <div class="code-example">
+<span class="keyword">switch</span>(node->type) {
+    <span class="comment">/* ... existing cases ... */</span>
+
+    <span class="keyword">case</span> NODE_ARRAY_ACCESS: {
+        <span class="comment">/* TODO: Generate TAC for array access */</span>
+        <span class="keyword">char</span>* indexExpr = generateTACExpr(node->data.array_access.index);
+        <span class="keyword">char</span>* temp = newTemp();
+
+        appendTAC(createTAC(TAC_ARRAY_ACCESS, indexExpr, <span class="keyword">NULL</span>, temp));
+        <span class="keyword">return</span> temp;
+    }
+}
+            </div>
+        </div>
+
+        <div class="todo-box">
+            <h4>🎯 TODO 6D: Update TAC Printing</h4>
+            <p><strong>File to modify:</strong> <span class="file-ref">tac.c</span> (in the <code>printTAC</code> function)</p>
+            <p><strong>Task:</strong> Add cases for printing the new TAC instructions:</p>
+
+            <div class="code-example">
+<span class="keyword">switch</span>(curr->op) {
+    <span class="comment">/* ... existing cases ... */</span>
+
+    <span class="keyword">case</span> TAC_ARRAY_DECL:
+        printf(<span class="string">"ARRAY_DECL %s"</span>, curr->result);
+        printf(<span class="string">"     // Declare array '%s'\n"</span>, curr->result);
+        <span class="keyword">break</span>;
+
+    <span class="keyword">case</span> TAC_ARRAY_ASSIGN:
+        printf(<span class="string">"%s[%s] = %s"</span>, curr->result, curr->arg1, curr->arg2);
+        printf(<span class="string">"   // Array assignment\n"</span>);
+        <span class="keyword">break</span>;
+
+    <span class="keyword">case</span> TAC_ARRAY_ACCESS:
+        printf(<span class="string">"%s = array[%s]"</span>, curr->result, curr->arg1);
+        printf(<span class="string">"  // Array access\n"</span>);
+        <span class="keyword">break</span>;
+}
+            </div>
+        </div>
+    </div>
+
+    <div class="step-section">
+        <h2>Step 7: Update TAC Optimization (tac.c)</h2>
+
+        <div class="todo-box">
+            <h4>🎯 TODO 7: Update Optimization for Arrays</h4>
+            <p><strong>File to modify:</strong> <span class="file-ref">tac.c</span> (in the <code>optimizeTAC</code> function)</p>
+            <p><strong>Task:</strong> Add cases for optimizing array operations:</p>
+
+            <div class="code-example">
+<span class="keyword">switch</span>(curr->op) {
+    <span class="comment">/* ... existing cases ... */</span>
+
+    <span class="keyword">case</span> TAC_ARRAY_DECL:
+        <span class="comment">/* TODO: Arrays declarations don't need optimization */</span>
+        newInstr = createTAC(TAC_ARRAY_DECL, <span class="keyword">NULL</span>, <span class="keyword">NULL</span>, curr->result);
+        <span class="keyword">break</span>;
+
+    <span class="keyword">case</span> TAC_ARRAY_ASSIGN: {
+        <span class="comment">/* TODO: Optimize array assignments */</span>
+        <span class="keyword">char</span>* index = curr->arg1;
+        <span class="keyword">char</span>* value = curr->arg2;
+
+        <span class="comment">/* Look up values in propagation table */</span>
+        <span class="keyword">for</span> (<span class="keyword">int</span> i = valueCount - 1; i >= 0; i--) {
+        <span class="keyword">if</span> (strcmp(values[i].var, index) == 0) {
+    index = values[i].value;
+    <span class="keyword">break</span>;
+}
+        }
+        <span class="keyword">for</span> (<span class="keyword">int</span> i = valueCount - 1; i >= 0; i--) {
+<span class="keyword">if</span> (strcmp(values[i].var, value) == 0) {
+    value = values[i].value;
+    <span class="keyword">break</span>;
+}
+        }
+
+        newInstr = createTAC(TAC_ARRAY_ASSIGN, index, value, curr->result);
+        <span class="keyword">break</span>;
+    }
+
+    <span class="keyword">case</span> TAC_ARRAY_ACCESS: {
+        <span class="comment">/* TODO: Optimize array access */</span>
+        <span class="keyword">char</span>* index = curr->arg1;
+
+        <span class="comment">/* Look up index in propagation table */</span>
+        <span class="keyword">for</span> (<span class="keyword">int</span> i = valueCount - 1; i >= 0; i--) {
+        <span class="keyword">if</span> (strcmp(values[i].var, index) == 0) {
+    index = values[i].value;
+    <span class="keyword">break</span>;
+}
+        }
+
+        newInstr = createTAC(TAC_ARRAY_ACCESS, index, <span class="keyword">NULL</span>, curr->result);
+        <span class="keyword">break</span>;
+    }
+}
+            </div>
+        </div>
+
+        <div class="info">
+            <strong>💡 Optimization Note:</strong> Arrays present unique optimization challenges:
+            <ul>
+                <li><strong>Constant folding:</strong> Index calculations can be optimized</li>
+                <li><strong>Bounds checking:</strong> Could add compile-time bounds checking</li>
+                <li><strong>Strength reduction:</strong> Could optimize array indexing arithmetic</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="step-section">
+        <h2>Step 8: Update Code Generation (codegen.c)</h2>
+
+        <h3>Current Code Generation Structure</h3>
+        <div class="current-grammar">
+            <strong>File:</strong> <span class="file-ref">codegen.c</span>
+            <p>Arrays in MIPS require:</p>
+            <ul>
+                <li><strong>Base address calculation:</strong> <code>array_base + (index * 4)</code></li>
+                <li><strong>Bounds checking:</strong> Ensure index is within array bounds</li>
+                <li><strong>Memory layout:</strong> Sequential storage in memory</li>
+            </ul>
+        </div>
+
+        <div class="todo-box">
+            <h4>🎯 TODO 8A: Update Statement Generation</h4>
+            <p><strong>File to modify:</strong> <span class="file-ref">codegen.c</span> (in the <code>genStmt</code> function)</p>
+            <p><strong>Task:</strong> Add cases for array AST nodes:</p>
+
+            <div class="code-example">
+<span class="keyword">switch</span>(node->type) {
+    <span class="comment">/* ... existing cases ... */</span>
+
+    <span class="keyword">case</span> NODE_ARRAY_DECL: {
+        <span class="comment">/* TODO: Generate code for array declaration */</span>
+        <span class="keyword">int</span> offset = addArrayVar(node->data.array_decl.name, node->data.array_decl.size);
+        <span class="keyword">if</span> (offset == -1) {
+fprintf(stderr, <span class="string">"Error: Array %s already declared\n"</span>,
+        node->data.array_decl.name);
+exit(1);
+        }
+        fprintf(output, <span class="string">"    # Declared array %s[%d] at offset %d\n"</span>,
+    node->data.array_decl.name, node->data.array_decl.size, offset);
+        <span class="keyword">break</span>;
+    }
+
+    <span class="keyword">case</span> NODE_ARRAY_ASSIGN: {
+        <span class="comment">/* TODO: Generate code for array assignment */</span>
+        <span class="keyword">if</span> (!isArrayVar(node->data.array_assign.name)) {
+fprintf(stderr, <span class="string">"Error: %s is not an array\n"</span>, node->data.array_assign.name);
+exit(1);
+        }
+
+        <span class="comment">/* Generate code for index expression */</span>
+        genExpr(node->data.array_assign.index);
+        <span class="keyword">int</span> indexReg = tempReg - 1;
+
+        <span class="comment">/* Generate code for value expression */</span>
+        genExpr(node->data.array_assign.value);
+        <span class="keyword">int</span> valueReg = tempReg - 1;
+
+        <span class="comment">/* Calculate array element address */</span>
+        <span class="keyword">int</span> baseOffset = getVarOffset(node->data.array_assign.name);
+        fprintf(output, <span class="string">"    # Array assignment: %s[index] = value\n"</span>,
+    node->data.array_assign.name);
+        fprintf(output, <span class="string">"    sll $t%d, $t%d, 2    # index * 4\n"</span>, indexReg, indexReg);
+        fprintf(output, <span class="string">"    addi $t%d, $sp, %d   # base address\n"</span>, indexReg, baseOffset);
+        fprintf(output, <span class="string">"    add $t%d, $t%d, $t%d # element address\n"</span>,
+    indexReg, indexReg, indexReg);
+        fprintf(output, <span class="string">"    sw $t%d, 0($t%d)     # store value\n"</span>,
+    valueReg, indexReg);
+        tempReg = 0;
+        <span class="keyword">break</span>;
+    }
+}
+            </div>
+        </div>
+
+        <div class="todo-box">
+            <h4>🎯 TODO 8B: Update Expression Generation</h4>
+            <p><strong>File to modify:</strong> <span class="file-ref">codegen.c</span> (in the <code>genExpr</code> function)</p>
+            <p><strong>Task:</strong> Add case for array access in expressions:</p>
+
+            <div class="code-example">
+<span class="keyword">switch</span>(node->type) {
+    <span class="comment">/* ... existing cases ... */</span>
+
+    <span class="keyword">case</span> NODE_ARRAY_ACCESS: {
+        <span class="comment">/* TODO: Generate code for array access */</span>
+        <span class="keyword">if</span> (!isArrayVar(node->data.array_access.name)) {
+fprintf(stderr, <span class="string">"Error: %s is not an array\n"</span>, node->data.array_access.name);
+exit(1);
+        }
+
+        <span class="comment">/* Generate code for index expression */</span>
+        genExpr(node->data.array_access.index);
+        <span class="keyword">int</span> indexReg = tempReg - 1;
+
+        <span class="comment">/* Calculate array element address and load value */</span>
+        <span class="keyword">int</span> baseOffset = getVarOffset(node->data.array_access.name);
+        <span class="keyword">int</span> resultReg = getNextTemp();
+
+        fprintf(output, <span class="string">"    # Array access: %s[index]\n"</span>, node->data.array_access.name);
+        fprintf(output, <span class="string">"    sll $t%d, $t%d, 2    # index * 4\n"</span>, indexReg, indexReg);
+        fprintf(output, <span class="string">"    addi $t%d, $sp, %d   # base address\n"</span>, resultReg, baseOffset);
+        fprintf(output, <span class="string">"    add $t%d, $t%d, $t%d # element address\n"</span>,
+    resultReg, resultReg, indexReg);
+        fprintf(output, <span class="string">"    lw $t%d, 0($t%d)     # load value\n"</span>,
+    resultReg, resultReg);
+        <span class="keyword">break</span>;
+    }
+}
+            </div>
+        </div>
+
+        <div class="info">
+            <strong>🔧 MIPS Array Implementation Notes:</strong>
+            <ul>
+                <li><strong>Address calculation:</strong> <code>base_address + (index * element_size)</code></li>
+                <li><strong>Element size:</strong> 4 bytes for integers</li>
+                <li><strong>Shift left 2:</strong> <code>sll $reg, $reg, 2</code> multiplies by 4 efficiently</li>
+                <li><strong>Memory operations:</strong> <code>lw</code> for load, <code>sw</code> for store</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🧪 Testing Your Implementation</h2>
+
+        <h3>Test Program 1: Basic Array Declaration</h3>
+        <div class="code-example">
+<span class="keyword">int</span> numbers[<span class="string">5</span>];
+<span class="keyword">int</span> x;
+x = <span class="string">10</span>;
+<span class="keyword">print</span>(x);
+        </div>
+
+        <h3>Test Program 2: Array Assignment and Access</h3>
+        <div class="code-example">
+<span class="keyword">int</span> list[<span class="string">3</span>];
+list[<span class="string">0</span>] = <span class="string">5</span>;
+list[<span class="string">1</span>] = <span class="string">10</span>;
+list[<span class="string">2</span>] = list[<span class="string">0</span>] + list[<span class="string">1</span>];
+<span class="keyword">print</span>(list[<span class="string">2</span>]);   <span class="comment">// Should output: 15</span>
+        </div>
+
+        <h3>Test Program 3: Complex Array Operations</h3>
+        <div class="code-example">
+<span class="keyword">int</span> data[<span class="string">4</span>];
+<span class="keyword">int</span> index;
+<span class="keyword">int</span> sum;
+
+index = <span class="string">0</span>;
+data[index] = <span class="string">100</span>;
+
+index = <span class="string">1</span>;
+data[index] = <span class="string">200</span>;
+
+sum = data[<span class="string">0</span>] + data[<span class="string">1</span>];
+<span class="keyword">print</span>(sum);      <span class="comment">// Should output: 300</span>
+        </div>
+
+        <div class="todo-box">
+            <h4>🎯 TODO 9: Testing and Debugging</h4>
+            <p><strong>Task:</strong> Test your implementation with progressively complex programs:</p>
+            <ol>
+                <li><strong>Compile and test</strong> each test program above</li>
+                <li><strong>Check each phase:</strong>
+                    <ul>
+                        <li>Verify tokens are recognized correctly</li>
+                        <li>Check AST structure with <code>printAST</code></li>
+                        <li>Examine TAC generation and optimization</li>
+                        <li>Test generated MIPS assembly in simulator</li>
+                    </ul>
+                </li>
+                <li><strong>Debug common issues:</strong>
+                    <ul>
+                        <li>Parser shift/reduce conflicts</li>
+                        <li>Memory leaks in AST creation</li>
+                        <li>Incorrect MIPS address calculations</li>
+                        <li>Symbol table lookup failures</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🎯 Expected Compiler Output</h2>
+
+        <h3>For the program: <code>int x[2]; x[0] = 5; x[1] = 10; print(x[0] + x[1]);</code></h3>
+
+        <div class="step-section">
+            <h4>AST Output:</h4>
+            <div class="code-example">
+STMT_LIST
+├── ARRAY_DECL: x[2]
+├── ARRAY_ASSIGN: x[] =
+│   ├── Index: NUM: 0
+│   └── Value: NUM: 5
+├── ARRAY_ASSIGN: x[] =
+│   ├── Index: NUM: 1
+│   └── Value: NUM: 10
+└── PRINT
+    └── BINOP: +
+        ├── ARRAY_ACCESS: x[]
+        │   └── Index: NUM: 0
+        └── ARRAY_ACCESS: x[]
+└── Index: NUM: 1
+            </div>
+        </div>
+
+        <div class="step-section">
+            <h4>TAC Output:</h4>
+            <div class="code-example">
+1: ARRAY_DECL x       // Declare array 'x'
+2: x[0] = 5           // Array assignment
+3: x[1] = 10          // Array assignment
+4: t0 = array[0]      // Array access
+5: t1 = array[1]      // Array access
+6: t2 = t0 + t1       // Add array elements
+7: PRINT t2           // Output result
+            </div>
+        </div>
+
+        <div class="step-section">
+            <h4>Generated MIPS:</h4>
+            <div class="code-example">
+.data
+.text
+.globl main
+main:
+    addi $sp, $sp, -400
+
+    # Declared array x[2] at offset 0
+
+    # x[0] = 5
+    li $t0, 0           # index = 0
+    sll $t0, $t0, 2     # index * 4 = 0
+    addi $t1, $sp, 0    # base address
+    add $t0, $t1, $t0   # element address
+    li $t1, 5           # value = 5
+    sw $t1, 0($t0)      # store value
+
+    # x[1] = 10
+    li $t0, 1           # index = 1
+    sll $t0, $t0, 2     # index * 4 = 4
+    addi $t1, $sp, 0    # base address
+    add $t0, $t1, $t0   # element address
+    li $t1, 10          # value = 10
+    sw $t1, 0($t0)      # store value
+
+    # print(x[0] + x[1])
+    li $t0, 0           # index = 0
+    sll $t0, $t0, 2     # index * 4
+    addi $t1, $sp, 0    # base address
+    add $t0, $t1, $t0   # element address
+    lw $t0, 0($t0)      # load x[0]
+
+    li $t1, 1           # index = 1
+    sll $t1, $t1, 2     # index * 4
+    addi $t2, $sp, 0    # base address
+    add $t1, $t2, $t1   # element address
+    lw $t1, 0($t1)      # load x[1]
+
+    add $t0, $t0, $t1   # x[0] + x[1]
+    move $a0, $t0       # prepare for print
+    li $v0, 1           # print integer
+    syscall
+
+    addi $sp, $sp, 400
+    li $v0, 10
+    syscall
+            </div>
+        </div>
+    </div>
+
+    <div class="completion-checklist">
+        <h2>✅ Completion Checklist</h2>
+        <p><strong>Check off each item as you complete it:</strong></p>
+        <ul>
+            <li>Updated grammar rules for array declarations and access</li>
+            <li>Added square bracket tokens to lexer (scanner.l)</li>
+            <li>Extended parser rules for array syntax (parser.y)</li>
+            <li>Added three new AST node types (ast.h)</li>
+            <li>Implemented AST creation functions (ast.c)</li>
+            <li>Updated AST printing for arrays (ast.c)</li>
+            <li>Extended symbol table for array support (symtab.h/c)</li>
+            <li>Added array-specific symbol table functions</li>
+            <li>Extended TAC instruction set for arrays (tac.h)</li>
+            <li>Updated TAC generation for array operations (tac.c)</li>
+            <li>Updated TAC optimization for arrays (tac.c)</li>
+            <li>Added array code generation for MIPS (codegen.c)</li>
+            <li>Tested with basic array declaration</li>
+            <li>Tested with array assignment and access</li>
+            <li>Tested with complex array operations</li>
+            <li>Debugged and fixed all compilation issues</li>
+            <li>Verified MIPS output runs correctly in simulator</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>🚀 Extensions and Challenges</h2>
+
+        <h3>Once you've completed the basic implementation, try these extensions:</h3>
+
+        <div class="todo-box">
+            <h4>🎯 Challenge 1: Bounds Checking</h4>
+            <p>Add compile-time bounds checking to prevent array access violations:</p>
+            <ul>
+                <li>Check array indices against declared size</li>
+                <li>Generate warning for constant out-of-bounds access</li>
+                <li>Add runtime bounds checking in generated MIPS code</li>
+            </ul>
+        </div>
+
+        <div class="todo-box">
+            <h4>🎯 Challenge 2: Multi-dimensional Arrays</h4>
+            <p>Extend support to 2D arrays: <code>int matrix[3][4];</code></p>
+            <ul>
+                <li>Update grammar for multiple dimensions</li>
+                <li>Modify address calculation: <code>base + (i*cols + j)*4</code></li>
+                <li>Extend symbol table to track dimensions</li>
+            </ul>
+        </div>
+
+        <div class="todo-box">
+            <h4>🎯 Challenge 3: Array Initialization</h4>
+            <p>Support array initialization: <code>int nums[3] = {1, 2, 3};</code></p>
+            <ul>
+                <li>Add initialization list parsing</li>
+                <li>Generate initialization code in MIPS</li>
+                <li>Optimize constant initializations</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>📚 Reflection Questions</h2>
+
+        <div class="info">
+            <h3>After completing this activity, consider these questions:</h3>
+            <ol>
+                <li><strong>Complexity Propagation:</strong> How did adding arrays affect every phase of the compiler?</li>
+                <li><strong>Design Decisions:</strong> What trade-offs did you make in your implementation?</li>
+                <li><strong>Error Handling:</strong> What kinds of errors can occur with arrays? How would you improve error messages?</li>
+                <li><strong>Optimization Opportunities:</strong> What array-specific optimizations could be added?</li>
+                <li><strong>Language Design:</strong> How do array features in other languages compare to your implementation?</li>
+                <li><strong>Performance:</strong> What are the performance implications of your array implementation?</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="header" style="margin: 30px -20px -20px -20px;">
+        <h2>🎓 Congratulations!</h2>
+        <p>You have successfully extended a compiler to support arrays!</p>
+        <p><em>This experience demonstrates the interconnected nature of compiler design and the complexity of adding language features.</em></p>
+    </div>
+
+</body>
+</html>

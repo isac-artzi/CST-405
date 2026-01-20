@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CST-405 Principles of Compiler Design - Performance Enhancement Activity</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 40px;
+            border-left: 5px solid #764ba2;
+            padding-left: 15px;
+        }
+        h3 {
+            color: #4a5568;
+            margin-top: 25px;
+        }
+        .enhancement-task {
+            background: linear-gradient(to right, #f7fafc, #edf2f7);
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .implementation-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .code-block {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .code-block pre {
+            margin: 0;
+            white-space: pre;
+            word-wrap: normal;
+        }
+        .performance-metrics {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .platform-note {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .difficulty-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .easy { background: #d4edda; color: #155724; }
+        .medium { background: #fff3cd; color: #856404; }
+        .hard { background: #f8d7da; color: #721c24; }
+        .advanced { background: #d6d8db; color: #383d41; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #dee2e6;
+        }
+        th {
+            background: #667eea;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        .expected-results {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+        ul li {
+            margin: 10px 0;
+        }
+        .benchmark-template {
+            background: #f4f4f4;
+            border: 2px dashed #666;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .keyword { color: #c678dd; }
+        .string { color: #98c379; }
+        .comment { color: #5c6370; font-style: italic; }
+        .number { color: #d19a66; }
+        .function { color: #61afef; }
+        .highlight-line {
+            background: rgba(255, 255, 255, 0.1);
+            display: block;
+            margin: 0 -20px;
+            padding: 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 CST-405 Principles of Compiler Design<br>Performance Enhancement Activity</h1>
+
+        <div class="performance-metrics">
+            <h3>📊 Activity Objectives</h3>
+            <ul>
+                <li>Optimize all major components of the minimal compiler</li>
+                <li>Implement and measure performance improvements</li>
+                <li>Understand time/space complexity tradeoffs</li>
+                <li>Learn platform-specific optimization techniques</li>
+                <li>Practice profiling and benchmarking</li>
+            </ul>
+        </div>
+
+        <h2>Part 1: Benchmarking Setup</h2>
+
+        <div class="implementation-box">
+            <h3>Create Performance Testing Framework</h3>
+            <p>First, create a benchmarking utility to measure compiler performance:</p>
+
+            <div class="code-block">
+<pre><span class="comment">// benchmark.c</span>
+<span class="keyword">#include</span> <span class="string">&lt;stdio.h&gt;</span>
+<span class="keyword">#include</span> <span class="string">&lt;stdlib.h&gt;</span>
+<span class="keyword">#include</span> <span class="string">&lt;time.h&gt;</span>
+<span class="keyword">#include</span> <span class="string">&lt;sys/time.h&gt;</span>
+<span class="keyword">#include</span> <span class="string">&lt;sys/resource.h&gt;</span>
+
+<span class="keyword">#ifdef</span> __APPLE__
+    <span class="keyword">#include</span> <span class="string">&lt;mach/mach.h&gt;</span>
+    <span class="keyword">#include</span> <span class="string">&lt;mach/mach_time.h&gt;</span>
+<span class="keyword">#else</span>
+    <span class="keyword">#include</span> <span class="string">&lt;unistd.h&gt;</span>
+<span class="keyword">#endif</span>
+
+<span class="keyword">typedef struct</span> {
+    <span class="keyword">double</span> cpu_time;
+    <span class="keyword">double</span> wall_time;
+    <span class="keyword">long</span> memory_usage;
+    <span class="keyword">long</span> peak_memory;
+} <span class="function">BenchmarkResult</span>;
+
+<span class="comment">// Platform-specific memory measurement</span>
+<span class="keyword">long</span> <span class="function">get_memory_usage</span>() {
+<span class="keyword">#ifdef</span> __APPLE__
+    <span class="keyword">struct</span> task_basic_info info;
+    mach_msg_type_number_t size = <span class="keyword">sizeof</span>(info);
+    kern_return_t kerr = task_info(mach_task_self(),
+                                    TASK_BASIC_INFO,
+                                    (task_info_t)&info, &size);
+    <span class="keyword">if</span>(kerr == KERN_SUCCESS) {
+        <span class="keyword">return</span> info.resident_size;
+    }
+<span class="keyword">#else</span>
+    FILE* file = fopen(<span class="string">"/proc/self/status"</span>, <span class="string">"r"</span>);
+    <span class="keyword">if</span> (file) {
+        <span class="keyword">char</span> line[<span class="number">128</span>];
+        <span class="keyword">while</span> (fgets(line, <span class="number">128</span>, file)) {
+            <span class="keyword">if</span> (strncmp(line, <span class="string">"VmRSS:"</span>, <span class="number">6</span>) == <span class="number">0</span>) {
+                <span class="keyword">long</span> memory;
+                sscanf(line, <span class="string">"VmRSS: %ld"</span>, &memory);
+                fclose(file);
+                <span class="keyword">return</span> memory * <span class="number">1024</span>; <span class="comment">// Convert KB to bytes</span>
+            }
+        }
+        fclose(file);
+    }
+<span class="keyword">#endif</span>
+    <span class="keyword">return</span> <span class="number">0</span>;
+}
+
+BenchmarkResult* <span class="function">start_benchmark</span>() {
+    BenchmarkResult* result = malloc(<span class="keyword">sizeof</span>(BenchmarkResult));
+
+    <span class="comment">// Get initial CPU time</span>
+    clock_t start_cpu = clock();
+
+    <span class="comment">// Get initial wall time</span>
+    <span class="keyword">struct</span> timeval start_wall;
+    gettimeofday(&start_wall, NULL);
+
+    <span class="comment">// Store in result (temporarily using these fields)</span>
+    result->cpu_time = (<span class="keyword">double</span>)start_cpu;
+    result->wall_time = start_wall.tv_sec + start_wall.tv_usec / <span class="number">1000000.0</span>;
+    result->memory_usage = get_memory_usage();
+
+    <span class="keyword">return</span> result;
+}
+
+<span class="keyword">void</span> <span class="function">end_benchmark</span>(BenchmarkResult* result, <span class="keyword">const char</span>* phase) {
+    <span class="comment">// Get final times</span>
+    clock_t end_cpu = clock();
+    <span class="keyword">struct</span> timeval end_wall;
+    gettimeofday(&end_wall, NULL);
+
+    <span class="comment">// Calculate elapsed times</span>
+    <span class="keyword">double</span> start_cpu = result->cpu_time;
+    result->cpu_time = ((<span class="keyword">double</span>)(end_cpu - start_cpu)) / CLOCKS_PER_SEC;
+
+    <span class="keyword">double</span> start_wall = result->wall_time;
+    <span class="keyword">double</span> end_wall_time = end_wall.tv_sec + end_wall.tv_usec / <span class="number">1000000.0</span>;
+    result->wall_time = end_wall_time - start_wall;
+
+    <span class="comment">// Get final memory</span>
+    <span class="keyword">long</span> final_memory = get_memory_usage();
+    result->peak_memory = final_memory - result->memory_usage;
+
+    <span class="comment">// Print results</span>
+    printf(<span class="string">"\n=== %s Performance ===\n"</span>, phase);
+    printf(<span class="string">"CPU Time: %.6f seconds\n"</span>, result->cpu_time);
+    printf(<span class="string">"Wall Time: %.6f seconds\n"</span>, result->wall_time);
+    printf(<span class="string">"Memory Delta: %.2f KB\n"</span>, result->peak_memory / <span class="number">1024.0</span>);
+}</pre>
+            </div>
+
+            <div class="platform-note">
+                <strong>Platform Notes:</strong>
+                <ul>
+                    <li><strong>macOS:</strong> Uses Mach kernel APIs for memory measurement</li>
+                    <li><strong>Linux/Ubuntu:</strong> Uses /proc filesystem for memory statistics</li>
+                    <li><strong>Windows (WSL2):</strong> Functions like Linux but may have virtualization overhead</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2>Part 2: Symbol Table Optimization</h2>
+
+        <div class="enhancement-task">
+            <span class="difficulty-badge medium">Medium</span>
+            <h3>Task 1: Hash Table Implementation</h3>
+            <p><strong>Current Issue:</strong> Linear search O(n) in symbol table</p>
+            <p><strong>Enhancement:</strong> Implement hash table for O(1) average lookup</p>
+
+            <div class="implementation-box">
+                <h4>Where to Implement:</h4>
+                <p>Modify <code>symtab.h</code> and <code>symtab.c</code></p>
+
+                <div class="code-block">
+<pre><span class="comment">// Enhanced symtab.h</span>
+<span class="keyword">#define</span> HASH_SIZE <span class="number">211</span>  <span class="comment">// Prime number for better distribution</span>
+<span class="keyword">#define</span> MAX_VARS <span class="number">1000</span>  <span class="comment">// Increased capacity</span>
+
+<span class="keyword">typedef struct</span> SymbolNode {
+    <span class="keyword">char</span>* name;
+    <span class="keyword">int</span> offset;
+    <span class="keyword">struct</span> SymbolNode* next;  <span class="comment">// For chaining</span>
+} SymbolNode;
+
+<span class="keyword">typedef struct</span> {
+    SymbolNode* buckets[HASH_SIZE];
+    <span class="keyword">int</span> count;
+    <span class="keyword">int</span> nextOffset;
+    <span class="comment">// Performance counters</span>
+    <span class="keyword">int</span> lookups;
+    <span class="keyword">int</span> collisions;
+} SymbolTable;
+
+<span class="comment">// Hash function</span>
+<span class="keyword">unsigned int</span> <span class="function">hash</span>(<span class="keyword">const char</span>* str) {
+    <span class="keyword">unsigned int</span> hash = <span class="number">5381</span>;
+    <span class="keyword">int</span> c;
+    <span class="keyword">while</span> ((c = *str++))
+        hash = ((hash &lt;&lt; <span class="number">5</span>) + hash) + c; <span class="comment">// hash * 33 + c</span>
+    <span class="keyword">return</span> hash % HASH_SIZE;
+}</pre>
+                </div>
+
+                <h4>Performance Measurement:</h4>
+                <div class="code-block">
+<pre><span class="comment">// Add to main.c</span>
+<span class="keyword">void</span> <span class="function">test_symbol_table_performance</span>() {
+    BenchmarkResult* bench = start_benchmark();
+
+    <span class="comment">// Test with 1000 variables</span>
+    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">1000</span>; i++) {
+        <span class="keyword">char</span> varname[<span class="number">20</span>];
+        sprintf(varname, <span class="string">"var_%d"</span>, i);
+        addVar(varname);
+    }
+
+    <span class="comment">// Test lookups</span>
+    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">10000</span>; i++) {
+        <span class="keyword">char</span> varname[<span class="number">20</span>];
+        sprintf(varname, <span class="string">"var_%d"</span>, rand() % <span class="number">1000</span>);
+        getVarOffset(varname);
+    }
+
+    end_benchmark(bench, <span class="string">"Symbol Table"</span>);
+    printf(<span class="string">"Collisions: %d\n"</span>, symtab.collisions);
+    free(bench);
+}</pre>
+                </div>
+            </div>
+        </div>
+
+        <h2>Part 3: AST Memory Pool Optimization</h2>
+
+        <div class="enhancement-task">
+            <span class="difficulty-badge hard">Hard</span>
+            <h3>Task 2: Memory Pool for AST Nodes</h3>
+            <p><strong>Current Issue:</strong> Individual malloc() calls for each AST node cause fragmentation</p>
+            <p><strong>Enhancement:</strong> Implement memory pool allocator</p>
+
+            <div class="implementation-box">
+                <h4>Implementation in ast.c:</h4>
+                <div class="code-block">
+<pre><span class="comment">// Memory pool structure</span>
+<span class="keyword">#define</span> POOL_SIZE <span class="number">4096</span>  <span class="comment">// Allocate in 4KB chunks</span>
+<span class="keyword">#define</span> MAX_POOLS <span class="number">100</span>
+
+<span class="keyword">typedef struct</span> MemPool {
+    <span class="keyword">char</span>* memory;
+    size_t used;
+    size_t size;
+    <span class="keyword">struct</span> MemPool* next;
+} MemPool;
+
+<span class="keyword">typedef struct</span> {
+    MemPool* current;
+    MemPool* head;
+    <span class="keyword">int</span> total_allocations;
+    <span class="keyword">int</span> pool_count;
+    size_t total_memory;
+} ASTMemoryManager;
+
+<span class="keyword">static</span> ASTMemoryManager ast_mem = {<span class="number">0</span>};
+
+<span class="comment">// Initialize memory pool</span>
+<span class="keyword">void</span> <span class="function">init_ast_memory</span>() {
+    ast_mem.head = malloc(<span class="keyword">sizeof</span>(MemPool));
+    ast_mem.head->memory = malloc(POOL_SIZE);
+    ast_mem.head->used = <span class="number">0</span>;
+    ast_mem.head->size = POOL_SIZE;
+    ast_mem.head->next = NULL;
+    ast_mem.current = ast_mem.head;
+    ast_mem.pool_count = <span class="number">1</span>;
+    ast_mem.total_memory = POOL_SIZE;
+}
+
+<span class="comment">// Allocate from pool</span>
+<span class="keyword">void</span>* <span class="function">ast_alloc</span>(size_t size) {
+    <span class="comment">// Align to 8 bytes for better performance</span>
+    size = (size + <span class="number">7</span>) & ~<span class="number">7</span>;
+
+    <span class="keyword">if</span> (ast_mem.current->used + size > ast_mem.current->size) {
+        <span class="comment">// Need new pool</span>
+        MemPool* new_pool = malloc(<span class="keyword">sizeof</span>(MemPool));
+        new_pool->memory = malloc(POOL_SIZE);
+        new_pool->used = <span class="number">0</span>;
+        new_pool->size = POOL_SIZE;
+        new_pool->next = NULL;
+
+        ast_mem.current->next = new_pool;
+        ast_mem.current = new_pool;
+        ast_mem.pool_count++;
+        ast_mem.total_memory += POOL_SIZE;
+    }
+
+    <span class="keyword">void</span>* ptr = ast_mem.current->memory + ast_mem.current->used;
+    ast_mem.current->used += size;
+    ast_mem.total_allocations++;
+
+    <span class="keyword">return</span> ptr;
+}
+
+<span class="comment">// Replace malloc in createNum, createVar, etc.</span>
+ASTNode* <span class="function">createNum</span>(<span class="keyword">int</span> value) {
+    ASTNode* node = (ASTNode*)ast_alloc(<span class="keyword">sizeof</span>(ASTNode));  <span class="comment">// Instead of malloc</span>
+    node->type = NODE_NUM;
+    node->data.num = value;
+    <span class="keyword">return</span> node;
+}</pre>
+                </div>
+
+                <div class="platform-note">
+                    <strong>Platform-Specific Considerations:</strong>
+                    <ul>
+                        <li><strong>macOS (Apple Silicon):</strong> 16-byte alignment may perform better due to M1/M2 architecture</li>
+                        <li><strong>Linux x86_64:</strong> 8-byte alignment is typically sufficient</li>
+                        <li><strong>Cache Line Optimization:</strong> Consider 64-byte alignment for frequently accessed nodes</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <h2>Part 4: TAC Optimization</h2>
+
+        <div class="enhancement-task">
+            <span class="difficulty-badge medium">Medium</span>
+            <h3>Task 3: TAC Peephole Optimization</h3>
+            <p><strong>Current Issue:</strong> Redundant temporary variables and operations</p>
+            <p><strong>Enhancement:</strong> Implement peephole optimizer</p>
+
+            <div class="implementation-box">
+                <h4>Add to tac.c:</h4>
+                <div class="code-block">
+<pre><span class="comment">// Peephole optimization patterns</span>
+<span class="keyword">typedef struct</span> {
+    <span class="keyword">int</span> eliminated_temps;
+    <span class="keyword">int</span> constant_folded;
+    <span class="keyword">int</span> dead_code_removed;
+} OptimizationStats;
+
+OptimizationStats opt_stats = {<span class="number">0</span>};
+
+<span class="keyword">void</span> <span class="function">optimizeTAC</span>() {
+    TACInstr* current = tacList.head;
+
+    <span class="keyword">while</span> (current && current->next) {
+        <span class="comment">// Pattern 1: Constant folding</span>
+        <span class="comment">// t0 = 5; t1 = 10; t2 = t0 + t1; => t2 = 15;</span>
+        <span class="keyword">if</span> (current->op == TAC_ASSIGN &&
+            current->next->op == TAC_ASSIGN &&
+            isConstant(current->arg1) &&
+            isConstant(current->next->arg1)) {
+
+            TACInstr* third = current->next->next;
+            <span class="keyword">if</span> (third && third->op == TAC_ADD &&
+                strcmp(third->arg1, current->result) == <span class="number">0</span> &&
+                strcmp(third->arg2, current->next->result) == <span class="number">0</span>) {
+
+                <span class="keyword">int</span> val1 = atoi(current->arg1);
+                <span class="keyword">int</span> val2 = atoi(current->next->arg1);
+                <span class="keyword">char</span> buffer[<span class="number">20</span>];
+                sprintf(buffer, <span class="string">"%d"</span>, val1 + val2);
+
+                <span class="comment">// Replace with single assignment</span>
+                third->op = TAC_ASSIGN;
+                third->arg1 = strdup(buffer);
+                third->arg2 = NULL;
+
+                <span class="comment">// Remove redundant instructions</span>
+                current->op = TAC_NOP;  <span class="comment">// Mark for removal</span>
+                current->next->op = TAC_NOP;
+
+                opt_stats.constant_folded++;
+            }
+        }
+
+        <span class="comment">// Pattern 2: Copy propagation</span>
+        <span class="comment">// t0 = x; y = t0; => y = x;</span>
+        <span class="keyword">if</span> (current->op == TAC_ASSIGN &&
+            current->next->op == TAC_ASSIGN &&
+            strcmp(current->next->arg1, current->result) == <span class="number">0</span>) {
+
+            current->next->arg1 = strdup(current->arg1);
+            current->op = TAC_NOP;
+            opt_stats.eliminated_temps++;
+        }
+
+        current = current->next;
+    }
+
+    <span class="comment">// Remove NOP instructions</span>
+    removeNOPs();
+}
+
+<span class="keyword">void</span> <span class="function">removeNOPs</span>() {
+    TACInstr* current = tacList.head;
+    TACInstr* prev = NULL;
+
+    <span class="keyword">while</span> (current) {
+        <span class="keyword">if</span> (current->op == TAC_NOP) {
+            TACInstr* toDelete = current;
+            <span class="keyword">if</span> (prev) {
+                prev->next = current->next;
+                current = current->next;
+            } <span class="keyword">else</span> {
+                tacList.head = current->next;
+                current = current->next;
+            }
+            opt_stats.dead_code_removed++;
+            <span class="comment">// Note: In production, should free toDelete</span>
+        } <span class="keyword">else</span> {
+            prev = current;
+            current = current->next;
+        }
+    }
+}</pre>
+                </div>
+            </div>
+        </div>
+
+        <h2>Part 5: Lexical Analysis Optimization</h2>
+
+        <div class="enhancement-task">
+            <span class="difficulty-badge easy">Easy</span>
+            <h3>Task 4: Scanner Buffer Optimization</h3>
+            <p><strong>Current Issue:</strong> Default flex buffer size may cause frequent I/O</p>
+            <p><strong>Enhancement:</strong> Optimize buffer size and keyword recognition</p>
+
+            <div class="implementation-box">
+                <h4>Modify scanner.l:</h4>
+                <div class="code-block">
+<pre>%{
+<span class="keyword">#include</span> <span class="string">"parser.tab.h"</span>
+<span class="keyword">#include</span> <span class="string">&lt;string.h&gt;</span>
+
+<span class="comment">// Increase buffer size for better I/O performance</span>
+<span class="keyword">#define</span> YY_BUF_SIZE <span class="number">32768</span>  <span class="comment">// 32KB instead of default 8KB</span>
+
+<span class="comment">// Keyword hash table for O(1) lookup</span>
+<span class="keyword">struct</span> keyword {
+    <span class="keyword">char</span>* word;
+    <span class="keyword">int</span> token;
+};
+
+<span class="keyword">#define</span> NUM_KEYWORDS <span class="number">3</span>
+<span class="keyword">static struct</span> keyword keywords[] = {
+    {<span class="string">"int"</span>, INT},
+    {<span class="string">"print"</span>, PRINT},
+    {<span class="string">"return"</span>, RETURN}
+};
+
+<span class="comment">// Perfect hash function for our keywords</span>
+<span class="keyword">int</span> <span class="function">keyword_hash</span>(<span class="keyword">const char</span>* str) {
+    <span class="keyword">int</span> len = strlen(str);
+    <span class="keyword">return</span> (len + str[<span class="number">0</span>]) % <span class="number">13</span>;  <span class="comment">// Simple but effective for our set</span>
+}
+
+<span class="keyword">int</span> <span class="function">check_keyword</span>(<span class="keyword">const char</span>* str) {
+    <span class="keyword">int</span> h = keyword_hash(str);
+    <span class="comment">// Check if it matches our keyword at that hash</span>
+    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; NUM_KEYWORDS; i++) {
+        <span class="keyword">if</span>(strcmp(keywords[i].word, str) == <span class="number">0</span>) {
+            <span class="keyword">return</span> keywords[i].token;
+        }
+    }
+    <span class="keyword">return</span> ID;  <span class="comment">// Not a keyword, must be identifier</span>
+}
+%}
+
+%%
+
+[a-zA-Z_][a-zA-Z0-9_]*  {
+    <span class="keyword">int</span> token = check_keyword(yytext);
+    <span class="keyword">if</span>(token == ID) {
+        yylval.name = strdup(yytext);
+    }
+    <span class="keyword">return</span> token;
+}
+
+%%</pre>
+                </div>
+            </div>
+        </div>
+
+        <h2>Part 6: Code Generation Optimization</h2>
+
+        <div class="enhancement-task">
+            <span class="difficulty-badge advanced">Advanced</span>
+            <h3>Task 5: Register Allocation</h3>
+            <p><strong>Current Issue:</strong> Excessive stack operations</p>
+            <p><strong>Enhancement:</strong> Implement basic register allocation</p>
+
+            <div class="implementation-box">
+                <h4>Add to codegen.c:</h4>
+                <div class="code-block">
+<pre><span class="comment">// Register allocator</span>
+<span class="keyword">typedef struct</span> {
+    <span class="keyword">char</span>* reg_name;
+    <span class="keyword">char</span>* var_name;  <span class="comment">// Variable currently in this register</span>
+    <span class="keyword">int</span> is_free;
+    <span class="keyword">int</span> last_used;   <span class="comment">// For LRU eviction</span>
+} Register;
+
+<span class="keyword">typedef struct</span> {
+    Register temp_regs[<span class="number">8</span>];  <span class="comment">// $t0-$t7</span>
+    Register saved_regs[<span class="number">8</span>]; <span class="comment">// $s0-$s7</span>
+    <span class="keyword">int</span> clock;              <span class="comment">// For LRU tracking</span>
+} RegisterAllocator;
+
+RegisterAllocator reg_alloc;
+
+<span class="keyword">void</span> <span class="function">init_register_allocator</span>() {
+    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">8</span>; i++) {
+        <span class="keyword">char</span> name[<span class="number">4</span>];
+        sprintf(name, <span class="string">"$t%d"</span>, i);
+        reg_alloc.temp_regs[i].reg_name = strdup(name);
+        reg_alloc.temp_regs[i].is_free = <span class="number">1</span>;
+        reg_alloc.temp_regs[i].var_name = NULL;
+        reg_alloc.temp_regs[i].last_used = <span class="number">0</span>;
+    }
+    reg_alloc.clock = <span class="number">0</span>;
+}
+
+<span class="keyword">char</span>* <span class="function">allocate_register</span>(<span class="keyword">char</span>* var) {
+    <span class="comment">// First check if variable already in register</span>
+    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">8</span>; i++) {
+        <span class="keyword">if</span>(reg_alloc.temp_regs[i].var_name &&
+           strcmp(reg_alloc.temp_regs[i].var_name, var) == <span class="number">0</span>) {
+            reg_alloc.temp_regs[i].last_used = reg_alloc.clock++;
+            <span class="keyword">return</span> reg_alloc.temp_regs[i].reg_name;
+        }
+    }
+
+    <span class="comment">// Find free register</span>
+    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">8</span>; i++) {
+        <span class="keyword">if</span>(reg_alloc.temp_regs[i].is_free) {
+            reg_alloc.temp_regs[i].is_free = <span class="number">0</span>;
+            reg_alloc.temp_regs[i].var_name = strdup(var);
+            reg_alloc.temp_regs[i].last_used = reg_alloc.clock++;
+            <span class="keyword">return</span> reg_alloc.temp_regs[i].reg_name;
+        }
+    }
+
+    <span class="comment">// Need to evict - find LRU</span>
+    <span class="keyword">int</span> lru_idx = <span class="number">0</span>;
+    <span class="keyword">int</span> min_time = reg_alloc.temp_regs[<span class="number">0</span>].last_used;
+    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; <span class="number">8</span>; i++) {
+        <span class="keyword">if</span>(reg_alloc.temp_regs[i].last_used &lt; min_time) {
+            min_time = reg_alloc.temp_regs[i].last_used;
+            lru_idx = i;
+        }
+    }
+
+    <span class="comment">// Spill old variable to stack</span>
+    <span class="keyword">if</span>(reg_alloc.temp_regs[lru_idx].var_name) {
+        <span class="keyword">int</span> offset = getVarOffset(reg_alloc.temp_regs[lru_idx].var_name);
+        fprintf(output, <span class="string">"    sw %s, %d($fp)\n"</span>,
+                reg_alloc.temp_regs[lru_idx].reg_name, offset);
+    }
+
+    <span class="comment">// Allocate to new variable</span>
+    reg_alloc.temp_regs[lru_idx].var_name = strdup(var);
+    reg_alloc.temp_regs[lru_idx].last_used = reg_alloc.clock++;
+
+    <span class="comment">// Load from stack if needed</span>
+    <span class="keyword">if</span>(isVarDeclared(var)) {
+        <span class="keyword">int</span> offset = getVarOffset(var);
+        fprintf(output, <span class="string">"    lw %s, %d($fp)\n"</span>,
+                reg_alloc.temp_regs[lru_idx].reg_name, offset);
+    }
+
+    <span class="keyword">return</span> reg_alloc.temp_regs[lru_idx].reg_name;
+}</pre>
+                </div>
+            </div>
+        </div>
+
+        <h2>Part 7: String Interning</h2>
+
+        <div class="enhancement-task">
+            <span class="difficulty-badge easy">Easy</span>
+            <h3>Task 6: String Pool for Identifiers</h3>
+            <p><strong>Current Issue:</strong> Duplicate string allocations for same identifiers</p>
+            <p><strong>Enhancement:</strong> Implement string interning</p>
+
+            <div class="implementation-box">
+                <h4>Create stringpool.h and stringpool.c:</h4>
+                <div class="code-block">
+<pre><span class="comment">// stringpool.h</span>
+<span class="keyword">#define</span> STRING_POOL_SIZE <span class="number">1024</span>
+<span class="keyword">#define</span> STRING_HASH_SIZE <span class="number">127</span>
+
+<span class="keyword">typedef struct</span> StringNode {
+    <span class="keyword">char</span>* str;
+    <span class="keyword">struct</span> StringNode* next;
+} StringNode;
+
+<span class="keyword">typedef struct</span> {
+    StringNode* buckets[STRING_HASH_SIZE];
+    <span class="keyword">char</span>* pool;
+    size_t pool_used;
+    <span class="keyword">int</span> unique_strings;
+    <span class="keyword">int</span> total_requests;
+} StringPool;
+
+<span class="keyword">extern</span> StringPool string_pool;
+
+<span class="keyword">void</span> <span class="function">init_string_pool</span>();
+<span class="keyword">char</span>* <span class="function">intern_string</span>(<span class="keyword">const char</span>* str);
+<span class="keyword">void</span> <span class="function">print_string_stats</span>();
+
+<span class="comment">// stringpool.c implementation</span>
+StringPool string_pool = {<span class="number">0</span>};
+
+<span class="keyword">void</span> <span class="function">init_string_pool</span>() {
+    string_pool.pool = malloc(STRING_POOL_SIZE);
+    string_pool.pool_used = <span class="number">0</span>;
+    string_pool.unique_strings = <span class="number">0</span>;
+    string_pool.total_requests = <span class="number">0</span>;
+    memset(string_pool.buckets, <span class="number">0</span>, <span class="keyword">sizeof</span>(string_pool.buckets));
+}
+
+<span class="keyword">char</span>* <span class="function">intern_string</span>(<span class="keyword">const char</span>* str) {
+    string_pool.total_requests++;
+
+    <span class="keyword">unsigned int</span> hash = <span class="number">0</span>;
+    <span class="keyword">const char</span>* p = str;
+    <span class="keyword">while</span>(*p) {
+        hash = hash * <span class="number">31</span> + *p++;
+    }
+    hash %= STRING_HASH_SIZE;
+
+    <span class="comment">// Check if already interned</span>
+    StringNode* node = string_pool.buckets[hash];
+    <span class="keyword">while</span>(node) {
+        <span class="keyword">if</span>(strcmp(node->str, str) == <span class="number">0</span>) {
+            <span class="keyword">return</span> node->str;  <span class="comment">// Return existing</span>
+        }
+        node = node->next;
+    }
+
+    <span class="comment">// Add new string</span>
+    size_t len = strlen(str) + <span class="number">1</span>;
+    <span class="keyword">if</span>(string_pool.pool_used + len > STRING_POOL_SIZE) {
+        <span class="comment">// In production, would allocate new pool</span>
+        <span class="keyword">return</span> strdup(str);  <span class="comment">// Fallback</span>
+    }
+
+    <span class="keyword">char</span>* interned = string_pool.pool + string_pool.pool_used;
+    strcpy(interned, str);
+    string_pool.pool_used += len;
+
+    <span class="comment">// Add to hash table</span>
+    StringNode* new_node = malloc(<span class="keyword">sizeof</span>(StringNode));
+    new_node->str = interned;
+    new_node->next = string_pool.buckets[hash];
+    string_pool.buckets[hash] = new_node;
+
+    string_pool.unique_strings++;
+    <span class="keyword">return</span> interned;
+}</pre>
+                </div>
+            </div>
+        </div>
+
+        <h2>Part 8: Performance Testing & Reporting</h2>
+
+        <div class="benchmark-template">
+            <h3>📈 Benchmark Test Suite</h3>
+            <p>Create comprehensive test files to measure improvements:</p>
+
+            <div class="code-block">
+<pre><span class="comment">#!/bin/bash</span>
+<span class="comment"># test_performance.sh</span>
+
+echo <span class="string">"=== Compiler Performance Benchmark ==="</span>
+echo <span class="string">"Platform: $(uname -s)"</span>
+echo <span class="string">"CPU: $(sysctl -n machdep.cpu.brand_string 2>/dev/null || lscpu | grep 'Model name' | cut -d: -f2)"</span>
+echo <span class="string">""</span>
+
+<span class="comment"># Test files of increasing complexity</span>
+cat > test_small.c &lt;&lt; <span class="string">'EOF'</span>
+int x;
+int y;
+x = 10;
+y = 20;
+print(x + y);
+EOF
+
+cat > test_medium.c &lt;&lt; <span class="string">'EOF'</span>
+int a; int b; int c; int d; int e;
+a = 1; b = 2; c = 3; d = 4; e = 5;
+int result;
+result = a + b + c + d + e;
+print(result);
+<span class="comment"># Repeat 50 times...</span>
+EOF
+
+<span class="comment"># Generate large test file</span>
+echo <span class="string">"Generating large test file..."</span>
+echo <span class="string">""</span> > test_large.c
+<span class="keyword">for</span> i in {1..1000}; <span class="keyword">do</span>
+    echo <span class="string">"int var$i;"</span> >> test_large.c
+<span class="keyword">done</span>
+<span class="keyword">for</span> i in {1..1000}; <span class="keyword">do</span>
+    echo <span class="string">"var$i = $i;"</span> >> test_large.c
+<span class="keyword">done</span>
+echo <span class="string">"print(var1 + var1000);"</span> >> test_large.c
+
+<span class="comment"># Run benchmarks</span>
+echo <span class="string">"=== BASELINE PERFORMANCE ==="</span>
+echo <span class="string">"Small file:"</span>
+time ./minicompiler_original &lt; test_small.c > /dev/null
+
+echo <span class="string">"Medium file:"</span>
+time ./minicompiler_original &lt; test_medium.c > /dev/null
+
+echo <span class="string">"Large file:"</span>
+time ./minicompiler_original &lt; test_large.c > /dev/null
+
+echo <span class="string">""</span>
+echo <span class="string">"=== OPTIMIZED PERFORMANCE ==="</span>
+echo <span class="string">"Small file:"</span>
+time ./minicompiler_optimized &lt; test_small.c > /dev/null
+
+echo <span class="string">"Medium file:"</span>
+time ./minicompiler_optimized &lt; test_medium.c > /dev/null
+
+echo <span class="string">"Large file:"</span>
+time ./minicompiler_optimized &lt; test_large.c > /dev/null
+
+<span class="comment"># Platform-specific profiling</span>
+<span class="keyword">if</span> [[ <span class="string">"$OSTYPE"</span> == <span class="string">"darwin"</span>* ]]; <span class="keyword">then</span>
+    echo <span class="string">""</span>
+    echo <span class="string">"=== macOS Instruments Profiling ==="</span>
+    echo <span class="string">"Run: instruments -t 'Time Profiler' ./minicompiler_optimized"</span>
+<span class="keyword">else</span>
+    echo <span class="string">""</span>
+    echo <span class="string">"=== Linux perf Profiling ==="</span>
+    echo <span class="string">"Run: perf record -g ./minicompiler_optimized &lt; test_large.c"</span>
+    echo <span class="string">"     perf report"</span>
+<span class="keyword">fi</span></pre>
+            </div>
+
+            <div class="platform-note">
+                <strong>Platform-Specific Profiling Tools:</strong>
+                <ul>
+                    <li><strong>macOS:</strong>
+                        <ul>
+                            <li>Instruments (Time Profiler, Allocations)</li>
+                            <li>leaks command for memory leak detection</li>
+                            <li>sample command for quick profiling</li>
+                        </ul>
+                    </li>
+                    <li><strong>Linux/Ubuntu:</strong>
+                        <ul>
+                            <li>perf (performance counters)</li>
+                            <li>valgrind (memory profiling with massif)</li>
+                            <li>gprof (GNU profiler)</li>
+                        </ul>
+                    </li>
+                    <li><strong>Cross-Platform:</strong>
+                        <ul>
+                            <li>Built-in timing with clock()</li>
+                            <li>Custom instrumentation</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="expected-results">
+            <h2>📋 Expected Results</h2>
+
+            <h3>Performance Metrics Table</h3>
+            <p>Students should measure and document the following metrics for each optimization:</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Optimization</th>
+                        <th>Baseline Time (ms)</th>
+                        <th>Optimized Time (ms)</th>
+                        <th>Speedup</th>
+                        <th>Memory Before (KB)</th>
+                        <th>Memory After (KB)</th>
+                        <th>Memory Saved</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Symbol Table (Hash)</td>
+                        <td>Measure</td>
+                        <td>Measure</td>
+                        <td>Calculate</td>
+                        <td>Measure</td>
+                        <td>Measure</td>
+                        <td>Calculate</td>
+                    </tr>
+                    <tr>
+                        <td>AST Memory Pool</td>
+                        <td>Measure</td>
+                        <td>Measure</td>
+                        <td>Calculate</td>
+                        <td>Measure</td>
+                        <td>Measure</td>
+                        <td>Calculate</td>
+                    </tr>
+                    <tr>
+                        <td>TAC Optimization</td>
+                        <td>Measure</td>
+                        <td>Measure</td>
+                        <td>Calculate</td>
+                        <td>Measure</td>
+                        <td>Measure</td>
+                        <td>Calculate</td>
+                    </tr>
+                    <tr>
+                        <td>Scanner Buffer</td>
+                        <td>Measure</td>
+                        <td>Measure</td>
+                        <td>Calculate</td>
+                        <td>Measure</td>
+                        <td>Measure</td>
+                        <td>Calculate</td>
+                    </tr>
+                    <tr>
+                        <td>Register Allocation</td>
+                        <td>Measure</td>
+                        <td>Measure</td>
+                        <td>Calculate</td>
+                        <td>Measure</td>
+                        <td>Measure</td>
+                        <td>Calculate</td>
+                    </tr>
+                    <tr>
+                        <td>String Interning</td>
+                        <td>Measure</td>
+                        <td>Measure</td>
+                        <td>Calculate</td>
+                        <td>Measure</td>
+                        <td>Measure</td>
+                        <td>Calculate</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Expected Improvements</h3>
+            <ul>
+                <li><strong>Symbol Table:</strong> O(n) to O(1) lookup time, 10x+ speedup for large programs</li>
+                <li><strong>Memory Pool:</strong> 30-50% reduction in memory allocations</li>
+                <li><strong>TAC Optimization:</strong> 15-25% reduction in generated instructions</li>
+                <li><strong>Scanner Buffer:</strong> 20-30% improvement in I/O performance</li>
+                <li><strong>Register Allocation:</strong> 40-60% reduction in memory accesses</li>
+                <li><strong>String Interning:</strong> 20-40% memory savings for identifier storage</li>
+            </ul>
+
+            <h3>Documentation Requirements</h3>
+            <ul>
+                <li>Clear before/after performance comparisons</li>
+                <li>Platform-specific implementation notes</li>
+                <li>Analysis of which optimizations provided the most benefit</li>
+                <li>Discussion of any unexpected results or challenges</li>
+                <li>Suggestions for future optimizations</li>
+            </ul>
+        </div>
+
+        <div class="performance-metrics">
+            <h3>🎯 Challenge Goals</h3>
+            <ul>
+                <li><strong>Speed Achievement:</strong> Aim for 50%+ overall speedup on large files</li>
+                <li><strong>Memory Efficiency:</strong> Target 40%+ reduction in memory usage</li>
+                <li><strong>Advanced Optimization:</strong> Consider implementing loop unrolling or instruction scheduling</li>
+                <li><strong>Cross-Platform Testing:</strong> Compare performance on ARM (M1/M2) vs x86_64 architectures</li>
+            </ul>
+        </div>
+
+        <div style="text-align: center; margin-top: 50px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 10px;">
+            <h2 style="color: white; border: none;">🚀 Ready to Optimize!</h2>
+            <p style="font-size: 1.2em;">Remember: Measure twice, optimize once!</p>
+            <p>Good luck with your performance enhancements!</p>
+        </div>
+    </div>
+</body>
+</html>

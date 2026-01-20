@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CST-405 Compiler Performance Enhancement - Lecture Slides</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a1a;
+            color: #333;
+            overflow: hidden;
+        }
+
+        .presentation {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .slide {
+            width: 90%;
+            max-width: 1200px;
+            height: 90vh;
+            background: white;
+            padding: 60px;
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            display: none;
+            overflow-y: auto;
+            animation: slideIn 0.5s ease;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            border-bottom: 4px solid #667eea;
+            padding-bottom: 20px;
+        }
+
+        h2 {
+            color: #34495e;
+            font-size: 2em;
+            margin: 30px 0 20px 0;
+            border-left: 5px solid #764ba2;
+            padding-left: 20px;
+        }
+
+        h3 {
+            color: #4a5568;
+            font-size: 1.5em;
+            margin: 20px 0 15px 0;
+        }
+
+        .code-example {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            margin: 20px 0;
+            overflow-x: auto;
+            line-height: 1.6;
+        }
+
+        .code-example pre {
+            margin: 0;
+            white-space: pre;
+        }
+
+        .comparison-table {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .before-box, .after-box {
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .before-box {
+            background: #ffe5e5;
+            border: 2px solid #ff6b6b;
+        }
+
+        .after-box {
+            background: #e5ffe5;
+            border: 2px solid #51cf66;
+        }
+
+        .before-box h4, .after-box h4 {
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .before-box h4 {
+            color: #c92a2a;
+        }
+
+        .after-box h4 {
+            color: #2b8a3e;
+        }
+
+        .bullet-list {
+            margin: 20px 0;
+            padding-left: 30px;
+        }
+
+        .bullet-list li {
+            margin: 10px 0;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 20px;
+            border-left: 4px solid #ffc107;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .navigation {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .nav-btn:hover {
+            background: #764ba2;
+            transform: scale(1.05);
+        }
+
+        .nav-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: scale(1);
+        }
+
+        .slide-number {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .keyword { color: #c678dd; }
+        .string { color: #98c379; }
+        .comment { color: #5c6370; font-style: italic; }
+        .number { color: #d19a66; }
+        .function { color: #61afef; }
+
+        .performance-chart {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .metric {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+        }
+
+        .metric-label {
+            width: 150px;
+            font-weight: bold;
+        }
+
+        .metric-bar {
+            flex: 1;
+            height: 30px;
+            background: linear-gradient(to right, #ff6b6b, #51cf66);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-value {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #dee2e6;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .title-slide {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .title-slide h1 {
+            font-size: 3em;
+            border: none;
+            margin-bottom: 20px;
+        }
+
+        .title-slide h2 {
+            border: none;
+            padding: 0;
+            color: #667eea;
+            font-size: 2.2em;
+        }
+
+        .title-slide .subtitle {
+            font-size: 1.5em;
+            color: #666;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation">
+        <div class="slide-number" id="slideNumber">1 / 30</div>
+
+        <!-- Slide 1: Title -->
+        <div class="slide active title-slide">
+            <h1>CST-405 Principles of Compiler Design</h1>
+            <h2>Compiler Performance Enhancement</h2>
+            <p class="subtitle">Optimizing Every Phase of Compilation</p>
+            <p class="subtitle" style="margin-top: 40px; font-size: 1.2em;">Class Activity & Implementation Guide</p>
+        </div>
+
+        <!-- Slide 2: Overview -->
+        <div class="slide">
+            <h1>Activity Overview</h1>
+            <h2>What We'll Optimize Today</h2>
+            <ul class="bullet-list">
+                <li><strong>Symbol Table:</strong> From O(n) to O(1) lookup</li>
+                <li><strong>Memory Management:</strong> Pool allocation for AST nodes</li>
+                <li><strong>TAC Generation:</strong> Peephole optimization patterns</li>
+                <li><strong>Lexical Analysis:</strong> Buffer optimization</li>
+                <li><strong>Code Generation:</strong> Register allocation</li>
+                <li><strong>String Management:</strong> String interning</li>
+            </ul>
+            <div class="highlight">
+                <strong>Goal:</strong> Achieve 30-50% overall performance improvement while learning fundamental optimization techniques
+            </div>
+        </div>
+
+        <!-- Slide 3: Why Performance Matters -->
+        <div class="slide">
+            <h1>Why Compiler Performance Matters</h1>
+            <div class="performance-chart">
+                <h3>Compilation Time Impact on Development</h3>
+                <div class="metric">
+                    <span class="metric-label">Small Project:</span>
+                    <div class="metric-bar">
+                        <span class="metric-value">2s → 1s (50% faster)</span>
+                    </div>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Medium Project:</span>
+                    <div class="metric-bar">
+                        <span class="metric-value">30s → 15s (50% faster)</span>
+                    </div>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Large Project:</span>
+                    <div class="metric-bar">
+                        <span class="metric-value">5min → 2.5min (50% faster)</span>
+                    </div>
+                </div>
+            </div>
+            <ul class="bullet-list">
+                <li><strong>Developer Productivity:</strong> Faster compile-test cycles</li>
+                <li><strong>CI/CD Pipelines:</strong> Reduced build times</li>
+                <li><strong>Resource Usage:</strong> Lower memory footprint</li>
+                <li><strong>Energy Efficiency:</strong> Less CPU time = less power consumption</li>
+            </ul>
+        </div>
+
+        <!-- Slide 4: Benchmarking Setup -->
+        <div class="slide">
+            <h1>Performance Measurement Setup</h1>
+            <h2>Creating a Benchmarking Framework</h2>
+            <div class="code-example">
+<pre><span class="comment">// Key measurements we need</span>
+<span class="keyword">typedef struct</span> {
+    <span class="keyword">double</span> cpu_time;      <span class="comment">// Processor time used</span>
+    <span class="keyword">double</span> wall_time;     <span class="comment">// Real-world elapsed time</span>
+    <span class="keyword">long</span> memory_usage;    <span class="comment">// Memory consumed</span>
+    <span class="keyword">long</span> peak_memory;     <span class="comment">// Maximum memory used</span>
+} <span class="function">BenchmarkResult</span>;</pre>
+            </div>
+            <div class="highlight">
+                <strong>Platform Differences:</strong>
+                <ul style="margin-top: 10px;">
+                    <li>macOS: Use Mach kernel APIs</li>
+                    <li>Linux: Use /proc filesystem</li>
+                    <li>Windows WSL2: Linux-compatible with overhead</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 5: Symbol Table Problem -->
+        <div class="slide">
+            <h1>Optimization 1: Symbol Table</h1>
+            <h2>The Problem: Linear Search</h2>
+            <div class="comparison-table">
+                <div class="before-box">
+                    <h4>❌ Current Implementation</h4>
+                    <div class="code-example" style="background: #2c1f1f;">
+<pre><span class="comment">// Linear search - O(n)</span>
+<span class="keyword">for</span>(i = <span class="number">0</span>; i < count; i++) {
+    <span class="keyword">if</span>(strcmp(vars[i].name, name) == <span class="number">0</span>) {
+        <span class="keyword">return</span> vars[i].offset;
+    }
+}
+<span class="keyword">return</span> -<span class="number">1</span>;</pre>
+                    </div>
+                    <p><strong>Problem:</strong> Gets slower with more variables</p>
+                </div>
+                <div class="after-box">
+                    <h4>✅ Solution: Hash Table</h4>
+                    <div class="code-example" style="background: #1f2c1f;">
+<pre><span class="comment">// Hash lookup - O(1) average</span>
+<span class="keyword">unsigned int</span> h = hash(name);
+SymbolNode* node = buckets[h];
+<span class="keyword">while</span>(node) {
+    <span class="keyword">if</span>(strcmp(node->name, name) == <span class="number">0</span>)
+        <span class="keyword">return</span> node->offset;
+    node = node->next;
+}</pre>
+                    </div>
+                    <p><strong>Result:</strong> Constant time lookups!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Hash Function Design -->
+        <div class="slide">
+            <h1>Hash Table Implementation Details</h1>
+            <h2>Choosing a Good Hash Function</h2>
+            <div class="code-example">
+<pre><span class="comment">// DJB2 Hash Algorithm - Simple and effective</span>
+<span class="keyword">unsigned int</span> <span class="function">hash</span>(<span class="keyword">const char</span>* str) {
+    <span class="keyword">unsigned int</span> hash = <span class="number">5381</span>;
+    <span class="keyword">int</span> c;
+
+    <span class="keyword">while</span> ((c = *str++)) {
+        hash = ((hash << <span class="number">5</span>) + hash) + c; <span class="comment">// hash * 33 + c</span>
+    }
+
+    <span class="keyword">return</span> hash % HASH_SIZE;  <span class="comment">// HASH_SIZE = 211 (prime)</span>
+}</pre>
+            </div>
+            <h3>Why This Works Well:</h3>
+            <ul class="bullet-list">
+                <li><strong>Prime number size (211):</strong> Better distribution, fewer collisions</li>
+                <li><strong>Multiplier 33:</strong> Good bit spreading properties</li>
+                <li><strong>Simple operations:</strong> Fast execution</li>
+            </ul>
+        </div>
+
+        <!-- Slide 7: Performance Comparison -->
+        <div class="slide">
+            <h1>Symbol Table Performance Results</h1>
+            <h2>Measured Improvements</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Number of Variables</th>
+                        <th>Linear Search (ms)</th>
+                        <th>Hash Table (ms)</th>
+                        <th>Speedup</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>100</td>
+                        <td>5</td>
+                        <td>1</td>
+                        <td>5x</td>
+                    </tr>
+                    <tr>
+                        <td>500</td>
+                        <td>125</td>
+                        <td>2</td>
+                        <td>62x</td>
+                    </tr>
+                    <tr>
+                        <td>1000</td>
+                        <td>500</td>
+                        <td>3</td>
+                        <td>166x</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="highlight">
+                <strong>Key Insight:</strong> Performance gap widens dramatically as program size increases!
+            </div>
+        </div>
+
+        <!-- Slide 8: Memory Pool Concept -->
+        <div class="slide">
+            <h1>Optimization 2: Memory Pool for AST</h1>
+            <h2>The Problem: Memory Fragmentation</h2>
+            <div class="comparison-table">
+                <div class="before-box">
+                    <h4>❌ Individual Allocations</h4>
+                    <div class="code-example" style="background: #2c1f1f;">
+<pre><span class="comment">// Each node = separate malloc</span>
+ASTNode* node = malloc(<span class="keyword">sizeof</span>(ASTNode));
+<span class="comment">// Problems:</span>
+<span class="comment">// - Fragmentation</span>
+<span class="comment">// - Allocation overhead</span>
+<span class="comment">// - Poor cache locality</span></pre>
+                    </div>
+                </div>
+                <div class="after-box">
+                    <h4>✅ Pool Allocation</h4>
+                    <div class="code-example" style="background: #1f2c1f;">
+<pre><span class="comment">// Allocate from pool</span>
+ASTNode* node = ast_alloc(<span class="keyword">sizeof</span>(ASTNode));
+<span class="comment">// Benefits:</span>
+<span class="comment">// - Contiguous memory</span>
+<span class="comment">// - No fragmentation</span>
+<span class="comment">// - Better cache performance</span></pre>
+                    </div>
+                </div>
+            </div>
+            <h3>How It Works:</h3>
+            <ul class="bullet-list">
+                <li>Allocate large chunks (4KB) at once</li>
+                <li>Hand out small pieces from the chunk</li>
+                <li>Only allocate new chunk when current is full</li>
+            </ul>
+        </div>
+
+        <!-- Slide 9: Memory Pool Implementation -->
+        <div class="slide">
+            <h1>Memory Pool Implementation</h1>
+            <div class="code-example">
+<pre><span class="keyword">#define</span> POOL_SIZE <span class="number">4096</span>  <span class="comment">// 4KB chunks - fits in L1 cache</span>
+
+<span class="keyword">typedef struct</span> MemPool {
+    <span class="keyword">char</span>* memory;        <span class="comment">// The chunk of memory</span>
+    size_t used;         <span class="comment">// How much we've used</span>
+    size_t size;         <span class="comment">// Total size available</span>
+    <span class="keyword">struct</span> MemPool* next; <span class="comment">// Link to next pool</span>
+} MemPool;
+
+<span class="keyword">void</span>* <span class="function">ast_alloc</span>(size_t size) {
+    <span class="comment">// Align to 8 bytes for performance</span>
+    size = (size + <span class="number">7</span>) & ~<span class="number">7</span>;
+
+    <span class="keyword">if</span> (current_pool->used + size > POOL_SIZE) {
+        <span class="comment">// Need new pool</span>
+        allocate_new_pool();
+    }
+
+    <span class="keyword">void</span>* ptr = current_pool->memory + current_pool->used;
+    current_pool->used += size;
+    <span class="keyword">return</span> ptr;
+}</pre>
+            </div>
+            <div class="highlight">
+                <strong>Memory Savings:</strong> 30-50% reduction in total memory usage!
+            </div>
+        </div>
+
+        <!-- Slide 10: Cache Performance -->
+        <div class="slide">
+            <h1>Why Memory Pools Improve Performance</h1>
+            <h2>Cache Locality Benefits</h2>
+            <div class="performance-chart">
+                <h3>Memory Access Patterns</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Individual malloc()</th>
+                            <th>Memory Pool</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Cache Misses</td>
+                            <td>High (scattered memory)</td>
+                            <td>Low (contiguous)</td>
+                        </tr>
+                        <tr>
+                            <td>TLB Misses</td>
+                            <td>Many pages</td>
+                            <td>Few pages</td>
+                        </tr>
+                        <tr>
+                            <td>Allocation Time</td>
+                            <td>~100ns per malloc</td>
+                            <td>~5ns per allocation</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="highlight">
+                <strong>Platform Note:</strong> Apple Silicon (M1/M2) benefits even more from 16-byte alignment due to architecture design
+            </div>
+        </div>
+
+        <!-- Slide 11: TAC Optimization -->
+        <div class="slide">
+            <h1>Optimization 3: TAC Peephole Optimization</h1>
+            <h2>Eliminating Redundant Operations</h2>
+            <div class="comparison-table">
+                <div class="before-box">
+                    <h4>❌ Unoptimized TAC</h4>
+                    <div class="code-example" style="background: #2c1f1f;">
+<pre>t0 = <span class="number">5</span>
+t1 = <span class="number">10</span>
+t2 = t0 + t1
+x = t2</pre>
+                    </div>
+                    <p>4 instructions, 3 temporaries</p>
+                </div>
+                <div class="after-box">
+                    <h4>✅ Optimized TAC</h4>
+                    <div class="code-example" style="background: #1f2c1f;">
+<pre>x = <span class="number">15</span></pre>
+                    </div>
+                    <p>1 instruction, 0 temporaries!</p>
+                </div>
+            </div>
+            <h3>Optimization Patterns:</h3>
+            <ul class="bullet-list">
+                <li><strong>Constant Folding:</strong> Evaluate constant expressions at compile time</li>
+                <li><strong>Copy Propagation:</strong> Replace copies with original values</li>
+                <li><strong>Dead Code Elimination:</strong> Remove unused computations</li>
+            </ul>
+        </div>
+
+        <!-- Slide 12: Peephole Pattern Matching -->
+        <div class="slide">
+            <h1>Implementing Peephole Optimization</h1>
+            <h2>Pattern Matching Approach</h2>
+            <div class="code-example">
+<pre><span class="comment">// Pattern 1: Constant Folding</span>
+<span class="keyword">if</span> (current->op == TAC_ASSIGN &&
+    next->op == TAC_ASSIGN &&
+    isConstant(current->arg1) &&
+    isConstant(next->arg1)) {
+
+    <span class="comment">// Look for: t0 = 5; t1 = 10; t2 = t0 + t1</span>
+    <span class="keyword">if</span> (third->op == TAC_ADD &&
+        third->arg1 == current->result &&
+        third->arg2 == next->result) {
+
+        <span class="comment">// Replace with: t2 = 15</span>
+        <span class="keyword">int</span> result = atoi(current->arg1) + atoi(next->arg1);
+        third->op = TAC_ASSIGN;
+        third->arg1 = itoa(result);
+
+        <span class="comment">// Mark old instructions for removal</span>
+        current->op = TAC_NOP;
+        next->op = TAC_NOP;
+    }
+}</pre>
+            </div>
+        </div>
+
+        <!-- Slide 13: Copy Propagation Example -->
+        <div class="slide">
+            <h1>Copy Propagation in Detail</h1>
+            <h2>Eliminating Unnecessary Copies</h2>
+            <div class="comparison-table">
+                <div class="before-box">
+                    <h4>Before Optimization</h4>
+                    <div class="code-example" style="background: #2c1f1f;">
+<pre>x = <span class="number">10</span>
+t0 = x     <span class="comment">// Copy</span>
+t1 = t0    <span class="comment">// Another copy</span>
+y = t1 + <span class="number">5</span></pre>
+                    </div>
+                </div>
+                <div class="after-box">
+                    <h4>After Copy Propagation</h4>
+                    <div class="code-example" style="background: #1f2c1f;">
+<pre>x = <span class="number">10</span>
+y = x + <span class="number">5</span>  <span class="comment">// Direct use</span></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="highlight">
+                <strong>Result:</strong> 50% reduction in instructions, less register pressure!
+            </div>
+        </div>
+
+        <!-- Slide 14: Scanner Optimization -->
+        <div class="slide">
+            <h1>Optimization 4: Scanner Buffer</h1>
+            <h2>Improving I/O Performance</h2>
+            <div class="code-example">
+<pre><span class="comment">// Increase buffer size for better I/O</span>
+<span class="keyword">#define</span> YY_BUF_SIZE <span class="number">32768</span>  <span class="comment">// 32KB vs default 8KB</span>
+
+<span class="comment">// Why 32KB?</span>
+<span class="comment">// - Fits in L1 cache on modern CPUs</span>
+<span class="comment">// - Reduces system calls by 4x</span>
+<span class="comment">// - Good balance of memory vs performance</span></pre>
+            </div>
+            <h3>Additional Scanner Optimizations:</h3>
+            <ul class="bullet-list">
+                <li><strong>Keyword Hashing:</strong> O(1) keyword recognition</li>
+                <li><strong>Character Classes:</strong> Table lookup instead of comparisons</li>
+                <li><strong>DFA Minimization:</strong> Fewer state transitions</li>
+            </ul>
+        </div>
+
+        <!-- Slide 15: Keyword Recognition -->
+        <div class="slide">
+            <h1>Fast Keyword Recognition</h1>
+            <h2>Perfect Hash Function</h2>
+            <div class="code-example">
+<pre><span class="comment">// Perfect hash for our 3 keywords</span>
+<span class="keyword">struct</span> keyword {
+    <span class="keyword">char</span>* word;
+    <span class="keyword">int</span> token;
+} keywords[] = {
+    {<span class="string">"int"</span>, INT},
+    {<span class="string">"print"</span>, PRINT},
+    {<span class="string">"return"</span>, RETURN}
+};
+
+<span class="keyword">int</span> <span class="function">keyword_hash</span>(<span class="keyword">const char</span>* str) {
+    <span class="comment">// Length + first char gives unique values</span>
+    <span class="keyword">return</span> (strlen(str) + str[<span class="number">0</span>]) % <span class="number">13</span>;
+}
+
+<span class="comment">// Result: O(1) keyword detection!</span></pre>
+            </div>
+            <div class="highlight">
+                <strong>Performance:</strong> 10x faster than strcmp() loop for keyword detection
+            </div>
+        </div>
+
+        <!-- Slide 16: Register Allocation -->
+        <div class="slide">
+            <h1>Optimization 5: Register Allocation</h1>
+            <h2>Reducing Memory Access</h2>
+            <div class="comparison-table">
+                <div class="before-box">
+                    <h4>❌ Stack-Based Code</h4>
+                    <div class="code-example" style="background: #2c1f1f;">
+<pre>lw $t0, -4($fp)   <span class="comment">// Load x</span>
+lw $t1, -8($fp)   <span class="comment">// Load y</span>
+add $t2, $t0, $t1
+sw $t2, -12($fp)  <span class="comment">// Store result</span>
+<span class="comment">// 3 memory accesses!</span></pre>
+                    </div>
+                </div>
+                <div class="after-box">
+                    <h4>✅ Register-Allocated Code</h4>
+                    <div class="code-example" style="background: #1f2c1f;">
+<pre><span class="comment">// x in $s0, y in $s1</span>
+add $s2, $s0, $s1
+<span class="comment">// 0 memory accesses!</span></pre>
+                    </div>
+                </div>
+            </div>
+            <h3>Memory Access Cost:</h3>
+            <ul class="bullet-list">
+                <li>Register access: 1 cycle</li>
+                <li>L1 cache: 4 cycles</li>
+                <li>Main memory: 100-200 cycles</li>
+            </ul>
+        </div>
+
+        <!-- Slide 17: LRU Register Allocation -->
+        <div class="slide">
+            <h1>LRU Register Allocation Strategy</h1>
+            <div class="code-example">
+<pre><span class="keyword">typedef struct</span> {
+    <span class="keyword">char</span>* reg_name;    <span class="comment">// e.g., "$t0"</span>
+    <span class="keyword">char</span>* var_name;    <span class="comment">// Variable in this register</span>
+    <span class="keyword">int</span> last_used;     <span class="comment">// For LRU tracking</span>
+} Register;
+
+<span class="keyword">char</span>* <span class="function">allocate_register</span>(<span class="keyword">char</span>* var) {
+    <span class="comment">// 1. Check if variable already in a register</span>
+    <span class="keyword">for</span>(reg : registers) {
+        <span class="keyword">if</span>(reg.var_name == var) <span class="keyword">return</span> reg.reg_name;
+    }
+
+    <span class="comment">// 2. Find free register</span>
+    <span class="keyword">for</span>(reg : registers) {
+        <span class="keyword">if</span>(reg.is_free) {
+            reg.var_name = var;
+            <span class="keyword">return</span> reg.reg_name;
+        }
+    }
+
+    <span class="comment">// 3. Evict LRU register</span>
+    Register* lru = find_lru_register();
+    spill_to_stack(lru);  <span class="comment">// Save old value</span>
+    lru.var_name = var;
+    <span class="keyword">return</span> lru.reg_name;
+}</pre>
+            </div>
+        </div>
+
+        <!-- Slide 18: String Interning -->
+        <div class="slide">
+            <h1>Optimization 6: String Interning</h1>
+            <h2>Eliminating Duplicate Strings</h2>
+            <div class="comparison-table">
+                <div class="before-box">
+                    <h4>❌ Without Interning</h4>
+                    <div class="code-example" style="background: #2c1f1f;">
+<pre><span class="comment">// Same identifier "count" appears 10 times</span>
+<span class="string">"count"</span> → malloc(6) <span class="comment">// 6 bytes</span>
+<span class="string">"count"</span> → malloc(6) <span class="comment">// 6 bytes</span>
+<span class="string">"count"</span> → malloc(6) <span class="comment">// 6 bytes</span>
+...
+<span class="comment">// Total: 60 bytes + overhead</span></pre>
+                    </div>
+                </div>
+                <div class="after-box">
+                    <h4>✅ With Interning</h4>
+                    <div class="code-example" style="background: #1f2c1f;">
+<pre><span class="comment">// All references point to same string</span>
+<span class="string">"count"</span> → pool[0] <span class="comment">// 6 bytes once</span>
+<span class="string">"count"</span> → pool[0] <span class="comment">// Same pointer</span>
+<span class="string">"count"</span> → pool[0] <span class="comment">// Same pointer</span>
+...
+<span class="comment">// Total: 6 bytes!</span></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="highlight">
+                <strong>Benefits:</strong> 20-40% memory savings, faster string comparisons (pointer equality)
+            </div>
+        </div>
+
+        <!-- Slide 19: String Pool Implementation -->
+        <div class="slide">
+            <h1>String Pool Implementation</h1>
+            <div class="code-example">
+<pre><span class="keyword">char</span>* <span class="function">intern_string</span>(<span class="keyword">const char</span>* str) {
+    <span class="comment">// 1. Hash the string</span>
+    <span class="keyword">unsigned int</span> h = hash(str);
+
+    <span class="comment">// 2. Check if already interned</span>
+    StringNode* node = buckets[h];
+    <span class="keyword">while</span>(node) {
+        <span class="keyword">if</span>(strcmp(node->str, str) == <span class="number">0</span>) {
+            <span class="keyword">return</span> node->str;  <span class="comment">// Found it!</span>
+        }
+        node = node->next;
+    }
+
+    <span class="comment">// 3. Add new string to pool</span>
+    <span class="keyword">char</span>* interned = pool + pool_used;
+    strcpy(interned, str);
+    pool_used += strlen(str) + <span class="number">1</span>;
+
+    <span class="comment">// 4. Add to hash table</span>
+    add_to_hash_table(h, interned);
+
+    <span class="keyword">return</span> interned;
+}</pre>
+            </div>
+        </div>
+
+        <!-- Slide 20: Complete Performance Test -->
+        <div class="slide">
+            <h1>Comprehensive Performance Testing</h1>
+            <h2>Test File Generation</h2>
+            <div class="code-example">
+<pre><span class="comment">#!/bin/bash</span>
+<span class="comment"># Generate test files of varying complexity</span>
+
+<span class="comment"># Small test (10 variables)</span>
+<span class="keyword">for</span> i in {1..10}; <span class="keyword">do</span>
+    echo <span class="string">"int var$i;"</span>
+    echo <span class="string">"var$i = $i;"</span>
+<span class="keyword">done</span> > test_small.c
+
+<span class="comment"># Large test (1000 variables)</span>
+<span class="keyword">for</span> i in {1..1000}; <span class="keyword">do</span>
+    echo <span class="string">"int var$i;"</span>
+    echo <span class="string">"var$i = $i;"</span>
+<span class="keyword">done</span> > test_large.c
+
+<span class="comment"># Measure performance</span>
+time ./compiler_original &lt; test_large.c
+time ./compiler_optimized &lt; test_large.c</pre>
+            </div>
+            <div class="highlight">
+                <strong>Expected Results:</strong> 30-50% overall speedup on large files
+            </div>
+        </div>
+
+        <!-- Slide 21: Platform-Specific Profiling -->
+        <div class="slide">
+            <h1>Platform-Specific Profiling Tools</h1>
+            <h2>Getting Detailed Performance Data</h2>
+            <div class="comparison-table">
+                <div class="before-box">
+                    <h4>macOS Tools</h4>
+                    <div class="code-example" style="font-size: 12px;">
+<pre><span class="comment"># Instruments profiling</span>
+instruments -t <span class="string">'Time Profiler'</span> ./compiler
+
+<span class="comment"># Memory leaks</span>
+leaks --atExit -- ./compiler
+
+<span class="comment"># Quick sampling</span>
+sample ./compiler -file test.c</pre>
+                    </div>
+                </div>
+                <div class="after-box">
+                    <h4>Linux Tools</h4>
+                    <div class="code-example" style="font-size: 12px;">
+<pre><span class="comment"># Performance counters</span>
+perf record -g ./compiler
+perf report
+
+<span class="comment"># Memory profiling</span>
+valgrind --tool=massif ./compiler
+
+<span class="comment"># Call graph</span>
+gprof ./compiler</pre>
+                    </div>
+                </div>
+            </div>
+            <div class="highlight">
+                <strong>Tip:</strong> Always profile before optimizing - measure, don't guess!
+            </div>
+        </div>
+
+        <!-- Slide 22: Results Summary -->
+        <div class="slide">
+            <h1>Expected Performance Improvements</h1>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Optimization</th>
+                        <th>Time Improvement</th>
+                        <th>Memory Improvement</th>
+                        <th>Complexity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Hash Table Symbol Table</td>
+                        <td>10-100x for lookups</td>
+                        <td>~Same</td>
+                        <td>Medium</td>
+                    </tr>
+                    <tr>
+                        <td>AST Memory Pool</td>
+                        <td>2-3x allocation speed</td>
+                        <td>30-50% less</td>
+                        <td>Hard</td>
+                    </tr>
+                    <tr>
+                        <td>TAC Optimization</td>
+                        <td>15-25% fewer instructions</td>
+                        <td>10-20% less</td>
+                        <td>Medium</td>
+                    </tr>
+                    <tr>
+                        <td>Scanner Buffer</td>
+                        <td>20-30% I/O improvement</td>
+                        <td>Minimal</td>
+                        <td>Easy</td>
+                    </tr>
+                    <tr>
+                        <td>Register Allocation</td>
+                        <td>40-60% faster execution</td>
+                        <td>Less stack usage</td>
+                        <td>Advanced</td>
+                    </tr>
+                    <tr>
+                        <td>String Interning</td>
+                        <td>Faster comparisons</td>
+                        <td>20-40% less</td>
+                        <td>Easy</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Slide 23: Common Pitfalls -->
+        <div class="slide">
+            <h1>Common Implementation Pitfalls</h1>
+            <h2>What to Watch Out For</h2>
+            <ul class="bullet-list">
+                <li><strong>Hash Collisions:</strong> Poor hash function → O(n) worst case
+                    <ul><li>Solution: Use prime table sizes, good hash functions</li></ul>
+                </li>
+                <li><strong>Memory Pool Fragmentation:</strong> Variable-sized allocations
+                    <ul><li>Solution: Separate pools for different sizes</li></ul>
+                </li>
+                <li><strong>Register Spilling:</strong> Too aggressive allocation
+                    <ul><li>Solution: Profile-guided allocation</li></ul>
+                </li>
+                <li><strong>Over-optimization:</strong> Complex code for minimal gain
+                    <ul><li>Solution: Focus on hotspots (80/20 rule)</li></ul>
+                </li>
+                <li><strong>Platform Dependencies:</strong> Code that only works on one OS
+                    <ul><li>Solution: Use #ifdef for platform-specific code</li></ul>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Slide 24: Debugging Optimized Code -->
+        <div class="slide">
+            <h1>Debugging Optimized Compilers</h1>
+            <h2>Maintaining Correctness</h2>
+            <div class="code-example">
+<pre><span class="comment">// Add debug modes to your optimizations</span>
+<span class="keyword">#ifdef</span> DEBUG_OPTIMIZATION
+    printf(<span class="string">"Before optimization:\n"</span>);
+    print_tac(tac_list);
+
+    optimize_tac();
+
+    printf(<span class="string">"After optimization:\n"</span>);
+    print_tac(tac_list);
+    printf(<span class="string">"Eliminated %d temps, folded %d constants\n"</span>,
+           stats.eliminated, stats.folded);
+<span class="keyword">#else</span>
+    optimize_tac();
+<span class="keyword">#endif</span></pre>
+            </div>
+            <h3>Testing Strategy:</h3>
+            <ul class="bullet-list">
+                <li>Run test suite with and without optimizations</li>
+                <li>Compare output - must be identical</li>
+                <li>Use assertions to verify invariants</li>
+                <li>Profile to ensure actual improvement</li>
+            </ul>
+        </div>
+
+        <!-- Slide 25: Advanced Optimizations -->
+        <div class="slide">
+            <h1>Advanced Optimizations (Extra Credit)</h1>
+            <h2>Going Beyond the Basics</h2>
+            <div class="highlight">
+                <h3>1. Loop Unrolling</h3>
+                <div class="code-example">
+<pre><span class="comment">// Before</span>
+<span class="keyword">for</span>(i = <span class="number">0</span>; i < <span class="number">100</span>; i++)
+    sum += array[i];
+
+<span class="comment">// After (4x unrolling)</span>
+<span class="keyword">for</span>(i = <span class="number">0</span>; i < <span class="number">100</span>; i += <span class="number">4</span>) {
+    sum += array[i];
+    sum += array[i+<span class="number">1</span>];
+    sum += array[i+<span class="number">2</span>];
+    sum += array[i+<span class="number">3</span>];
+}</pre>
+                </div>
+            </div>
+            <h3>2. Instruction Scheduling</h3>
+            <ul class="bullet-list">
+                <li>Reorder independent instructions</li>
+                <li>Hide memory latency</li>
+                <li>Maximize pipeline utilization</li>
+            </ul>
+        </div>
+
+        <!-- Slide 26: Architecture-Specific Optimization -->
+        <div class="slide">
+            <h1>Architecture-Specific Optimizations</h1>
+            <h2>Apple Silicon vs x86_64</h2>
+            <div class="comparison-table">
+                <div class="before-box">
+                    <h4>Apple M1/M2 Optimizations</h4>
+                    <ul style="font-size: 0.9em;">
+                        <li>16-byte alignment preferred</li>
+                        <li>Larger register file (31 GPRs)</li>
+                        <li>Better branch prediction</li>
+                        <li>Unified memory architecture</li>
+                    </ul>
+                </div>
+                <div class="after-box">
+                    <h4>x86_64 Optimizations</h4>
+                    <ul style="font-size: 0.9em;">
+                        <li>8-byte alignment usually sufficient</li>
+                        <li>Smaller register file (16 GPRs)</li>
+                        <li>Complex addressing modes</li>
+                        <li>SIMD opportunities (SSE/AVX)</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="code-example">
+<pre><span class="comment">// Conditional compilation for architecture</span>
+<span class="keyword">#ifdef</span> __aarch64__  <span class="comment">// Apple Silicon</span>
+    <span class="keyword">#define</span> ALIGNMENT <span class="number">16</span>
+    <span class="keyword">#define</span> NUM_REGISTERS <span class="number">31</span>
+<span class="keyword">#else</span>  <span class="comment">// x86_64</span>
+    <span class="keyword">#define</span> ALIGNMENT <span class="number">8</span>
+    <span class="keyword">#define</span> NUM_REGISTERS <span class="number">16</span>
+<span class="keyword">#endif</span></pre>
+            </div>
+        </div>
+
+        <!-- Slide 27: Measuring Success -->
+        <div class="slide">
+            <h1>Measuring Your Success</h1>
+            <h2>Key Performance Indicators</h2>
+            <div class="performance-chart">
+                <h3>Target Metrics</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Minimum Goal</th>
+                            <th>Stretch Goal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Overall Speedup</td>
+                            <td>30%</td>
+                            <td>50%+</td>
+                        </tr>
+                        <tr>
+                            <td>Memory Reduction</td>
+                            <td>20%</td>
+                            <td>40%+</td>
+                        </tr>
+                        <tr>
+                            <td>Compilation Time (1000 lines)</td>
+                            <td>&lt; 100ms</td>
+                            <td>&lt; 50ms</td>
+                        </tr>
+                        <tr>
+                            <td>Generated Code Size</td>
+                            <td>15% smaller</td>
+                            <td>25% smaller</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="highlight">
+                <strong>Remember:</strong> Document your measurements thoroughly - show before/after for each optimization!
+            </div>
+        </div>
+
+        <!-- Slide 28: Activity Deliverables -->
+        <div class="slide">
+            <h1>Activity Deliverables</h1>
+            <h2>What to Submit</h2>
+            <ul class="bullet-list">
+                <li><strong>Source Code:</strong>
+                    <ul>
+                        <li>Original compiler (baseline/)</li>
+                        <li>Optimized compiler (optimized/)</li>
+                        <li>Benchmark suite (benchmarks/)</li>
+                    </ul>
+                </li>
+                <li><strong>Performance Report:</strong>
+                    <ul>
+                        <li>Methodology description</li>
+                        <li>Before/after measurements</li>
+                        <li>Analysis of improvements</li>
+                        <li>Platform-specific observations</li>
+                    </ul>
+                </li>
+                <li><strong>Test Results:</strong>
+                    <ul>
+                        <li>Correctness verification</li>
+                        <li>Performance benchmarks</li>
+                        <li>Memory usage analysis</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Slide 29: Real-World Impact -->
+        <div class="slide">
+            <h1>Real-World Impact</h1>
+            <h2>Why These Optimizations Matter</h2>
+            <div class="highlight">
+                <h3>Industry Applications:</h3>
+                <ul class="bullet-list">
+                    <li><strong>GCC/LLVM:</strong> Use all these techniques and more</li>
+                    <li><strong>V8 (JavaScript):</strong> Hidden classes = our hash tables</li>
+                    <li><strong>Java HotSpot:</strong> Aggressive register allocation</li>
+                    <li><strong>Rust:</strong> Memory pools for fast compilation</li>
+                </ul>
+            </div>
+            <h3>Career Relevance:</h3>
+            <ul class="bullet-list">
+                <li>Performance optimization is crucial in:
+                    <ul>
+                        <li>Game engines</li>
+                        <li>Database systems</li>
+                        <li>Operating systems</li>
+                        <li>Embedded systems</li>
+                        <li>High-frequency trading</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Slide 30: Conclusion -->
+        <div class="slide title-slide">
+            <h1>Ready to Optimize!</h1>
+            <h2>Key Takeaways</h2>
+            <ul class="bullet-list" style="text-align: left; max-width: 800px;">
+                <li>Always measure before optimizing</li>
+                <li>Focus on algorithmic improvements first (O(n) → O(1))</li>
+                <li>Memory locality matters as much as CPU cycles</li>
+                <li>Platform differences can be significant</li>
+                <li>80% of time is spent in 20% of code - optimize hotspots</li>
+            </ul>
+            <div class="highlight" style="margin-top: 40px;">
+                <p style="font-size: 1.3em;"><strong>Remember:</strong> "Premature optimization is the root of all evil" - Donald Knuth</p>
+                <p style="margin-top: 10px;">But now you know when and how to optimize effectively!</p>
+            </div>
+        </div>
+
+        <!-- Navigation buttons -->
+        <div class="navigation">
+            <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">← Previous</button>
+            <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">Next →</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+
+            document.getElementById('slideNumber').textContent = `${currentSlide + 1} / ${totalSlides}`;
+
+            // Update navigation buttons
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+        }
+
+        function changeSlide(direction) {
+            showSlide(currentSlide + direction);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' && currentSlide > 0) {
+                changeSlide(-1);
+            } else if (e.key === 'ArrowRight' && currentSlide < totalSlides - 1) {
+                changeSlide(1);
+            }
+        });
+
+        // Initialize
+        showSlide(0);
+    </script>
+</body>
+</html>

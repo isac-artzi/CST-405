@@ -461,10 +461,13 @@ char *yytext;
 #include <stdio.h>
 #include <stdlib.h>
 #include "parser.tab.h"  /* Token definitions from Bison */
-#line 464 "lex.yy.c"
+
+/* Global flag to enable token display */
+extern int displayTokens;
+#line 467 "lex.yy.c"
 /* Flex options to suppress warnings for unused functions */
 #define YY_NO_INPUT 1
-#line 467 "lex.yy.c"
+#line 470 "lex.yy.c"
 
 #define INITIAL 0
 
@@ -679,10 +682,10 @@ YY_DECL
 		}
 
 	{
-#line 15 "scanner.l"
+#line 18 "scanner.l"
 
 
-#line 685 "lex.yy.c"
+#line 688 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -741,72 +744,95 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 17 "scanner.l"
-{ return INT; }
+#line 20 "scanner.l"
+{
+    if (displayTokens) printf("  TOKEN: INT keyword\n");
+    return INT;
+}
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 18 "scanner.l"
-{ return PRINT; }
+#line 25 "scanner.l"
+{
+    if (displayTokens) printf("  TOKEN: PRINT keyword\n");
+    return PRINT;
+}
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 20 "scanner.l"
-{ 
+#line 30 "scanner.l"
+{
+    if (displayTokens) printf("  TOKEN: ID '%s'\n", yytext);
     yylval.str = strdup(yytext);
-    return ID; 
+    return ID;
 }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 25 "scanner.l"
-{ 
+#line 36 "scanner.l"
+{
+    if (displayTokens) printf("  TOKEN: NUM %s\n", yytext);
     yylval.num = atoi(yytext);
-    return NUM; 
+    return NUM;
 }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 30 "scanner.l"
-{ return '+'; }
+#line 42 "scanner.l"
+{
+    if (displayTokens) printf("  TOKEN: '+'\n");
+    return '+';
+}
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 31 "scanner.l"
-{ return '='; }
+#line 47 "scanner.l"
+{
+    if (displayTokens) printf("  TOKEN: '='\n");
+    return '=';
+}
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 32 "scanner.l"
-{ return ';'; }
+#line 52 "scanner.l"
+{
+    if (displayTokens) printf("  TOKEN: ';'\n");
+    return ';';
+}
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 33 "scanner.l"
-{ return '('; }
+#line 57 "scanner.l"
+{
+    if (displayTokens) printf("  TOKEN: '('\n");
+    return '(';
+}
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 34 "scanner.l"
-{ return ')'; }
+#line 62 "scanner.l"
+{
+    if (displayTokens) printf("  TOKEN: ')'\n");
+    return ')';
+}
 	YY_BREAK
 case 10:
 /* rule 10 can match eol */
 YY_RULE_SETUP
-#line 36 "scanner.l"
+#line 67 "scanner.l"
 { }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 38 "scanner.l"
+#line 69 "scanner.l"
 { printf("Lexical Error: Unknown character '%c'\n", *yytext); }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 40 "scanner.l"
+#line 71 "scanner.l"
 ECHO;
 	YY_BREAK
-#line 809 "lex.yy.c"
+#line 835 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1774,7 +1800,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 40 "scanner.l"
+#line 71 "scanner.l"
 
 
 /* Required by Flex - signals end of input */

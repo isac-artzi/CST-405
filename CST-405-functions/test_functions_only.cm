@@ -1,0 +1,219 @@
+/* Test File 1: Functions Only (No Control Flow)
+ * This test file includes:
+ * - Multiple function definitions with various parameters
+ * - Complex arithmetic expressions
+ * - Functions calling other functions
+ * - Nested function calls
+ * - Array declarations and operations
+ * - Input/output operations
+ * - Return statements
+ */
+
+/* Function: Calculate sum of two numbers */
+int add(int a, int b) {
+    return a + b;
+}
+
+/* Function: Calculate difference of two numbers */
+int subtract(int x, int y) {
+    return x - y;
+}
+
+/* Function: Calculate product of two numbers */
+int multiply(int a, int b) {
+    return a * b;
+}
+
+/* Function: Calculate quotient of two numbers */
+int divide(int numerator, int denominator) {
+    return numerator / denominator;
+}
+
+/* Function: Complex expression combining multiple operations */
+int complexExpression(int a, int b, int c) {
+    int temp;
+    temp = a * b + c - a / b;
+    return temp;
+}
+
+/* Function: Calls other functions - demonstrates function composition */
+int addAndMultiply(int x, int y, int z) {
+    int sum;
+    sum = add(x, y);
+    return multiply(sum, z);
+}
+
+/* Function: Nested function calls with complex expression */
+int nestedCalls(int a, int b, int c, int d) {
+    return add(multiply(a, b), subtract(c, d));
+}
+
+/* Function: Calculate average using function calls */
+int average(int num1, int num2, int num3) {
+    int total;
+    int result;
+    total = add(add(num1, num2), num3);
+    result = divide(total, 3);
+    return result;
+}
+
+/* Function: Calculate polynomial: ax^2 + bx + c
+ * Note: x^2 implemented as x * x since no exponentiation operator
+ */
+int polynomial(int a, int x, int b, int c) {
+    int xSquared;
+    int term1;
+    int term2;
+    int result;
+
+    xSquared = multiply(x, x);
+    term1 = multiply(a, xSquared);
+    term2 = multiply(b, x);
+    result = add(add(term1, term2), c);
+
+    return result;
+}
+
+/* Function: Working with arrays - sum array elements manually */
+int sumArray(int arr[], int size) {
+    int total;
+    total = arr[0] + arr[1] + arr[2] + arr[3] + arr[4];
+    return total;
+}
+
+/* Function: Calculate array average */
+int arrayAverage(int numbers[], int count) {
+    int sum;
+    sum = sumArray(numbers, count);
+    return divide(sum, count);
+}
+
+/* Function: Multiple arithmetic operations in sequence */
+int chainOperations(int value) {
+    int result;
+    result = value;
+    result = add(result, 10);
+    result = multiply(result, 2);
+    result = subtract(result, 5);
+    result = divide(result, 3);
+    return result;
+}
+
+/* Function: Deeply nested function calls */
+int deepNesting(int a, int b, int c) {
+    return multiply(add(subtract(a, b), c), divide(add(a, c), subtract(c, b)));
+}
+
+/* Function: Test complex expression with all operators */
+int allOperators(int w, int x, int y, int z) {
+    int part1;
+    int part2;
+    int result;
+
+    part1 = w * x + y - z;
+    part2 = w / x - y + z;
+    result = part1 * part2;
+
+    return result;
+}
+
+/* Function: Void function that performs output */
+void printCalculation(int a, int b) {
+    int sum;
+    int product;
+
+    sum = add(a, b);
+    product = multiply(a, b);
+
+    output(sum);
+    output(product);
+}
+
+/* Function: Void function with array parameter */
+void printArraySum(int data[], int length) {
+    int total;
+    total = sumArray(data, length);
+    output(total);
+}
+
+/* Main function: Demonstrates all features */
+void main(void) {
+    int x;
+    int y;
+    int z;
+    int result;
+    int numbers[5];
+    int arraySum;
+    int arrayAvg;
+    int poly;
+    int deep;
+    int chain;
+
+    /* Get input values */
+    x = input();
+    y = input();
+    z = input();
+
+    /* Test basic arithmetic function calls */
+    output(add(x, y));
+    output(subtract(x, y));
+    output(multiply(x, y));
+    output(divide(x, y));
+
+    /* Test complex expression function */
+    result = complexExpression(x, y, z);
+    output(result);
+
+    /* Test function composition */
+    result = addAndMultiply(x, y, z);
+    output(result);
+
+    /* Test nested function calls */
+    result = nestedCalls(x, y, z, x);
+    output(result);
+
+    /* Test average calculation */
+    result = average(x, y, z);
+    output(result);
+
+    /* Initialize array with complex expressions */
+    numbers[0] = add(x, y);
+    numbers[1] = multiply(x, 2);
+    numbers[2] = subtract(y, 3);
+    numbers[3] = divide(z, 2);
+    numbers[4] = add(x, z);
+
+    /* Test array functions */
+    arraySum = sumArray(numbers, 5);
+    output(arraySum);
+
+    arrayAvg = arrayAverage(numbers, 5);
+    output(arrayAvg);
+
+    /* Test polynomial: 2x^2 + 3x + 5 */
+    poly = polynomial(2, x, 3, 5);
+    output(poly);
+
+    /* Test chain operations */
+    chain = chainOperations(x);
+    output(chain);
+
+    /* Test deeply nested calls */
+    deep = deepNesting(x, y, z);
+    output(deep);
+
+    /* Test all operators in complex expression */
+    result = allOperators(x, y, z, 10);
+    output(result);
+
+    /* Test void functions */
+    printCalculation(x, y);
+    printArraySum(numbers, 5);
+
+    /* Test multiple nested calls in single statement */
+    output(add(multiply(x, y), divide(subtract(z, x), add(y, 2))));
+
+    /* Test expressions with literal values and function calls */
+    result = add(multiply(x, 5), subtract(y, 10)) + divide(z, 2);
+    output(result);
+}

@@ -6,6 +6,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "parser.tab.h"  /* Token definitions from Bison */
+
+/* Global flag to enable token display */
+extern int displayTokens;
 %}
 
 /* Flex options to suppress warnings for unused functions */
@@ -14,24 +17,52 @@
 
 %%
 
-"int"           { return INT; }
-"print"         { return PRINT; }
+"int"           {
+    if (displayTokens) printf("  TOKEN: INT keyword\n");
+    return INT;
+}
 
-[a-zA-Z_][a-zA-Z0-9_]* { 
+"print"         {
+    if (displayTokens) printf("  TOKEN: PRINT keyword\n");
+    return PRINT;
+}
+
+[a-zA-Z_][a-zA-Z0-9_]* {
+    if (displayTokens) printf("  TOKEN: ID '%s'\n", yytext);
     yylval.str = strdup(yytext);
-    return ID; 
+    return ID;
 }
 
-[0-9]+          { 
+[0-9]+          {
+    if (displayTokens) printf("  TOKEN: NUM %s\n", yytext);
     yylval.num = atoi(yytext);
-    return NUM; 
+    return NUM;
 }
 
-"+"             { return '+'; }
-"="             { return '='; }
-";"             { return ';'; }
-"("             { return '('; }
-")"             { return ')'; }
+"+"             {
+    if (displayTokens) printf("  TOKEN: '+'\n");
+    return '+';
+}
+
+"="             {
+    if (displayTokens) printf("  TOKEN: '='\n");
+    return '=';
+}
+
+";"             {
+    if (displayTokens) printf("  TOKEN: ';'\n");
+    return ';';
+}
+
+"("             {
+    if (displayTokens) printf("  TOKEN: '('\n");
+    return '(';
+}
+
+")"             {
+    if (displayTokens) printf("  TOKEN: ')'\n");
+    return ')';
+}
 
 [ \t\n]         { }
 

@@ -1,0 +1,518 @@
+/* Test File 2: Functions with If-Statements (No Loops)
+ * This test file includes:
+ * - All features from test file 1 (functions, complex expressions)
+ * - If-else statements
+ * - Nested if-statements (multiple levels)
+ * - If-statements calling functions
+ * - Complex relational expressions (==, !=, <, <=, >, >=)
+ * - Conditional logic in functions
+ * - Function calls within conditions
+ * - Multiple branches and decision paths
+ */
+
+/* Function: Return maximum of two numbers using if-else */
+int max(int a, int b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+/* Function: Return minimum of two numbers using if-else */
+int min(int a, int b) {
+    if (a < b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+/* Function: Return absolute value */
+int absolute(int n) {
+    if (n < 0) {
+        return 0 - n;
+    } else {
+        return n;
+    }
+}
+
+/* Function: Check if number is positive, negative, or zero */
+int sign(int n) {
+    if (n > 0) {
+        return 1;
+    } else {
+        if (n < 0) {
+            return 0 - 1;
+        } else {
+            return 0;
+        }
+    }
+}
+
+/* Function: Compare two numbers and return comparison result
+ * Returns: 1 if a > b, -1 if a < b, 0 if equal
+ */
+int compare(int a, int b) {
+    int result;
+    if (a > b) {
+        result = 1;
+    } else {
+        if (a < b) {
+            result = 0 - 1;
+        } else {
+            result = 0;
+        }
+    }
+    return result;
+}
+
+/* Function: Return maximum of three numbers using nested if */
+int max3(int a, int b, int c) {
+    int maxAB;
+    if (a > b) {
+        maxAB = a;
+    } else {
+        maxAB = b;
+    }
+
+    if (maxAB > c) {
+        return maxAB;
+    } else {
+        return c;
+    }
+}
+
+/* Function: Return minimum of three numbers using nested if */
+int min3(int a, int b, int c) {
+    if (a < b) {
+        if (a < c) {
+            return a;
+        } else {
+            return c;
+        }
+    } else {
+        if (b < c) {
+            return b;
+        } else {
+            return c;
+        }
+    }
+}
+
+/* Function: Check if number is in range [low, high] */
+int inRange(int value, int low, int high) {
+    if (value >= low) {
+        if (value <= high) {
+            return 1;
+        } else {
+            return 0;
+        }
+    } else {
+        return 0;
+    }
+}
+
+/* Function: Conditional addition - add only if both positive */
+int conditionalAdd(int a, int b) {
+    if (a > 0) {
+        if (b > 0) {
+            return a + b;
+        } else {
+            return a;
+        }
+    } else {
+        if (b > 0) {
+            return b;
+        } else {
+            return 0;
+        }
+    }
+}
+
+/* Function: Safe division - check for zero denominator */
+int safeDivide(int numerator, int denominator) {
+    if (denominator == 0) {
+        return 0;
+    } else {
+        return numerator / denominator;
+    }
+}
+
+/* Function: Conditional multiply - multiply if conditions met */
+int conditionalMultiply(int a, int b) {
+    int result;
+    if (a != 0) {
+        if (b != 0) {
+            result = a * b;
+        } else {
+            result = 0;
+        }
+    } else {
+        result = 0;
+    }
+    return result;
+}
+
+/* Function: Multiple condition checks with function calls */
+int complexCondition(int x, int y, int z) {
+    int result;
+
+    if (max(x, y) > z) {
+        result = max(x, y) + z;
+    } else {
+        if (min(x, y) < z) {
+            result = min(x, y) - z;
+        } else {
+            result = x + y + z;
+        }
+    }
+
+    return result;
+}
+
+/* Function: Nested if with multiple function calls */
+int nestedWithFunctions(int a, int b, int c) {
+    int result;
+
+    if (absolute(a) > absolute(b)) {
+        if (max(a, c) > 0) {
+            result = max(a, c) + min(b, c);
+        } else {
+            result = absolute(a - b);
+        }
+    } else {
+        if (compare(b, c) > 0) {
+            result = b * c;
+        } else {
+            result = b + c;
+        }
+    }
+
+    return result;
+}
+
+/* Function: Array operations with conditional logic */
+int conditionalArraySum(int arr[], int size, int threshold) {
+    int sum;
+    int temp;
+
+    sum = 0;
+
+    /* Check each element against threshold */
+    temp = arr[0];
+    if (temp > threshold) {
+        sum = sum + temp;
+    }
+
+    temp = arr[1];
+    if (temp > threshold) {
+        sum = sum + temp;
+    }
+
+    temp = arr[2];
+    if (temp > threshold) {
+        sum = sum + temp;
+    }
+
+    temp = arr[3];
+    if (temp > threshold) {
+        sum = sum + temp;
+    }
+
+    temp = arr[4];
+    if (temp > threshold) {
+        sum = sum + temp;
+    }
+
+    return sum;
+}
+
+/* Function: Find maximum in array using conditional logic */
+int arrayMax(int arr[], int size) {
+    int maxVal;
+
+    maxVal = arr[0];
+
+    if (arr[1] > maxVal) {
+        maxVal = arr[1];
+    }
+
+    if (arr[2] > maxVal) {
+        maxVal = arr[2];
+    }
+
+    if (arr[3] > maxVal) {
+        maxVal = arr[3];
+    }
+
+    if (arr[4] > maxVal) {
+        maxVal = arr[4];
+    }
+
+    return maxVal;
+}
+
+/* Function: Count positive numbers in array */
+int countPositive(int arr[], int size) {
+    int count;
+
+    count = 0;
+
+    if (arr[0] > 0) {
+        count = count + 1;
+    }
+
+    if (arr[1] > 0) {
+        count = count + 1;
+    }
+
+    if (arr[2] > 0) {
+        count = count + 1;
+    }
+
+    if (arr[3] > 0) {
+        count = count + 1;
+    }
+
+    if (arr[4] > 0) {
+        count = count + 1;
+    }
+
+    return count;
+}
+
+/* Function: Deeply nested if-statements with complex conditions */
+int deeplyNested(int a, int b, int c, int d) {
+    int result;
+
+    if (a > 0) {
+        if (b > 0) {
+            if (c > 0) {
+                if (d > 0) {
+                    result = a + b + c + d;
+                } else {
+                    result = a + b + c;
+                }
+            } else {
+                if (d > 0) {
+                    result = a + b + d;
+                } else {
+                    result = a + b;
+                }
+            }
+        } else {
+            if (c > 0) {
+                if (d > 0) {
+                    result = a + c + d;
+                } else {
+                    result = a + c;
+                }
+            } else {
+                result = a;
+            }
+        }
+    } else {
+        if (b > 0) {
+            if (c > 0) {
+                result = b + c;
+            } else {
+                result = b;
+            }
+        } else {
+            result = 0;
+        }
+    }
+
+    return result;
+}
+
+/* Void function: Conditional output */
+void conditionalPrint(int value, int threshold) {
+    if (value > threshold) {
+        output(value);
+    } else {
+        output(threshold);
+    }
+}
+
+/* Void function: Print maximum using function call in condition */
+void printMax(int a, int b, int c) {
+    int maximum;
+
+    maximum = max(a, b);
+
+    if (maximum < c) {
+        output(c);
+    } else {
+        output(maximum);
+    }
+}
+
+/* Void function: Conditional array processing */
+void processArray(int arr[], int size, int limit) {
+    if (arrayMax(arr, size) > limit) {
+        output(arrayMax(arr, size));
+    } else {
+        output(conditionalArraySum(arr, size, 0));
+    }
+}
+
+/* Main function: Comprehensive test of all features */
+void main(void) {
+    int x;
+    int y;
+    int z;
+    int result;
+    int nums[5];
+    int comparison;
+    int maxValue;
+    int minValue;
+    int absValue;
+    int signValue;
+    int threshold;
+
+    /* Input values */
+    x = input();
+    y = input();
+    z = input();
+
+    /* Test basic conditional functions */
+    maxValue = max(x, y);
+    output(maxValue);
+
+    minValue = min(x, y);
+    output(minValue);
+
+    absValue = absolute(x);
+    output(absValue);
+
+    signValue = sign(x);
+    output(signValue);
+
+    /* Test comparison function */
+    comparison = compare(x, y);
+    output(comparison);
+
+    /* Test three-way comparisons */
+    result = max3(x, y, z);
+    output(result);
+
+    result = min3(x, y, z);
+    output(result);
+
+    /* Test range checking */
+    if (inRange(x, 0, 100) == 1) {
+        output(x);
+    } else {
+        output(0);
+    }
+
+    /* Test conditional arithmetic */
+    result = conditionalAdd(x, y);
+    output(result);
+
+    result = safeDivide(x, y);
+    output(result);
+
+    result = conditionalMultiply(x, y);
+    output(result);
+
+    /* Initialize array with mixed positive and negative values */
+    nums[0] = x;
+    nums[1] = y;
+    nums[2] = z;
+    nums[3] = 0 - x;
+    nums[4] = y - z;
+
+    /* Test array conditional functions */
+    threshold = 0;
+    result = conditionalArraySum(nums, 5, threshold);
+    output(result);
+
+    maxValue = arrayMax(nums, 5);
+    output(maxValue);
+
+    result = countPositive(nums, 5);
+    output(result);
+
+    /* Test complex nested conditions with function calls */
+    result = complexCondition(x, y, z);
+    output(result);
+
+    result = nestedWithFunctions(x, y, z);
+    output(result);
+
+    /* Test deeply nested if-statements */
+    result = deeplyNested(x, y, z, 5);
+    output(result);
+
+    /* Test if-statements with complex expressions */
+    if (max(x, y) > min(y, z)) {
+        if (absolute(x) >= absolute(z)) {
+            result = x + z;
+        } else {
+            result = x - z;
+        }
+    } else {
+        if (compare(y, z) == 0) {
+            result = y * z;
+        } else {
+            result = y / safeDivide(z, 2);
+        }
+    }
+    output(result);
+
+    /* Test void functions with conditionals */
+    conditionalPrint(x, y);
+    printMax(x, y, z);
+    processArray(nums, 5, 10);
+
+    /* Test multiple conditions in sequence */
+    if (x > 0) {
+        output(1);
+    }
+
+    if (y < 0) {
+        output(2);
+    }
+
+    if (z == 0) {
+        output(3);
+    }
+
+    if (x != y) {
+        output(4);
+    }
+
+    if (x <= y) {
+        output(5);
+    }
+
+    if (y >= z) {
+        output(6);
+    }
+
+    /* Test if-statement with function call in single expression */
+    if (max(absolute(x), absolute(y)) > min3(z, x, y)) {
+        output(max(absolute(x), absolute(y)));
+    } else {
+        output(min3(z, x, y));
+    }
+
+    /* Test complex nested if with multiple function calls */
+    if (compare(max(x, y), min(y, z)) > 0) {
+        if (inRange(z, min(x, y), max(x, y)) == 1) {
+            result = conditionalAdd(x, y) + conditionalMultiply(y, z);
+        } else {
+            result = safeDivide(max3(x, y, z), min3(x, y, z));
+        }
+    } else {
+        if (absolute(x - y) > absolute(y - z)) {
+            result = absolute(x - y);
+        } else {
+            result = absolute(y - z);
+        }
+    }
+    output(result);
+}

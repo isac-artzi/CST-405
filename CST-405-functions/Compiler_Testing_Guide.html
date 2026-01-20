@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C-Minus Compiler Testing and Debugging Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            border-bottom: 4px solid #667eea;
+            padding-bottom: 20px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        h2 {
+            color: #764ba2;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            border-left: 5px solid #764ba2;
+            padding-left: 15px;
+        }
+
+        h3 {
+            color: #667eea;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+
+        h4 {
+            color: #555;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        .intro-box {
+            background: #f8f9ff;
+            border-left: 5px solid #667eea;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 5px;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .warning-box h4 {
+            color: #856404;
+            margin-top: 0;
+        }
+
+        .tip-box {
+            background: #d1ecf1;
+            border-left: 5px solid #17a2b8;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .tip-box h4 {
+            color: #0c5460;
+            margin-top: 0;
+        }
+
+        .success-box {
+            background: #d4edda;
+            border-left: 5px solid #28a745;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .success-box h4 {
+            color: #155724;
+            margin-top: 0;
+        }
+
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+            color: #c7254e;
+        }
+
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        tr:hover {
+            background: #f8f9ff;
+        }
+
+        .step-number {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .deliverable-list {
+            background: #f8f9fa;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .deliverable-list li {
+            background: white;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #28a745;
+        }
+
+        .checklist {
+            list-style-type: none;
+            margin-left: 0;
+        }
+
+        .checklist li:before {
+            content: "☐ ";
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-right: 8px;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .container {
+                box-shadow: none;
+                padding: 20px;
+            }
+
+            pre {
+                page-break-inside: avoid;
+            }
+        }
+
+        .phase-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .phase-card h4 {
+            color: #667eea;
+            margin-top: 0;
+            font-size: 1.3em;
+        }
+
+        .command-box {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            border-left: 4px solid #667eea;
+        }
+
+        .command-box .prompt {
+            color: #4ec9b0;
+        }
+
+        .metric-table {
+            background: white;
+            margin: 20px 0;
+        }
+
+        .metric-table th {
+            background: #764ba2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>C-Minus Compiler Testing and Debugging Guide</h1>
+        <p class="subtitle">Comprehensive Guide for Testing Your Compiler Implementation</p>
+
+        <div class="intro-box">
+            <h3>Overview</h3>
+            <p>
+                This guide will walk you through the process of thoroughly testing and debugging your C-Minus compiler implementation.
+                You will test your compiler using two comprehensive test files that progressively introduce language features,
+                verify the correctness of each compilation phase, measure performance, and audit critical compiler components.
+            </p>
+            <p>
+                <strong>Testing is not just about finding bugs—it's about understanding how your compiler transforms source code
+                through each phase and ensuring the correctness of the final output.</strong>
+            </p>
+        </div>
+
+        <!-- Section 1: Test Files Overview -->
+        <h2>1. Test Files Overview</h2>
+
+        <p>You have been provided with two comprehensive test files that progressively test your compiler's capabilities:</p>
+
+        <h3>Test File 1: <code>test_functions_only.cm</code></h3>
+        <p>This file tests your compiler's ability to handle:</p>
+        <ul>
+            <li>Multiple function definitions with various parameter counts</li>
+            <li>Complex arithmetic expressions using all operators (+, -, *, /)</li>
+            <li>Functions calling other functions (function composition)</li>
+            <li>Nested function calls in expressions</li>
+            <li>Array declarations and array access operations</li>
+            <li>Return statements with complex expressions</li>
+            <li>Void functions with output operations</li>
+            <li>Input/output operations</li>
+        </ul>
+        <p><strong>Note:</strong> This test file does NOT include control flow statements (if-statements or loops).</p>
+
+        <h3>Test File 2: <code>test_with_if_statements.cm</code></h3>
+        <p>This file includes all features from Test File 1, PLUS:</p>
+        <ul>
+            <li>If-else statements (single and nested)</li>
+            <li>Complex relational expressions (==, !=, &lt;, &lt;=, &gt;, &gt;=)</li>
+            <li>Nested if-statements (up to 4 levels deep)</li>
+            <li>If-statements containing function calls</li>
+            <li>Functions that use if-statements for conditional logic</li>
+            <li>Conditional array processing</li>
+            <li>Multiple decision paths and branching logic</li>
+        </ul>
+
+        <div class="warning-box">
+            <h4>⚠ Testing Strategy</h4>
+            <p>Start with <code>test_functions_only.cm</code> to ensure your compiler correctly handles basic features
+            before moving to <code>test_with_if_statements.cm</code>. If your compiler fails on the first test,
+            do not proceed to the second test until those issues are resolved.</p>
+        </div>
+
+        <!-- Section 2: Compilation Process -->
+        <h2>2. Compilation Process and Phase Outputs</h2>
+
+        <p>Your compiler transforms C-Minus source code through multiple phases. You must capture and analyze the output
+        from EACH phase to verify correctness.</p>
+
+        <h3>Step-by-Step Compilation Testing</h3>
+
+        <div class="phase-card">
+            <h4><span class="step-number">1</span>Lexical Analysis (Scanning)</h4>
+            <p><strong>What happens:</strong> The scanner reads the source file character-by-character and produces a stream of tokens.</p>
+
+            <p><strong>How to test:</strong></p>
+            <div class="command-box">
+                <span class="prompt">$</span> ./minicompiler test_functions_only.cm output.s > compiler_output.txt 2>&1
+            </div>
+
+            <p><strong>What to capture:</strong></p>
+            <ul>
+                <li>Token stream (if your compiler outputs tokens during scanning)</li>
+                <li>Any lexical errors (unrecognized characters, invalid tokens)</li>
+            </ul>
+
+            <p><strong>Verification checklist:</strong></p>
+            <ul class="checklist">
+                <li>All keywords are correctly identified (int, void, if, else, while, return)</li>
+                <li>All identifiers (variable/function names) are recognized</li>
+                <li>All numeric literals are tokenized correctly</li>
+                <li>All operators and delimiters are recognized</li>
+                <li>Comments are properly ignored</li>
+                <li>No lexical errors are reported</li>
+            </ul>
+        </div>
+
+        <div class="phase-card">
+            <h4><span class="step-number">2</span>Syntax Analysis (Parsing)</h4>
+            <p><strong>What happens:</strong> The parser reads tokens and builds a parse tree according to the C-Minus grammar rules.</p>
+
+            <p><strong>What to capture:</strong></p>
+            <ul>
+                <li>Parse tree structure (if outputted)</li>
+                <li>Syntax error messages (if any)</li>
+                <li>Success/failure of parsing</li>
+            </ul>
+
+            <p><strong>Verification checklist:</strong></p>
+            <ul class="checklist">
+                <li>Parser successfully completes without syntax errors</li>
+                <li>All function declarations are recognized</li>
+                <li>All statements are correctly parsed</li>
+                <li>Expression precedence is handled correctly (e.g., * before +)</li>
+                <li>Nested structures (function calls, if-statements) are properly parsed</li>
+            </ul>
+        </div>
+
+        <div class="phase-card">
+            <h4><span class="step-number">3</span>Abstract Syntax Tree (AST) Construction</h4>
+            <p><strong>What happens:</strong> The AST is built from the parse tree, representing the program's semantic structure.</p>
+
+            <p><strong>How to verify AST:</strong> Add debug print statements in your AST generation code to output the tree structure.</p>
+
+            <div class="tip-box">
+                <h4>💡 AST Verification Tips</h4>
+                <ul>
+                    <li><strong>Node Types:</strong> Verify each node has the correct type (NODE_BINOP, NODE_VAR, NODE_DECL, etc.)</li>
+                    <li><strong>Tree Structure:</strong> Check parent-child relationships are correct</li>
+                    <li><strong>Operator Precedence:</strong> Ensure multiplication/division are child nodes of addition/subtraction</li>
+                    <li><strong>Function Calls:</strong> Verify function call nodes contain correct function name and argument list</li>
+                    <li><strong>Expression Nesting:</strong> Complex expressions should form proper sub-trees</li>
+                </ul>
+            </div>
+
+            <p><strong>Example AST structure for: <code>x = a + b * c;</code></strong></p>
+            <pre><code>NODE_ASSIGN
+├── NODE_VAR (x)
+└── NODE_BINOP (+)
+    ├── NODE_VAR (a)
+    └── NODE_BINOP (*)
+        ├── NODE_VAR (b)
+        └── NODE_VAR (c)</code></pre>
+
+            <p><strong>Verification checklist:</strong></p>
+            <ul class="checklist">
+                <li>AST correctly represents program structure</li>
+                <li>All declarations appear in correct order</li>
+                <li>Function bodies contain correct statement sequences</li>
+                <li>Expressions are properly nested with correct precedence</li>
+                <li>Array accesses are represented correctly</li>
+                <li>If-statements (Test 2) have condition and then/else branches</li>
+            </ul>
+        </div>
+
+        <div class="phase-card">
+            <h4><span class="step-number">4</span>Semantic Analysis and Symbol Table</h4>
+            <p><strong>What happens:</strong> The compiler performs semantic checks and builds a symbol table tracking variables and functions.</p>
+
+            <p><strong>What to capture:</strong></p>
+            <ul>
+                <li>Symbol table contents (variable names, types, scopes, offsets)</li>
+                <li>Semantic error messages (undefined variables, type mismatches, etc.)</li>
+            </ul>
+
+            <p><strong>Verification checklist:</strong></p>
+            <ul class="checklist">
+                <li>All variables are declared before use</li>
+                <li>No duplicate variable declarations in same scope</li>
+                <li>Function calls reference declared functions</li>
+                <li>Function call argument counts match parameter counts</li>
+                <li>Array indices are properly handled</li>
+                <li>Return types match function declarations</li>
+            </ul>
+        </div>
+
+        <div class="phase-card">
+            <h4><span class="step-number">5</span>Three-Address Code (TAC) Generation</h4>
+            <p><strong>What happens:</strong> The AST is translated into TAC, a simplified intermediate representation.</p>
+
+            <p><strong>How to output TAC:</strong> Your compiler should have a function to print TAC instructions (e.g., <code>printTAC()</code>).</p>
+
+            <p><strong>Example TAC output:</strong></p>
+            <pre><code>1: DECL x
+2: DECL y
+3: DECL sum
+4: x = 10
+5: y = 20
+6: t0 = x + y
+7: sum = t0
+8: PRINT sum</code></pre>
+
+            <div class="tip-box">
+                <h4>💡 TAC Verification Tips</h4>
+                <ul>
+                    <li><strong>Three-operand form:</strong> Each instruction should have at most 3 addresses (result, arg1, arg2)</li>
+                    <li><strong>Temporary variables:</strong> Complex expressions should generate temporaries (t0, t1, etc.)</li>
+                    <li><strong>Instruction sequencing:</strong> TAC instructions should be in correct execution order</li>
+                    <li><strong>Function calls:</strong> Verify PARAM, CALL, and return value retrieval instructions</li>
+                    <li><strong>Control flow (Test 2):</strong> Check LABEL, IF, GOTO instructions for if-statements</li>
+                    <li><strong>Array access:</strong> Verify offset calculations for array operations</li>
+                </ul>
+            </div>
+
+            <p><strong>Verification checklist:</strong></p>
+            <ul class="checklist">
+                <li>All declarations appear before their use</li>
+                <li>Temporary variables are used for intermediate results</li>
+                <li>Complex expressions are broken down into simple operations</li>
+                <li>Function calls include proper PARAM and CALL instructions</li>
+                <li>Labels and jumps (Test 2) are correctly generated</li>
+                <li>No undefined variables in TAC</li>
+            </ul>
+        </div>
+
+        <div class="phase-card">
+            <h4><span class="step-number">6</span>TAC Optimization</h4>
+            <p><strong>What happens:</strong> Optimization passes improve the TAC by eliminating redundancies.</p>
+
+            <p><strong>Optimization techniques to verify:</strong></p>
+            <table>
+                <tr>
+                    <th>Optimization</th>
+                    <th>Example</th>
+                </tr>
+                <tr>
+                    <td><strong>Constant Folding</strong></td>
+                    <td>
+                        Before: <code>t0 = 10 + 20</code><br>
+                        After: <code>t0 = 30</code>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Copy Propagation</strong></td>
+                    <td>
+                        Before: <code>x = 5; y = x;</code><br>
+                        After: <code>x = 5; y = 5;</code>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Dead Code Elimination</strong></td>
+                    <td>
+                        Before: <code>t0 = x + y; t0 = 10;</code><br>
+                        After: <code>t0 = 10;</code>
+                    </td>
+                </tr>
+            </table>
+
+            <div class="tip-box">
+                <h4>💡 Optimization Verification Tips</h4>
+                <ul>
+                    <li><strong>Compare before/after:</strong> Print TAC before and after optimization</li>
+                    <li><strong>Count instructions:</strong> Optimized TAC should have fewer or equal instructions</li>
+                    <li><strong>Verify correctness:</strong> Optimization must not change program semantics</li>
+                    <li><strong>Check edge cases:</strong> Ensure optimization doesn't break function calls or control flow</li>
+                </ul>
+            </div>
+
+            <p><strong>Verification checklist:</strong></p>
+            <ul class="checklist">
+                <li>Constant expressions are evaluated at compile-time</li>
+                <li>Redundant temporary variables are eliminated</li>
+                <li>Unused instructions are removed</li>
+                <li>Optimized code produces same results as unoptimized code</li>
+                <li>Function calls and control flow remain correct</li>
+            </ul>
+        </div>
+
+        <div class="phase-card">
+            <h4><span class="step-number">7</span>MIPS Code Generation</h4>
+            <p><strong>What happens:</strong> TAC is translated into MIPS assembly code.</p>
+
+            <p><strong>How to test:</strong> Compile and run the MIPS code using MARS or SPIM simulator.</p>
+
+            <div class="command-box">
+                <span class="prompt">$</span> ./minicompiler test_functions_only.cm output.s<br>
+                <span class="prompt">$</span> java -jar Mars.jar output.s
+            </div>
+
+            <p><strong>Example MIPS output:</strong></p>
+            <pre><code>.data
+.text
+.globl main
+main:
+    addi $sp, $sp, -400      # Allocate stack
+    li $t0, 10               # x = 10
+    sw $t0, 0($sp)           # Store x
+    li $t0, 20               # y = 20
+    sw $t0, 4($sp)           # Store y
+    lw $t0, 0($sp)           # Load x
+    lw $t1, 4($sp)           # Load y
+    add $t0, $t0, $t1        # x + y
+    sw $t0, 8($sp)           # Store sum
+    lw $t0, 8($sp)           # Load sum
+    move $a0, $t0            # Prepare for print
+    li $v0, 1                # Print integer syscall
+    syscall
+    addi $sp, $sp, 400       # Deallocate stack
+    li $v0, 10               # Exit
+    syscall</code></pre>
+
+            <div class="tip-box">
+                <h4>💡 Code Generation Verification Tips</h4>
+                <ul>
+                    <li><strong>Stack management:</strong> Verify stack pointer is correctly adjusted</li>
+                    <li><strong>Variable offsets:</strong> Each variable should have unique, correct offset</li>
+                    <li><strong>Register usage:</strong> Check temporary registers ($t0-$t9) are used properly</li>
+                    <li><strong>Function calls:</strong> Verify $ra (return address) is saved/restored</li>
+                    <li><strong>System calls:</strong> Check correct syscall codes for I/O operations</li>
+                    <li><strong>Labels and jumps:</strong> Verify control flow uses correct labels</li>
+                </ul>
+            </div>
+
+            <p><strong>Verification checklist:</strong></p>
+            <ul class="checklist">
+                <li>MIPS code assembles without errors in MARS/SPIM</li>
+                <li>Stack is properly allocated and deallocated</li>
+                <li>All variables have correct stack offsets</li>
+                <li>Arithmetic operations produce correct results</li>
+                <li>Function calls work correctly (proper saving/restoring of registers)</li>
+                <li>Input/output operations function as expected</li>
+                <li>Program terminates properly with exit syscall</li>
+            </ul>
+        </div>
+
+        <!-- Section 3: Performance Analysis -->
+        <h2>3. Performance Analysis and Metrics</h2>
+
+        <p>Performance analysis helps you understand your compiler's efficiency and identify bottlenecks.
+        You must measure and report performance metrics for your compiler.</p>
+
+        <h3>Metrics to Measure</h3>
+
+        <table class="metric-table">
+            <tr>
+                <th>Metric</th>
+                <th>Description</th>
+                <th>How to Measure</th>
+            </tr>
+            <tr>
+                <td><strong>Compilation Time</strong></td>
+                <td>Total time to compile source to MIPS</td>
+                <td>Use <code>time</code> command: <code>time ./minicompiler test.cm out.s</code></td>
+            </tr>
+            <tr>
+                <td><strong>Phase Breakdown</strong></td>
+                <td>Time spent in each compiler phase</td>
+                <td>Add timing code to each phase using <code>clock()</code> or <code>gettimeofday()</code></td>
+            </tr>
+            <tr>
+                <td><strong>TAC Instructions</strong></td>
+                <td>Number of TAC instructions generated</td>
+                <td>Count instructions before and after optimization</td>
+            </tr>
+            <tr>
+                <td><strong>Optimization Effectiveness</strong></td>
+                <td>Percentage reduction in TAC instructions</td>
+                <td>Calculate: <code>(original - optimized) / original * 100</code></td>
+            </tr>
+            <tr>
+                <td><strong>MIPS Instructions</strong></td>
+                <td>Number of assembly instructions generated</td>
+                <td>Count lines in output .s file (excluding comments/labels)</td>
+            </tr>
+            <tr>
+                <td><strong>Symbol Table Size</strong></td>
+                <td>Number of symbols stored</td>
+                <td>Report symbol count from symbol table</td>
+            </tr>
+            <tr>
+                <td><strong>Memory Usage</strong></td>
+                <td>Peak memory consumption during compilation</td>
+                <td>Use <code>/usr/bin/time -v</code> (Linux) or Activity Monitor (macOS)</td>
+            </tr>
+        </table>
+
+        <h3>Implementing Performance Measurement</h3>
+
+        <p>Add timing code to your compiler's main function:</p>
+
+        <pre><code>#include &lt;time.h&gt;
+
+int main(int argc, char** argv) {
+    clock_t start_total, end_total;
+    clock_t start_phase, end_phase;
+    double time_lex, time_parse, time_tac, time_opt, time_codegen;
+
+    start_total = clock();
+
+    // Lexical Analysis
+    start_phase = clock();
+    yyparse();
+    end_phase = clock();
+    time_lex = ((double)(end_phase - start_phase)) / CLOCKS_PER_SEC;
+
+    // TAC Generation
+    start_phase = clock();
+    TACInstr* tac = generateTAC(root);
+    end_phase = clock();
+    time_tac = ((double)(end_phase - start_phase)) / CLOCKS_PER_SEC;
+
+    // Optimization
+    int tac_count_before = countTAC(tac);
+    start_phase = clock();
+    tac = optimizeTAC(tac);
+    end_phase = clock();
+    time_opt = ((double)(end_phase - start_phase)) / CLOCKS_PER_SEC;
+    int tac_count_after = countTAC(tac);
+
+    // Code Generation
+    start_phase = clock();
+    generateMIPS(tac);
+    end_phase = clock();
+    time_codegen = ((double)(end_phase - start_phase)) / CLOCKS_PER_SEC;
+
+    end_total = clock();
+    double time_total = ((double)(end_total - start_total)) / CLOCKS_PER_SEC;
+
+    // Print performance report
+    printf("\n=== COMPILER PERFORMANCE REPORT ===\n");
+    printf("Total compilation time: %.4f seconds\n", time_total);
+    printf("Lexical analysis: %.4f seconds\n", time_lex);
+    printf("TAC generation: %.4f seconds\n", time_tac);
+    printf("Optimization: %.4f seconds\n", time_opt);
+    printf("Code generation: %.4f seconds\n", time_codegen);
+    printf("TAC instructions (before opt): %d\n", tac_count_before);
+    printf("TAC instructions (after opt): %d\n", tac_count_after);
+    printf("Optimization reduction: %.2f%%\n",
+           (tac_count_before - tac_count_after) * 100.0 / tac_count_before);
+
+    return 0;
+}</code></pre>
+
+        <h3>Performance Benchmarking</h3>
+
+        <p>Create a performance comparison table for both test files:</p>
+
+        <table class="metric-table">
+            <tr>
+                <th>Metric</th>
+                <th>Test File 1</th>
+                <th>Test File 2</th>
+                <th>Notes</th>
+            </tr>
+            <tr>
+                <td>Total Time (sec)</td>
+                <td>_________</td>
+                <td>_________</td>
+                <td>Should be < 1 second for small files</td>
+            </tr>
+            <tr>
+                <td>TAC Instructions (before)</td>
+                <td>_________</td>
+                <td>_________</td>
+                <td>Test 2 should have more due to if-statements</td>
+            </tr>
+            <tr>
+                <td>TAC Instructions (after)</td>
+                <td>_________</td>
+                <td>_________</td>
+                <td>Should be reduced after optimization</td>
+            </tr>
+            <tr>
+                <td>Optimization Rate (%)</td>
+                <td>_________</td>
+                <td>_________</td>
+                <td>Typical: 10-30%</td>
+            </tr>
+            <tr>
+                <td>MIPS Instructions</td>
+                <td>_________</td>
+                <td>_________</td>
+                <td>Count non-comment lines in .s file</td>
+            </tr>
+            <tr>
+                <td>Symbol Table Size</td>
+                <td>_________</td>
+                <td>_________</td>
+                <td>Number of unique symbols</td>
+            </tr>
+        </table>
+
+        <div class="warning-box">
+            <h4>⚠ Performance Red Flags</h4>
+            <ul>
+                <li><strong>Compilation takes > 5 seconds:</strong> Possible inefficiency in symbol table lookup or AST traversal</li>
+                <li><strong>Optimization increases instruction count:</strong> Bug in optimization logic</li>
+                <li><strong>Memory usage > 100MB:</strong> Possible memory leak</li>
+                <li><strong>Optimization rate = 0%:</strong> Optimization not working or no optimizable patterns found</li>
+            </ul>
+        </div>
+
+        <!-- Section 4: Comprehensive Testing Checklist -->
+        <h2>4. Comprehensive Testing and Debugging Checklist</h2>
+
+        <h3>Pre-Compilation Checks</h3>
+        <ul class="checklist">
+            <li>All source files compile without warnings</li>
+            <li>Makefile builds successfully</li>
+            <li>No memory leaks detected (run with valgrind if available)</li>
+            <li>All required functions are implemented</li>
+        </ul>
+
+        <h3>Test Execution</h3>
+        <ol>
+            <li><strong>Compile Test File 1:</strong>
+                <div class="command-box">
+                    <span class="prompt">$</span> ./minicompiler test_functions_only.cm test1_output.s > test1_log.txt 2>&1
+                </div>
+            </li>
+            <li><strong>Review compilation output:</strong> Check test1_log.txt for errors or warnings</li>
+            <li><strong>Inspect TAC output:</strong> Verify TAC is correct and optimized</li>
+            <li><strong>Test MIPS code:</strong>
+                <div class="command-box">
+                    <span class="prompt">$</span> java -jar Mars.jar test1_output.s < input.txt > test1_result.txt
+                </div>
+            </li>
+            <li><strong>Verify output:</strong> Compare actual output with expected output</li>
+            <li><strong>Repeat for Test File 2:</strong>
+                <div class="command-box">
+                    <span class="prompt">$</span> ./minicompiler test_with_if_statements.cm test2_output.s > test2_log.txt 2>&1
+                </div>
+            </li>
+        </ol>
+
+        <h3>Common Debugging Scenarios</h3>
+
+        <table>
+            <tr>
+                <th>Problem</th>
+                <th>Possible Cause</th>
+                <th>Debugging Strategy</th>
+            </tr>
+            <tr>
+                <td>Segmentation fault during compilation</td>
+                <td>Null pointer dereference in AST or TAC generation</td>
+                <td>Run with gdb, check pointer validity before dereferencing</td>
+            </tr>
+            <tr>
+                <td>Parser errors on valid code</td>
+                <td>Grammar rule issue in parser.y</td>
+                <td>Check grammar rules, verify operator precedence</td>
+            </tr>
+            <tr>
+                <td>Undefined variable error</td>
+                <td>Symbol table lookup failure</td>
+                <td>Print symbol table contents, verify insertion/lookup logic</td>
+            </tr>
+            <tr>
+                <td>Incorrect MIPS output</td>
+                <td>Wrong stack offsets or register usage</td>
+                <td>Print variable offsets, trace register allocations</td>
+            </tr>
+            <tr>
+                <td>Optimization breaks program</td>
+                <td>Incorrect transformation logic</td>
+                <td>Compare TAC before/after optimization, disable optimization to isolate issue</td>
+            </tr>
+            <tr>
+                <td>Function calls fail in MIPS</td>
+                <td>Register $ra not saved/restored properly</td>
+                <td>Verify function prologue/epilogue code</td>
+            </tr>
+        </table>
+
+        <!-- Section 5: Scope Management and Type System Audit -->
+        <h2>5. Scope Management and Type System Audit</h2>
+
+        <p>
+            Critical compiler components like scope management, type checking, and type coercion require thorough auditing.
+            This section guides you through a systematic review of these essential features.
+        </p>
+
+        <h3>Scope Management Audit</h3>
+
+        <p><strong>What is scope management?</strong> Scope determines where variables and functions are visible and accessible in the program.</p>
+
+        <h4>Audit Questions</h4>
+        <ol>
+            <li><strong>Does your compiler support global and local scopes?</strong>
+                <ul>
+                    <li>Global scope: functions and global variables</li>
+                    <li>Local scope: function parameters and local variables</li>
+                </ul>
+            </li>
+            <li><strong>Can you handle nested scopes?</strong>
+                <ul>
+                    <li>Compound statements create new scopes</li>
+                    <li>If-statement blocks may have separate scopes</li>
+                </ul>
+            </li>
+            <li><strong>Is variable shadowing handled correctly?</strong>
+                <ul>
+                    <li>Local variable can shadow global variable with same name</li>
+                    <li>Inner scope can shadow outer scope</li>
+                </ul>
+            </li>
+        </ol>
+
+        <h4>Testing Scope Management</h4>
+
+        <p>Create a test case:</p>
+        <pre><code>int x;  /* Global x */
+
+int foo(int x) {  /* Parameter x shadows global x */
+    int y;
+    y = x + 1;  /* Should use parameter x, not global x */
+    return y;
+}
+
+void main(void) {
+    int x;  /* Local x shadows global x */
+    x = 10;
+    output(foo(x));  /* Should pass local x to foo */
+}</code></pre>
+
+        <div class="tip-box">
+            <h4>💡 Scope Audit Tips</h4>
+            <ul>
+                <li><strong>Symbol table structure:</strong> Use a stack of hash tables, one per scope level</li>
+                <li><strong>Scope entry/exit:</strong> Push new table when entering scope, pop when exiting</li>
+                <li><strong>Lookup order:</strong> Search from innermost scope to outermost</li>
+                <li><strong>Debug output:</strong> Print symbol table with scope levels for each variable</li>
+                <li><strong>Test thoroughly:</strong> Create test cases with same variable names in different scopes</li>
+            </ul>
+        </div>
+
+        <h3>Type System Audit</h3>
+
+        <p>C-Minus is a simply-typed language with <code>int</code> and <code>void</code> types. Your compiler must enforce type rules.</p>
+
+        <h4>Type Checking Audit Questions</h4>
+        <ol>
+            <li><strong>Are all variables typed correctly?</strong>
+                <ul>
+                    <li>Variables declared with proper types</li>
+                    <li>Types stored in symbol table</li>
+                </ul>
+            </li>
+            <li><strong>Are function return types checked?</strong>
+                <ul>
+                    <li><code>void</code> functions should not return values</li>
+                    <li><code>int</code> functions must return int expressions</li>
+                </ul>
+            </li>
+            <li><strong>Are function argument types checked?</strong>
+                <ul>
+                    <li>Function calls must match parameter types</li>
+                    <li>Array parameters correctly identified</li>
+                </ul>
+            </li>
+            <li><strong>Are operator type rules enforced?</strong>
+                <ul>
+                    <li>Arithmetic operators require int operands</li>
+                    <li>Relational operators produce boolean-like results</li>
+                </ul>
+            </li>
+        </ol>
+
+        <h4>Testing Type Checking</h4>
+
+        <p>Test cases to verify type checking (these should produce errors):</p>
+        <pre><code>/* Test 1: void function returning value */
+void foo(void) {
+    return 5;  /* ERROR: void function cannot return value */
+}
+
+/* Test 2: int function not returning value */
+int bar(void) {
+    int x;
+    x = 10;
+    /* ERROR: missing return statement */
+}
+
+/* Test 3: Type mismatch in assignment */
+int x;
+x = foo();  /* ERROR: cannot assign void to int */
+
+/* Test 4: Wrong argument count */
+int add(int a, int b) {
+    return a + b;
+}
+
+void main(void) {
+    output(add(5));  /* ERROR: missing second argument */
+}</code></pre>
+
+        <h3>Type Casting and Coercion Audit</h3>
+
+        <p>
+            <strong>Note:</strong> C-Minus does not support explicit type casting (no float, double, or type casts).
+            However, you should be aware of implicit conversions.
+        </p>
+
+        <h4>Audit Questions</h4>
+        <ol>
+            <li><strong>Are all integer operations handled consistently?</strong>
+                <ul>
+                    <li>Division produces integer result (truncation)</li>
+                    <li>No overflow checking required (but good to be aware)</li>
+                </ul>
+            </li>
+            <li><strong>Are boolean conditions handled properly?</strong>
+                <ul>
+                    <li>Relational operators (==, <, >, etc.) produce 0 or 1</li>
+                    <li>If-conditions treat non-zero as true, zero as false</li>
+                </ul>
+            </li>
+        </ol>
+
+        <h3>Memory Management Audit</h3>
+
+        <h4>Audit Questions</h4>
+        <ol>
+            <li><strong>Are all dynamically allocated structures freed?</strong>
+                <ul>
+                    <li>AST nodes</li>
+                    <li>TAC instructions</li>
+                    <li>Symbol table entries</li>
+                </ul>
+            </li>
+            <li><strong>Are there any memory leaks?</strong>
+                <ul>
+                    <li>Run with valgrind (Linux) or Instruments (macOS)</li>
+                    <li>Check for "still reachable" or "definitely lost" memory</li>
+                </ul>
+            </li>
+            <li><strong>Are string copies managed correctly?</strong>
+                <ul>
+                    <li>Use <code>strdup()</code> for copying strings</li>
+                    <li>Free duplicated strings when done</li>
+                </ul>
+            </li>
+        </ol>
+
+        <div class="command-box">
+            <span class="prompt">$</span> valgrind --leak-check=full ./minicompiler test.cm output.s
+        </div>
+
+        <h3>Conducting a Systematic Audit</h3>
+
+        <p>Follow this structured approach to audit your compiler:</p>
+
+        <div class="phase-card">
+            <h4>Step 1: Code Review</h4>
+            <ul>
+                <li>Review symbol table implementation line-by-line</li>
+                <li>Check for proper scope handling in lookup and insert functions</li>
+                <li>Verify type information is stored and retrieved correctly</li>
+                <li>Look for edge cases that might not be handled</li>
+            </ul>
+        </div>
+
+        <div class="phase-card">
+            <h4>Step 2: Create Targeted Test Cases</h4>
+            <ul>
+                <li>Write small test programs that specifically test scope rules</li>
+                <li>Create tests with deliberate type errors</li>
+                <li>Test boundary conditions (max variables, deep nesting)</li>
+            </ul>
+        </div>
+
+        <div class="phase-card">
+            <h4>Step 3: Trace Execution</h4>
+            <ul>
+                <li>Add debug prints showing scope entry/exit</li>
+                <li>Print symbol table contents at each scope level</li>
+                <li>Show type checking decisions</li>
+                <li>Trace variable lookups and show which scope was used</li>
+            </ul>
+        </div>
+
+        <div class="phase-card">
+            <h4>Step 4: Stress Testing</h4>
+            <ul>
+                <li>Test with maximum nesting depth</li>
+                <li>Test with many variables in same scope</li>
+                <li>Test with recursive functions</li>
+                <li>Test with large array sizes</li>
+            </ul>
+        </div>
+
+        <div class="success-box">
+            <h4>✓ Audit Success Criteria</h4>
+            <ul>
+                <li>All scope test cases pass correctly</li>
+                <li>Type errors are caught and reported with clear messages</li>
+                <li>No segmentation faults or crashes during compilation</li>
+                <li>Symbol table correctly reflects program structure</li>
+                <li>Memory leaks are zero or minimal</li>
+            </ul>
+        </div>
+
+        <!-- Section 6: Expected Deliverables -->
+        <h2>6. Expected Deliverables</h2>
+
+        <p>
+            Submit the following materials as evidence of thorough testing and verification of your compiler implementation.
+        </p>
+
+        <div class="deliverable-list">
+            <h3>Required Deliverables</h3>
+
+            <ol>
+                <li><strong>Compiler Source Code</strong>
+                    <ul>
+                        <li>All .c, .h, .l, .y files</li>
+                        <li>Makefile</li>
+                        <li>README with build instructions</li>
+                    </ul>
+                </li>
+
+                <li><strong>Test File Compilation Outputs</strong>
+                    <ul>
+                        <li><code>test1_output.s</code> - MIPS assembly for test_functions_only.cm</li>
+                        <li><code>test2_output.s</code> - MIPS assembly for test_with_if_statements.cm</li>
+                        <li>Compilation logs showing all phases (test1_log.txt, test2_log.txt)</li>
+                    </ul>
+                </li>
+
+                <li><strong>Phase Output Documentation</strong>
+                    <ul>
+                        <li>AST structure printout for both test files</li>
+                        <li>Symbol table contents for both test files</li>
+                        <li>TAC output (before optimization) for both test files</li>
+                        <li>TAC output (after optimization) for both test files</li>
+                        <li>Highlighted differences showing optimization effects</li>
+                    </ul>
+                </li>
+
+                <li><strong>MIPS Execution Results</strong>
+                    <ul>
+                        <li>Console output from running both test files in MARS/SPIM</li>
+                        <li>Screenshots of MARS showing successful execution</li>
+                        <li>Test input files used (if applicable)</li>
+                        <li>Expected vs. actual output comparison</li>
+                    </ul>
+                </li>
+
+                <li><strong>Performance Report</strong>
+                    <ul>
+                        <li>Completed performance metrics table (as shown in Section 3)</li>
+                        <li>Timing measurements for each compiler phase</li>
+                        <li>TAC instruction count before/after optimization</li>
+                        <li>Optimization effectiveness percentage</li>
+                        <li>MIPS instruction count for both test files</li>
+                        <li>Memory usage statistics</li>
+                    </ul>
+                </li>
+
+                <li><strong>Testing and Verification Report</strong>
+                    <ul>
+                        <li>Completed verification checklists for all phases</li>
+                        <li>Description of any issues found and how they were resolved</li>
+                        <li>Test cases created to verify specific features</li>
+                        <li>Screenshots or output showing successful test execution</li>
+                    </ul>
+                </li>
+
+                <li><strong>Scope and Type System Audit Report</strong>
+                    <ul>
+                        <li>Answers to all audit questions in Section 5</li>
+                        <li>Description of scope management implementation</li>
+                        <li>Type checking implementation details</li>
+                        <li>Test cases demonstrating proper scope handling</li>
+                        <li>Test cases demonstrating type checking</li>
+                        <li>Valgrind output showing memory leak analysis</li>
+                    </ul>
+                </li>
+
+                <li><strong>Debug and Trace Outputs (Optional but Recommended)</strong>
+                    <ul>
+                        <li>Debug output showing AST traversal</li>
+                        <li>Symbol table state at different program points</li>
+                        <li>TAC generation trace</li>
+                        <li>Optimization transformation log</li>
+                    </ul>
+                </li>
+
+                <li><strong>Known Issues and Limitations Document</strong>
+                    <ul>
+                        <li>List of known bugs or limitations</li>
+                        <li>Features not yet implemented (if any)</li>
+                        <li>Edge cases that may not be handled</li>
+                        <li>Plans for future improvements</li>
+                    </ul>
+                </li>
+
+                <li><strong>Reflection and Analysis</strong>
+                    <ul>
+                        <li>Most challenging aspects of implementation</li>
+                        <li>Key insights gained during testing</li>
+                        <li>Comparison of expected vs. actual performance</li>
+                        <li>Lessons learned</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+
+        <h3>Submission Format</h3>
+
+        <p>Organize your deliverables in the following directory structure:</p>
+
+        <pre><code>compiler_submission/
+├── src/
+│   ├── scanner.l
+│   ├── parser.y
+│   ├── ast.c / ast.h
+│   ├── symtab.c / symtab.h
+│   ├── tac.c / tac.h
+│   ├── codegen.c / codegen.h
+│   ├── main.c
+│   └── Makefile
+├── tests/
+│   ├── test_functions_only.cm
+│   ├── test_with_if_statements.cm
+│   ├── test1_output.s
+│   ├── test2_output.s
+│   ├── test1_log.txt
+│   └── test2_log.txt
+├── outputs/
+│   ├── ast_output_test1.txt
+│   ├── ast_output_test2.txt
+│   ├── symbol_table_test1.txt
+│   ├── symbol_table_test2.txt
+│   ├── tac_before_opt_test1.txt
+│   ├── tac_before_opt_test2.txt
+│   ├── tac_after_opt_test1.txt
+│   └── tac_after_opt_test2.txt
+├── mips_results/
+│   ├── test1_execution_output.txt
+│   ├── test2_execution_output.txt
+│   └── mars_screenshots/
+├── reports/
+│   ├── performance_report.pdf
+│   ├── testing_verification_report.pdf
+│   ├── scope_type_audit_report.pdf
+│   └── known_issues.pdf
+├── README.md
+└── BUILD_AND_RUN_INSTRUCTIONS.txt</code></pre>
+
+        <div class="tip-box">
+            <h4>💡 Documentation Tips</h4>
+            <ul>
+                <li><strong>Be thorough:</strong> Document everything you did, even if it seems obvious</li>
+                <li><strong>Use screenshots:</strong> Visual evidence is powerful</li>
+                <li><strong>Explain failures:</strong> If something didn't work, explain what you tried</li>
+                <li><strong>Show process:</strong> Include intermediate steps, not just final results</li>
+                <li><strong>Be honest:</strong> If features are incomplete, clearly state what's missing</li>
+            </ul>
+        </div>
+
+        <!-- Section 7: Additional Resources -->
+        <h2>7. Additional Resources and Tips</h2>
+
+        <h3>Debugging Tools and Techniques</h3>
+
+        <table>
+            <tr>
+                <th>Tool</th>
+                <th>Purpose</th>
+                <th>Usage Example</th>
+            </tr>
+            <tr>
+                <td><strong>GDB</strong></td>
+                <td>Interactive debugger</td>
+                <td><code>gdb ./minicompiler</code><br><code>(gdb) run test.cm out.s</code></td>
+            </tr>
+            <tr>
+                <td><strong>Valgrind</strong></td>
+                <td>Memory leak detection</td>
+                <td><code>valgrind --leak-check=full ./minicompiler test.cm out.s</code></td>
+            </tr>
+            <tr>
+                <td><strong>MARS</strong></td>
+                <td>MIPS simulator</td>
+                <td><code>java -jar Mars.jar output.s</code></td>
+            </tr>
+            <tr>
+                <td><strong>diff</strong></td>
+                <td>Compare outputs</td>
+                <td><code>diff expected_output.txt actual_output.txt</code></td>
+            </tr>
+        </table>
+
+        <h3>Common Pitfalls to Avoid</h3>
+
+        <ul>
+            <li><strong>Not freeing memory:</strong> Always free dynamically allocated nodes/instructions</li>
+            <li><strong>Incorrect operator precedence:</strong> Multiplication must be evaluated before addition</li>
+            <li><strong>Stack offset errors:</strong> Each variable needs unique offset, calculated correctly</li>
+            <li><strong>Not saving $ra:</strong> Function calls must save/restore return address register</li>
+            <li><strong>Ignoring semantic checks:</strong> Type checking and scope validation are critical</li>
+            <li><strong>Over-optimizing:</strong> Optimization should never change program behavior</li>
+            <li><strong>Hardcoding values:</strong> Use symbol table for variable offsets, not hardcoded values</li>
+        </ul>
+
+        <h3>Best Practices for Testing</h3>
+
+        <ol>
+            <li><strong>Test incrementally:</strong> Test each phase before moving to the next</li>
+            <li><strong>Start simple:</strong> Begin with basic test cases, then increase complexity</li>
+            <li><strong>Use version control:</strong> Commit working code before making changes</li>
+            <li><strong>Document as you go:</strong> Don't wait until the end to write reports</li>
+            <li><strong>Compare with reference:</strong> If available, compare your output with reference implementation</li>
+            <li><strong>Test edge cases:</strong> Empty programs, single statements, deeply nested structures</li>
+            <li><strong>Automate testing:</strong> Create shell scripts to run multiple tests automatically</li>
+        </ol>
+
+        <h3>Getting Help</h3>
+
+        <p>If you encounter issues:</p>
+        <ul>
+            <li>Review course lecture notes and textbook</li>
+            <li>Check compiler error messages carefully</li>
+            <li>Use debugging tools to isolate the problem</li>
+            <li>Test with simpler input to narrow down the issue</li>
+            <li>Consult with classmates (without sharing code)</li>
+            <li>Attend office hours with specific questions and error outputs</li>
+        </ul>
+
+        <!-- Conclusion -->
+        <h2>Conclusion</h2>
+
+        <div class="success-box">
+            <h3>🎯 Testing Goals</h3>
+            <p>By completing this comprehensive testing guide, you will:</p>
+            <ul>
+                <li>Verify the correctness of every compiler phase</li>
+                <li>Understand how your compiler transforms code from source to assembly</li>
+                <li>Identify and fix bugs systematically</li>
+                <li>Measure and optimize compiler performance</li>
+                <li>Ensure proper handling of scope, types, and memory</li>
+                <li>Gain deep insight into compiler design and implementation</li>
+            </ul>
+            <p><strong>Thorough testing is the hallmark of a robust compiler. Take your time, be methodical, and document everything!</strong></p>
+        </div>
+
+        <div class="intro-box">
+            <h3>Final Checklist</h3>
+            <ul class="checklist">
+                <li>Both test files compile successfully</li>
+                <li>All compiler phases produce correct output</li>
+                <li>MIPS code executes correctly in simulator</li>
+                <li>Performance metrics are measured and documented</li>
+                <li>Scope and type system audits are complete</li>
+                <li>All deliverables are prepared and organized</li>
+                <li>Known issues are documented</li>
+                <li>Reports are complete and well-formatted</li>
+            </ul>
+        </div>
+
+        <p style="text-align: center; margin-top: 40px; color: #667eea; font-size: 1.2em; font-weight: bold;">
+            Good luck with your compiler testing!
+        </p>
+
+    </div>
+</body>
+</html>
