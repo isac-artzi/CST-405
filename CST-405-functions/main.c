@@ -4,13 +4,38 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "ast.h"
+#include "semantic.h"
 #include "codegen.h"
 #include "tac.h"
 
 extern int yyparse();
 extern FILE* yyin;
 extern ASTNode* root;
+
+/* Helper function to generate TAC filenames from output filename */
+void getTACFilename(const char* outputFile, char* tacFile, char* optimizedTacFile) {
+    // Find the last dot in the filename
+    const char* dot = strrchr(outputFile, '.');
+    const char* slash = strrchr(outputFile, '/');
+
+    if (dot && (!slash || dot > slash)) {
+        // Copy everything before the extension
+        int baseLen = dot - outputFile;
+        strncpy(tacFile, outputFile, baseLen);
+        tacFile[baseLen] = '\0';
+        strcat(tacFile, ".tac");
+
+        strncpy(optimizedTacFile, outputFile, baseLen);
+        optimizedTacFile[baseLen] = '\0';
+        strcat(optimizedTacFile, ".optimized.tac");
+    } else {
+        // No extension found, just append
+        sprintf(tacFile, "%s.tac", outputFile);
+        sprintf(optimizedTacFile, "%s.optimized.tac", outputFile);
+    }
+}
 
 int main(int argc, char* argv[]) {
     if (argc != 3) {
@@ -52,10 +77,29 @@ int main(int argc, char* argv[]) {
         printf("└──────────────────────────────────────────────────────────┘\n");
         printAST(root, 0);
         printf("\n");
-        
-        /* PHASE 3: Intermediate Code */
+
+        /* PHASE 3: Semantic Analysis */
         printf("┌──────────────────────────────────────────────────────────┐\n");
-        printf("│ PHASE 3: INTERMEDIATE CODE GENERATION                    │\n");
+        printf("│ PHASE 3: SEMANTIC ANALYSIS                               │\n");
+        printf("├──────────────────────────────────────────────────────────┤\n");
+        printf("│ Checking program semantics:                              │\n");
+        printf("│ • Variable declarations and usage                        │\n");
+        printf("│ • Type compatibility                                     │\n");
+        printf("│ • Duplicate declarations                                 │\n");
+        printf("└──────────────────────────────────────────────────────────┘\n");
+        initSemantic();
+        int semResult = performSemanticAnalysis(root);
+        printSemanticSummary();
+
+        if (semResult != 0) {
+            printf("✗ Compilation failed due to semantic errors\n");
+            fclose(yyin);
+            return 1;
+        }
+
+        /* PHASE 4: Intermediate Code */
+        printf("┌──────────────────────────────────────────────────────────┐\n");
+        printf("│ PHASE 4: INTERMEDIATE CODE GENERATION                    │\n");
         printf("├──────────────────────────────────────────────────────────┤\n");
         printf("│ Three-Address Code (TAC) - simplified instructions:       │\n");
         printf("│ • Each instruction has at most 3 operands                │\n");
@@ -64,11 +108,16 @@ int main(int argc, char* argv[]) {
         initTAC();
         generateTAC(root);
         printTAC();
-        printf("\n");
-        
-        /* PHASE 4: Optimization */
+        printTempAllocatorState();
+
+        // Generate TAC filename and save to file
+        char tacFile[256], optimizedTacFile[256];
+        getTACFilename(argv[2], tacFile, optimizedTacFile);
+        saveTACToFile(tacFile);
+
+        /* PHASE 5: Optimization */
         printf("┌──────────────────────────────────────────────────────────┐\n");
-        printf("│ PHASE 4: CODE OPTIMIZATION                               │\n");
+        printf("│ PHASE 5: CODE OPTIMIZATION                               │\n");
         printf("├──────────────────────────────────────────────────────────┤\n");
         printf("│ Applying optimizations:                                  │\n");
         printf("│ • Constant folding (evaluate compile-time expressions)   │\n");
@@ -77,17 +126,21 @@ int main(int argc, char* argv[]) {
         optimizeTAC();
         printOptimizedTAC();
         printf("\n");
-        
-        /* PHASE 5: Code Generation */
+
+        // Save optimized TAC to file
+        saveOptimizedTACToFile(optimizedTacFile);
+
+        /* PHASE 6: Code Generation */
         printf("┌──────────────────────────────────────────────────────────┐\n");
-        printf("│ PHASE 5: MIPS CODE GENERATION                            │\n");
+        printf("│ PHASE 6: MIPS CODE GENERATION                            │\n");
         printf("├──────────────────────────────────────────────────────────┤\n");
-        printf("│ Translating to MIPS assembly:                            │\n");
+        printf("│ Translating OPTIMIZED TAC to MIPS assembly:              │\n");
+        printf("│ • Using optimized TAC (with constant folding)            │\n");
         printf("│ • Variables stored on stack                              │\n");
-        printf("│ • Using $t0-$t7 for temporary values                     │\n");
+        printf("│ • Register allocation with LRU spilling                  │\n");
         printf("│ • System calls for print operations                      │\n");
         printf("└──────────────────────────────────────────────────────────┘\n");
-        generateMIPS(root, argv[2]);
+        generateMIPSFromTAC(argv[2]);
         printf("✓ MIPS assembly code generated to: %s\n", argv[2]);
         printf("\n");
         

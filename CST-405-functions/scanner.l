@@ -1,7 +1,8 @@
 %{
-/* LEXICAL ANALYZER (SCANNER)
+/* LEXICAL ANALYZER (SCANNER) - WITH FUNCTION SUPPORT
  * This is the first phase of compilation - breaking input into tokens
  * Flex generates a scanner from these rules that reads character by character
+ * Now supports functions, control flow, and more operators
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,27 +12,51 @@
 /* Flex options to suppress warnings for unused functions */
 %option nounput
 %option noinput
+%option yylineno
 
 %%
 
 "int"           { return INT; }
 "print"         { return PRINT; }
+"return"        { return RETURN; }
+"if"            { return IF; }
+"else"          { return ELSE; }
+"while"         { return WHILE; }
 
-[a-zA-Z_][a-zA-Z0-9_]* { 
+[a-zA-Z_][a-zA-Z0-9_]* {
     yylval.str = strdup(yytext);
-    return ID; 
+    return ID;
 }
 
-[0-9]+          { 
+[0-9]+          {
     yylval.num = atoi(yytext);
-    return NUM; 
+    return NUM;
 }
+
+"<="            { return LE; }
+">="            { return GE; }
+"=="            { return EQ; }
+"!="            { return NE; }
 
 "+"             { return '+'; }
+"-"             { return '-'; }
+"*"             { return '*'; }
+"/"             { return '/'; }
+
+"<"             { return '<'; }
+">"             { return '>'; }
+
 "="             { return '='; }
+
 ";"             { return ';'; }
 "("             { return '('; }
 ")"             { return ')'; }
+"{"             { return '{'; }
+"}"             { return '}'; }
+","             { return ','; }
+
+"//".*          { /* Skip single-line comments */ }
+"/*"([^*]|\*+[^*/])*\*+"/"  { /* Skip multi-line comments */ }
 
 [ \t\n]         { }
 
@@ -39,7 +64,6 @@
 
 %%
 
-/* Required by Flex - signals end of input */
 int yywrap() {
-    return 1;  /* 1 means no more input files */
+    return 1;
 }
