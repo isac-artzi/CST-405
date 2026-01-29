@@ -7,10 +7,14 @@
 #include <string.h>
 #include "ast.h"
 
+/* External line number from scanner */
+extern int yylineno;
+
 /* Create a number literal node */
 ASTNode* createNum(int value) {
     ASTNode* node = malloc(sizeof(ASTNode));
     node->type = NODE_NUM;
+    node->lineno = yylineno;
     node->data.num = value;  /* Store the integer value */
     return node;
 }
@@ -19,6 +23,7 @@ ASTNode* createNum(int value) {
 ASTNode* createVar(char* name) {
     ASTNode* node = malloc(sizeof(ASTNode));
     node->type = NODE_VAR;
+    node->lineno = yylineno;
     node->data.name = strdup(name);  /* Copy the variable name */
     return node;
 }
@@ -27,6 +32,7 @@ ASTNode* createVar(char* name) {
 ASTNode* createBinOp(char op, ASTNode* left, ASTNode* right) {
     ASTNode* node = malloc(sizeof(ASTNode));
     node->type = NODE_BINOP;
+    node->lineno = yylineno;
     node->data.binop.op = op;        /* Store operator (+) */
     node->data.binop.left = left;    /* Left subtree */
     node->data.binop.right = right;  /* Right subtree */
@@ -37,6 +43,7 @@ ASTNode* createBinOp(char op, ASTNode* left, ASTNode* right) {
 ASTNode* createDecl(char* name) {
     ASTNode* node = malloc(sizeof(ASTNode));
     node->type = NODE_DECL;
+    node->lineno = yylineno;
     node->data.name = strdup(name);  /* Store variable name */
     return node;
 }
@@ -56,6 +63,7 @@ ASTNode* createDeclWithAssgn(char* name, int value) {
 ASTNode* createAssign(char* var, ASTNode* value) {
     ASTNode* node = malloc(sizeof(ASTNode));
     node->type = NODE_ASSIGN;
+    node->lineno = yylineno;
     node->data.assign.var = strdup(var);  /* Variable name */
     node->data.assign.value = value;      /* Expression tree */
     return node;
@@ -65,6 +73,7 @@ ASTNode* createAssign(char* var, ASTNode* value) {
 ASTNode* createPrint(ASTNode* expr) {
     ASTNode* node = malloc(sizeof(ASTNode));
     node->type = NODE_PRINT;
+    node->lineno = yylineno;
     node->data.expr = expr;  /* Expression to print */
     return node;
 }
@@ -73,6 +82,7 @@ ASTNode* createPrint(ASTNode* expr) {
 ASTNode* createStmtList(ASTNode* stmt1, ASTNode* stmt2) {
     ASTNode* node = malloc(sizeof(ASTNode));
     node->type = NODE_STMT_LIST;
+    node->lineno = stmt1 ? stmt1->lineno : (stmt2 ? stmt2->lineno : yylineno);
     node->data.stmtlist.stmt = stmt1;  /* First statement */
     node->data.stmtlist.next = stmt2;  /* Rest of list */
     return node;
@@ -82,6 +92,7 @@ ASTNode* createStmtList(ASTNode* stmt1, ASTNode* stmt2) {
 ASTNode* createFuncDef(char* name, ASTNode* params, ASTNode* body) {
     ASTNode* node = malloc(sizeof(ASTNode));
     node->type = NODE_FUNC_DEF;
+    node->lineno = yylineno;
     node->data.func_def.name = strdup(name);
     node->data.func_def.params = params;
     node->data.func_def.body = body;
@@ -92,6 +103,7 @@ ASTNode* createFuncDef(char* name, ASTNode* params, ASTNode* body) {
 ASTNode* createParam(char* name) {
     ASTNode* node = malloc(sizeof(ASTNode));
     node->type = NODE_PARAM;
+    node->lineno = yylineno;
     node->data.param.name = strdup(name);
     return node;
 }
@@ -100,6 +112,7 @@ ASTNode* createParam(char* name) {
 ASTNode* createParamList(ASTNode* param, ASTNode* next) {
     ASTNode* node = malloc(sizeof(ASTNode));
     node->type = NODE_PARAM_LIST;
+    node->lineno = param ? param->lineno : yylineno;
     node->data.param_list.param = param;
     node->data.param_list.next = next;
     return node;
@@ -109,6 +122,7 @@ ASTNode* createParamList(ASTNode* param, ASTNode* next) {
 ASTNode* createFuncCall(char* name, ASTNode* args) {
     ASTNode* node = malloc(sizeof(ASTNode));
     node->type = NODE_FUNC_CALL;
+    node->lineno = yylineno;
     node->data.func_call.name = strdup(name);
     node->data.func_call.args = args;
     return node;
@@ -118,6 +132,7 @@ ASTNode* createFuncCall(char* name, ASTNode* args) {
 ASTNode* createArgList(ASTNode* expr, ASTNode* next) {
     ASTNode* node = malloc(sizeof(ASTNode));
     node->type = NODE_ARG_LIST;
+    node->lineno = expr ? expr->lineno : yylineno;
     node->data.arg_list.expr = expr;
     node->data.arg_list.next = next;
     return node;
@@ -127,6 +142,7 @@ ASTNode* createArgList(ASTNode* expr, ASTNode* next) {
 ASTNode* createReturn(ASTNode* expr) {
     ASTNode* node = malloc(sizeof(ASTNode));
     node->type = NODE_RETURN;
+    node->lineno = yylineno;
     node->data.ret.expr = expr;
     return node;
 }
@@ -135,6 +151,7 @@ ASTNode* createReturn(ASTNode* expr) {
 ASTNode* createIf(ASTNode* condition, ASTNode* then_stmt, ASTNode* else_stmt) {
     ASTNode* node = malloc(sizeof(ASTNode));
     node->type = NODE_IF;
+    node->lineno = yylineno;
     node->data.if_stmt.condition = condition;
     node->data.if_stmt.then_stmt = then_stmt;
     node->data.if_stmt.else_stmt = else_stmt;
@@ -145,6 +162,7 @@ ASTNode* createIf(ASTNode* condition, ASTNode* then_stmt, ASTNode* else_stmt) {
 ASTNode* createWhile(ASTNode* condition, ASTNode* body) {
     ASTNode* node = malloc(sizeof(ASTNode));
     node->type = NODE_WHILE;
+    node->lineno = yylineno;
     node->data.while_stmt.condition = condition;
     node->data.while_stmt.body = body;
     return node;
@@ -154,6 +172,7 @@ ASTNode* createWhile(ASTNode* condition, ASTNode* body) {
 ASTNode* createBlock(ASTNode* stmt_list) {
     ASTNode* node = malloc(sizeof(ASTNode));
     node->type = NODE_BLOCK;
+    node->lineno = yylineno;
     node->data.block.stmt_list = stmt_list;
     return node;
 }

@@ -386,8 +386,10 @@ void generateMIPSFromTAC(const char* filename) {
     while (curr) {
         switch(curr->op) {
             case TAC_FUNC_BEGIN: {
-                // Function begin - for now, just add a comment
-                // In a full implementation, we would manage separate scopes per function
+                // Function begin - reset symbol table for new function scope
+                // Each function has its own local symbol table
+                initSymTab();
+
                 fprintf(output, "\n# Function: %s\n", curr->result);
                 if (strcmp(curr->result, "main") != 0) {
                     fprintf(output, "%s:\n", curr->result);

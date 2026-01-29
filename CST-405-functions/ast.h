@@ -33,7 +33,8 @@ typedef enum {
  */
 typedef struct ASTNode {
     NodeType type;  /* Identifies what kind of node this is */
-    
+    int lineno;     /* Line number in source code for error reporting */
+
     /* Union allows same memory to store different data types */
     union {
         /* Literal number value (NODE_NUM) */

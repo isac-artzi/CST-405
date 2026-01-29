@@ -249,8 +249,8 @@ static void checkExpr(ASTNode* node) {
 
         case NODE_VAR:
             if (!isVarDeclaredInScope(node->data.name)) {
-                fprintf(stderr, "  ✗ SEMANTIC ERROR: Variable '%s' used before declaration\n",
-                        node->data.name);
+                fprintf(stderr, "  ✗ SEMANTIC ERROR (line %d): Variable '%s' used before declaration\n",
+                        node->lineno, node->data.name);
                 semInfo.errorCount++;
             }
             break;
@@ -265,14 +265,14 @@ static void checkExpr(ASTNode* node) {
         case NODE_FUNC_CALL: {
             FunctionSymbol* func = findFunction(node->data.func_call.name);
             if (!func) {
-                fprintf(stderr, "  ✗ SEMANTIC ERROR: Function '%s' not declared\n",
-                        node->data.func_call.name);
+                fprintf(stderr, "  ✗ SEMANTIC ERROR (line %d): Function '%s' not declared\n",
+                        node->lineno, node->data.func_call.name);
                 semInfo.errorCount++;
             } else {
                 int argCount = countArgs(node->data.func_call.args);
                 if (argCount != func->paramCount) {
-                    fprintf(stderr, "  ✗ SEMANTIC ERROR: Function '%s' expects %d arguments, got %d\n",
-                            node->data.func_call.name, func->paramCount, argCount);
+                    fprintf(stderr, "  ✗ SEMANTIC ERROR (line %d): Function '%s' expects %d arguments, got %d\n",
+                            node->lineno, node->data.func_call.name, func->paramCount, argCount);
                     semInfo.errorCount++;
                 } else {
                     printf("  ✓ Function call '%s' has correct argument count\n",
@@ -306,21 +306,21 @@ static void checkStmt(ASTNode* node) {
     switch(node->type) {
         case NODE_DECL:
             if (addVarToScope(node->data.name) == -1) {
-                fprintf(stderr, "  ✗ SEMANTIC ERROR: Variable '%s' already declared in this scope\n",
-                        node->data.name);
+                fprintf(stderr, "  ✗ SEMANTIC ERROR (line %d): Variable '%s' already declared in this scope\n",
+                        node->lineno, node->data.name);
                 semInfo.errorCount++;
             } else {
-                printf("  ✓ Variable '%s' declared\n", node->data.name);
+                printf("  ✓ Variable '%s' declared (line %d)\n", node->data.name, node->lineno);
             }
             break;
 
         case NODE_ASSIGN:
             if (!isVarDeclaredInScope(node->data.assign.var)) {
-                fprintf(stderr, "  ✗ SEMANTIC ERROR: Assignment to undeclared variable '%s'\n",
-                        node->data.assign.var);
+                fprintf(stderr, "  ✗ SEMANTIC ERROR (line %d): Assignment to undeclared variable '%s'\n",
+                        node->lineno, node->data.assign.var);
                 semInfo.errorCount++;
             } else {
-                printf("  ✓ Assignment to '%s' is valid\n", node->data.assign.var);
+                printf("  ✓ Assignment to '%s' is valid (line %d)\n", node->data.assign.var, node->lineno);
             }
             checkExpr(node->data.assign.value);
             break;
