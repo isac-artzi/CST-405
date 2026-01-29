@@ -5,13 +5,16 @@
 main:
     # Allocate stack space
     addi $sp, $sp, -400
+    j main_start       # Jump to main function
 
 
 # Function: add
-add:
+func_add:
     # Save return address and allocate local stack frame
     # Parameter 'a' at offset 0
+    sw $a0, 0($sp)     # Store parameter 'a'
     # Parameter 'b' at offset 4
+    sw $a1, 4($sp)     # Store parameter 'b'
     # Declared 'result' at offset 8
     lw $t0, 0($sp)     # Load variable 'a'
     lw $t1, 4($sp)     # Load variable 'b'
@@ -25,7 +28,7 @@ add:
     jr $ra
 
 # Function: computeConstants
-computeConstants:
+func_computeConstants:
     # Save return address and allocate local stack frame
     # Declared 'x' at offset 0
     # Declared 'y' at offset 4
@@ -46,9 +49,10 @@ computeConstants:
     jr $ra
 
 # Function: complexCalculation
-complexCalculation:
+func_complexCalculation:
     # Save return address and allocate local stack frame
     # Parameter 'n' at offset 0
+    sw $a0, 0($sp)     # Store parameter 'n'
     # Declared 'a' at offset 4
     # Declared 'b' at offset 8
     # Declared 'c' at offset 12
@@ -73,6 +77,7 @@ complexCalculation:
     jr $ra
 
 # Function: main
+main_start:
     # Declared 'x' at offset 0
     # Declared 'y' at offset 4
     # Declared 'z' at offset 8
@@ -88,19 +93,25 @@ complexCalculation:
     # Argument: x
     # Argument: y
     # Call function add with 2 arguments
-    # Return value in $t2 (placeholder)
+    move $a0, $t1      # Pass argument 'x'
+    move $a1, $t3      # Pass argument 'y'
+    jal func_add
+    move $t2, $v0      # Get return value
     move $t4, $t2       # z = t0
     sw $t4, 8($sp)     # Store to 'z'
     li $t2, 12         # t0 = 12 (constant)
     move $t5, $t2       # w = t0
     sw $t5, 12($sp)     # Store to 'w'
     # Call function computeConstants with 0 arguments
-    # Return value in $t2 (placeholder)
+    jal func_computeConstants
+    move $t2, $v0      # Get return value
     move $t6, $t2       # result1 = t0
     sw $t6, 16($sp)     # Store to 'result1'
     # Argument: z
     # Call function complexCalculation with 1 arguments
-    # Return value in $t2 (placeholder)
+    move $a0, $t4      # Pass argument 'z'
+    jal func_complexCalculation
+    move $t2, $v0      # Get return value
     move $t7, $t2       # result2 = t0
     sw $t7, 20($sp)     # Store to 'result2'
     # Print integer

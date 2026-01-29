@@ -15,15 +15,14 @@ SymbolTable symtab;
 void initSymTab() {
     symtab.count = 0;       /* No variables yet */
     symtab.nextOffset = 0;  /* Start at stack offset 0 */
-    printf("SYMBOL TABLE: Initialized\n");
-    printSymTab();
+    printf("SYMBOL TABLE: Initialized (empty, starting at offset 0)\n");
 }
 
 /* Add a new variable to the symbol table */
 int addVar(char* name) {
     /* Check for duplicate declaration */
     if (isVarDeclared(name)) {
-        printf("SYMBOL TABLE: Failed to add '%s' - already declared\n", name);
+        printf("SYMBOL TABLE: ✗ Failed to add '%s' - already declared\n", name);
         return -1;  /* Error: variable already exists */
     }
 
@@ -35,8 +34,8 @@ int addVar(char* name) {
     symtab.nextOffset += 4;
     symtab.count++;
 
-    printf("SYMBOL TABLE: Added variable '%s' at offset %d\n", name, symtab.vars[symtab.count - 1].offset);
-    printSymTab();
+    printf("SYMBOL TABLE: ✓ Added '%s' at stack offset %d (4 bytes)\n",
+           name, symtab.vars[symtab.count - 1].offset);
 
     /* Return the offset for this variable */
     return symtab.vars[symtab.count - 1].offset;
@@ -47,11 +46,12 @@ int getVarOffset(char* name) {
     /* Linear search through symbol table */
     for (int i = 0; i < symtab.count; i++) {
         if (strcmp(symtab.vars[i].name, name) == 0) {
-            printf("SYMBOL TABLE: Found variable '%s' at offset %d\n", name, symtab.vars[i].offset);
+            // Only print for debugging if needed - too verbose otherwise
+            // printf("SYMBOL TABLE: Found '%s' at offset %d\n", name, symtab.vars[i].offset);
             return symtab.vars[i].offset;  /* Found it */
         }
     }
-    printf("SYMBOL TABLE: Variable '%s' not found\n", name);
+    printf("SYMBOL TABLE: ✗ Variable '%s' not found (undeclared)\n", name);
     return -1;  /* Variable not found - semantic error */
 }
 

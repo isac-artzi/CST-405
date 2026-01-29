@@ -529,6 +529,8 @@ void optimizeTAC() {
     printf("\n┌──────────────────────────────────────────────────────────┐\n");
     printf("│ OPTIMIZATION PASS - Tracking Changes                    │\n");
     printf("├──────────────────────────────────────────────────────────┤\n");
+    printf("│ Analyzing each instruction for optimization opportunities│\n");
+    printf("├──────────────────────────────────────────────────────────┤\n");
 
     TACInstr* curr = tacList.head;
     int instrNum = 1;
@@ -550,9 +552,11 @@ void optimizeTAC() {
             if (folded) {
                 /* Replace operation with assignment of constant */
                 newInstr = createTAC(TAC_ASSIGN, foldedValue, NULL, curr->result);
-                printf("│ [%3d] CONSTANT FOLDING: %s = %s %s %s → %s = %s\n",
-                       instrNum, curr->result, curr->arg1, getOpName(curr->op),
-                       curr->arg2, curr->result, foldedValue);
+                printf("│ [%3d] ✓ CONSTANT FOLDING: %s = %s %s %s\n",
+                       instrNum, curr->result, curr->arg1, getOpName(curr->op), curr->arg2);
+                printf("│       → Evaluating: %s %s %s = %s\n",
+                       curr->arg1, getOpName(curr->op), curr->arg2, foldedValue);
+                printf("│       → Simplified to: %s = %s\n", curr->result, foldedValue);
                 optimizationCount++;
                 optimized = 1;
                 free(foldedValue);

@@ -8,6 +8,12 @@ FILE* output;
 int tempReg = 0;
 RegisterAllocator regAlloc;
 
+// Function call argument tracking
+#define MAX_ARGS 4
+char* argList[MAX_ARGS];
+int argCount = 0;
+int paramIndex = 0;  // Track parameter index in current function
+
 int getNextTemp() {
     int reg = tempReg++;
     if (tempReg > 7) tempReg = 0;  // Reuse $t0-$t7
@@ -371,6 +377,12 @@ void generateMIPSFromTAC(const char* filename) {
         return;
     }
 
+    printf("\n┌──────────────────────────────────────────────────────────┐\n");
+    printf("│ TRANSLATING TAC TO MIPS ASSEMBLY                        │\n");
+    printf("├──────────────────────────────────────────────────────────┤\n");
+    printf("│ Each TAC instruction will be converted to MIPS code     │\n");
+    printf("└──────────────────────────────────────────────────────────┘\n\n");
+
     // MIPS program header
     fprintf(output, ".data\n");
     fprintf(output, "\n.text\n");
@@ -379,21 +391,34 @@ void generateMIPSFromTAC(const char* filename) {
 
     // Allocate stack space (max 100 variables * 4 bytes)
     fprintf(output, "    # Allocate stack space\n");
-    fprintf(output, "    addi $sp, $sp, -400\n\n");
+    fprintf(output, "    addi $sp, $sp, -400\n");
+    fprintf(output, "    j main_start       # Jump to main function\n\n");
+
+    printf("Generated program entry point and stack allocation\n\n");
 
     // Process each TAC instruction
     TACInstr* curr = tac->head;
+    int tacLineNum = 1;
     while (curr) {
         switch(curr->op) {
             case TAC_FUNC_BEGIN: {
                 // Function begin - reset symbol table for new function scope
                 // Each function has its own local symbol table
+                printf("\n[TAC %3d] ═══════════════════════════════════════════\n", tacLineNum);
+                printf("[TAC %3d] FUNC_BEGIN: %s\n", tacLineNum, curr->result);
+                printf("[TAC %3d] ═══════════════════════════════════════════\n", tacLineNum);
+                printf("          → Initializing new symbol table for function scope\n");
                 initSymTab();
+                paramIndex = 0;  // Reset parameter index for new function
 
                 fprintf(output, "\n# Function: %s\n", curr->result);
                 if (strcmp(curr->result, "main") != 0) {
-                    fprintf(output, "%s:\n", curr->result);
+                    fprintf(output, "func_%s:\n", curr->result);
                     fprintf(output, "    # Save return address and allocate local stack frame\n");
+                    printf("          → Generated label: func_%s\n", curr->result);
+                } else {
+                    fprintf(output, "main_start:\n");
+                    printf("          → Generated label: main_start\n");
                 }
                 break;
             }
@@ -409,19 +434,29 @@ void generateMIPSFromTAC(const char* filename) {
             }
 
             case TAC_PARAM: {
-                // Function parameter - add to symbol table like a declaration
-                // In a full implementation, parameters would be loaded from registers or stack
+                // Function parameter - add to symbol table and copy from $a register
+                printf("[TAC %3d] PARAM: %s\n", tacLineNum, curr->result);
                 int offset = addVar(curr->result);
                 if (offset == -1) {
                     fprintf(stderr, "Error: Parameter %s already declared\n", curr->result);
                     exit(1);
                 }
                 fprintf(output, "    # Parameter '%s' at offset %d\n", curr->result, offset);
+
+                // Copy parameter from $a register to stack
+                if (paramIndex < MAX_ARGS) {
+                    printf("          → Receiving from $a%d, storing at offset %d\n",
+                           paramIndex, offset);
+                    fprintf(output, "    sw $a%d, %d($sp)     # Store parameter '%s'\n",
+                            paramIndex, offset, curr->result);
+                    paramIndex++;
+                }
                 break;
             }
 
             case TAC_DECL: {
                 // Declare variable in symbol table
+                printf("[TAC %3d] DECL: %s (local variable)\n", tacLineNum, curr->result);
                 int offset = addVar(curr->result);
                 if (offset == -1) {
                     fprintf(stderr, "Error: Variable %s already declared\n", curr->result);
@@ -433,6 +468,8 @@ void generateMIPSFromTAC(const char* filename) {
 
             case TAC_ADD: {
                 // result = arg1 + arg2
+                printf("[TAC %3d] ADD: %s = %s + %s\n", tacLineNum, curr->result, curr->arg1, curr->arg2);
+                printf("          → Loading operands into registers\n");
                 int reg1, reg2, regResult;
 
                 // Load arg1 into register
@@ -495,6 +532,7 @@ void generateMIPSFromTAC(const char* filename) {
                 regResult = allocReg(curr->result);
 
                 // Perform addition
+                printf("          → Executing: $t%d = $t%d + $t%d\n", regResult, reg1, reg2);
                 fprintf(output, "    add $t%d, $t%d, $t%d   # %s = %s + %s\n",
                         regResult, reg1, reg2, curr->result, curr->arg1, curr->arg2);
 
@@ -506,12 +544,14 @@ void generateMIPSFromTAC(const char* filename) {
                 // Free operand registers (unless they're still needed)
                 freeReg(reg1);
                 freeReg(reg2);
+                printf("          → Result stored in $t%d\n\n", regResult);
 
                 break;
             }
 
             case TAC_ASSIGN: {
                 // result = arg1
+                printf("[TAC %3d] ASSIGN: %s = %s\n", tacLineNum, curr->result, curr->arg1);
                 int regSrc, regDest;
                 int isTempResult = isTACTemp(curr->result);
                 int offset = -1;
@@ -579,6 +619,8 @@ void generateMIPSFromTAC(const char* filename) {
 
             case TAC_PRINT: {
                 // PRINT arg1
+                printf("[TAC %3d] PRINT: output %s\n", tacLineNum, curr->arg1);
+                printf("          → Using syscall 1 (print integer)\n");
                 int regPrint;
 
                 // Load value to print
@@ -628,25 +670,53 @@ void generateMIPSFromTAC(const char* filename) {
             }
 
             case TAC_ARG: {
-                // Argument for function call - for now, just add a comment
-                // In a full implementation, arguments would be passed via registers or stack
+                // Collect arguments for the upcoming function call
                 fprintf(output, "    # Argument: %s\n", curr->arg1);
+                if (argCount < MAX_ARGS) {
+                    argList[argCount] = strdup(curr->arg1);
+                    argCount++;
+                }
                 break;
             }
 
             case TAC_CALL: {
                 // Function call: result = CALL name, argCount
-                // For now, just add a comment
-                // In a full implementation, we would:
-                // 1. Save caller-saved registers
-                // 2. Set up arguments in $a0-$a3
-                // 3. Call the function with jal
-                // 4. Retrieve return value from $v0
+                printf("[TAC %3d] CALL: %s = call %s with %s arguments\n",
+                       tacLineNum, curr->result, curr->arg1, curr->arg2);
+                printf("          → Passing arguments in $a0-$a3\n");
                 fprintf(output, "    # Call function %s with %s arguments\n", curr->arg1, curr->arg2);
 
-                // Allocate register for return value
+                // Pass arguments in $a0-$a3
+                for (int i = 0; i < argCount && i < MAX_ARGS; i++) {
+                    char* arg = argList[i];
+                    if (isConstant(arg)) {
+                        fprintf(output, "    li $a%d, %s\n", i, arg);
+                    } else {
+                        int argReg = findVarReg(arg);
+                        if (argReg == -1) {
+                            // Variable not in register, load from stack
+                            int offset = getVarOffset(arg);
+                            if (offset != -1) {
+                                fprintf(output, "    lw $a%d, %d($sp)     # Load argument '%s'\n",
+                                        i, offset, arg);
+                            }
+                        } else {
+                            fprintf(output, "    move $a%d, $t%d      # Pass argument '%s'\n",
+                                    i, argReg, arg);
+                        }
+                    }
+                    free(argList[i]);
+                }
+                argCount = 0;  // Reset for next call
+
+                // Call the function with jal
+                printf("          → Jumping to function func_%s\n", curr->arg1);
+                fprintf(output, "    jal func_%s\n", curr->arg1);
+
+                // Retrieve return value from $v0 and store in result register
                 int regResult = allocReg(curr->result);
-                fprintf(output, "    # Return value in $t%d (placeholder)\n", regResult);
+                fprintf(output, "    move $t%d, $v0      # Get return value\n", regResult);
+                printf("          → Return value stored in $t%d\n\n", regResult);
                 break;
             }
 
@@ -690,6 +760,7 @@ void generateMIPSFromTAC(const char* filename) {
         }
 
         curr = curr->next;
+        tacLineNum++;
     }
 
     // Spill any remaining dirty registers
