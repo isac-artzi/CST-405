@@ -1,0 +1,4 @@
+// Test 1: Missing semicolon after declaration
+int x
+x = 5;
+print(x);

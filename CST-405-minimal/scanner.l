@@ -14,8 +14,37 @@ extern int displayTokens;
 /* Flex options to suppress warnings for unused functions */
 %option nounput
 %option noinput
+%option yylineno
+
+/* Exclusive start condition for multi-line comments */
+%x COMMENT
 
 %%
+
+"//".*          {
+    /* Single-line comment - ignore everything from // to end of line */
+    if (displayTokens) printf("  (ignoring single-line comment)\n");
+}
+
+"/*"            {
+    /* Start of multi-line comment - switch to COMMENT state */
+    if (displayTokens) printf("  (start multi-line comment)\n");
+    BEGIN(COMMENT);
+}
+
+<COMMENT>"*/"   {
+    /* End of multi-line comment - return to normal scanning */
+    if (displayTokens) printf("  (end multi-line comment)\n");
+    BEGIN(INITIAL);
+}
+
+<COMMENT>\n     {
+    /* Newline inside comment - ignore but continue in COMMENT state */
+}
+
+<COMMENT>.      {
+    /* Any other character inside comment - ignore */
+}
 
 "int"           {
     if (displayTokens) printf("  TOKEN: INT keyword\n");
@@ -66,7 +95,21 @@ extern int displayTokens;
 
 [ \t\n]         { }
 
-.               { printf("Lexical Error: Unknown character '%c'\n", *yytext); }
+.               {
+    fprintf(stderr, "\n❌ Lexical Error at line %d:\n", yylineno);
+    fprintf(stderr, "   Unknown character: '%c' (ASCII %d)\n", *yytext, *yytext);
+    fprintf(stderr, "   💡 Suggestion: Remove this character or check for typos\n\n");
+}
+
+<<EOF>>         {
+    if (YY_START == COMMENT) {
+        fprintf(stderr, "\n❌ Lexical Error at line %d:\n", yylineno);
+        fprintf(stderr, "   Unterminated multi-line comment\n");
+        fprintf(stderr, "   💡 Suggestion: Add '*/' to close the comment\n\n");
+        return 0;
+    }
+    yyterminate();
+}
 
 %%
 

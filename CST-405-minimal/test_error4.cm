@@ -1,0 +1,5 @@
+// Test 4: Unknown character
+int a;
+a = 5;
+@
+print(a);

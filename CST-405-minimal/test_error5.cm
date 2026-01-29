@@ -1,0 +1,5 @@
+// Test 5: Unterminated multi-line comment
+int b;
+b = 20;
+/* This comment never ends
+print(b);

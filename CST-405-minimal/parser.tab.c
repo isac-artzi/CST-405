@@ -83,11 +83,13 @@
 extern int yylex();      /* Get next token from scanner */
 extern int yyparse();    /* Parse the entire input */
 extern FILE* yyin;       /* Input file handle */
+extern int yylineno;     /* Current line number from scanner */
+extern char* yytext;     /* Current token text from scanner */
 
 void yyerror(const char* s);  /* Error handling function */
 ASTNode* root = NULL;          /* Root of the Abstract Syntax Tree */
 
-#line 91 "parser.tab.c"
+#line 93 "parser.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -460,18 +462,18 @@ union yyalloc
 #endif /* !YYCOPY_NEEDED */
 
 /* YYFINAL -- State number of the termination state.  */
-#define YYFINAL  13
+#define YYFINAL  16
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   18
+#define YYLAST   31
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  12
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  8
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  13
+#define YYNRULES  22
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  25
+#define YYNSTATES  34
 
 /* YYMAXUTOK -- Last valid token kind.  */
 #define YYMAXUTOK   261
@@ -519,10 +521,11 @@ static const yytype_int8 yytranslate[] =
 
 #if YYDEBUG
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
-static const yytype_int8 yyrline[] =
+static const yytype_uint8 yyrline[] =
 {
-       0,    48,    48,    56,    60,    68,    69,    70,    75,    84,
-      93,    97,   102,   110
+       0,    50,    50,    58,    62,    70,    71,    72,    77,    82,
+      90,   101,   106,   114,   122,   134,   138,   143,   151,   155,
+     162,   169,   176
 };
 #endif
 
@@ -550,7 +553,7 @@ yysymbol_name (yysymbol_kind_t yysymbol)
 }
 #endif
 
-#define YYPACT_NINF (-13)
+#define YYPACT_NINF (-16)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
@@ -564,9 +567,10 @@ yysymbol_name (yysymbol_kind_t yysymbol)
    STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-      -2,     4,     7,     5,    12,    -2,   -13,   -13,   -13,   -13,
-       3,     6,     3,   -13,   -13,   -13,   -13,     2,   -13,    -6,
-       3,   -13,     8,   -13,   -13
+      21,     1,    18,     3,    23,    21,   -16,   -16,   -16,   -16,
+     -16,     2,   -16,     8,   -16,    17,   -16,   -16,   -16,   -16,
+     -16,     7,   -16,   -16,   -16,     0,   -16,    25,   -16,   -16,
+      16,   -16,   -16,   -16
 };
 
 /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -575,20 +579,21 @@ static const yytype_int8 yypact[] =
 static const yytype_int8 yydefact[] =
 {
        0,     0,     0,     0,     0,     2,     3,     5,     6,     7,
-       0,     0,     0,     1,     4,    10,    11,     0,     8,     0,
-       0,     9,     0,    12,    13
+      14,     0,    10,     0,    22,     0,     1,     4,    13,    15,
+      16,     0,     9,     8,    21,     0,    12,     0,    11,    20,
+       0,    17,    19,    18
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -13,   -13,   -13,    13,   -13,   -13,   -12,   -13
+     -16,   -16,   -16,    26,   -16,   -16,   -15,   -16
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-       0,     4,     5,     6,     7,     8,    17,     9
+       0,     4,     5,     6,     7,     8,    21,     9
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -596,14 +601,18 @@ static const yytype_int8 yydefgoto[] =
    number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int8 yytable[] =
 {
-      19,    20,     1,     2,     3,    22,    15,    16,    23,    20,
-      21,    11,    13,    10,    18,    12,    24,     0,    14
+      25,    29,    10,    18,    14,    19,    20,    27,    26,    22,
+      11,    30,    31,    15,    27,    28,    23,    32,    24,    12,
+      19,    20,    13,    16,    33,     1,     2,     3,    19,    20,
+       0,    17
 };
 
 static const yytype_int8 yycheck[] =
 {
-      12,     7,     4,     5,     6,    11,     3,     4,    20,     7,
-       8,     4,     0,     9,     8,    10,     8,    -1,     5
+      15,     1,     1,     1,     1,     3,     4,     7,     1,     1,
+       9,    11,    27,    10,     7,     8,     8,     1,     1,     1,
+       3,     4,     4,     0,     8,     4,     5,     6,     3,     4,
+      -1,     5
 };
 
 /* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
@@ -611,22 +620,25 @@ static const yytype_int8 yycheck[] =
 static const yytype_int8 yystos[] =
 {
        0,     4,     5,     6,    13,    14,    15,    16,    17,    19,
-       9,     4,    10,     0,    15,     3,     4,    18,     8,    18,
-       7,     8,    11,    18,     8
+       1,     9,     1,     4,     1,    10,     0,    15,     1,     3,
+       4,    18,     1,     8,     1,    18,     1,     7,     8,     1,
+      11,    18,     1,     8
 };
 
 /* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr1[] =
 {
-       0,    12,    13,    14,    14,    15,    15,    15,    16,    17,
-      18,    18,    18,    19
+       0,    12,    13,    14,    14,    15,    15,    15,    16,    16,
+      16,    17,    17,    17,    17,    18,    18,    18,    19,    19,
+      19,    19,    19
 };
 
 /* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr2[] =
 {
-       0,     2,     1,     1,     2,     1,     1,     1,     3,     4,
-       1,     1,     3,     5
+       0,     2,     1,     1,     2,     1,     1,     1,     3,     3,
+       2,     4,     4,     3,     2,     1,     1,     3,     5,     5,
+       4,     3,     2
 };
 
 
@@ -1090,91 +1102,203 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* program: stmt_list  */
-#line 48 "parser.y"
+#line 50 "parser.y"
               { 
         /* Action: Save the statement list as our AST root */
         root = (yyvsp[0].node);  /* $1 refers to the first symbol (stmt_list) */
     }
-#line 1099 "parser.tab.c"
+#line 1111 "parser.tab.c"
     break;
 
   case 3: /* stmt_list: stmt  */
-#line 56 "parser.y"
+#line 58 "parser.y"
          { 
         /* Base case: single statement */
         (yyval.node) = (yyvsp[0].node);  /* Pass the statement up as-is */
     }
-#line 1108 "parser.tab.c"
+#line 1120 "parser.tab.c"
     break;
 
   case 4: /* stmt_list: stmt_list stmt  */
-#line 60 "parser.y"
+#line 62 "parser.y"
                      { 
         /* Recursive case: list followed by another statement */
         (yyval.node) = createStmtList((yyvsp[-1].node), (yyvsp[0].node));  /* Build linked list of statements */
     }
-#line 1117 "parser.tab.c"
+#line 1129 "parser.tab.c"
     break;
 
   case 8: /* decl: INT ID ';'  */
-#line 75 "parser.y"
-               { 
+#line 77 "parser.y"
+               {
         /* Create declaration node and free the identifier string */
         (yyval.node) = createDecl((yyvsp[-1].str));  /* $2 is the ID token's string value */
         free((yyvsp[-1].str));             /* Free the string copy from scanner */
     }
-#line 1127 "parser.tab.c"
+#line 1139 "parser.tab.c"
     break;
 
-  case 9: /* assign: ID '=' expr ';'  */
-#line 84 "parser.y"
-                    { 
+  case 9: /* decl: INT ID error  */
+#line 82 "parser.y"
+                   {
+        fprintf(stderr, "\n❌ Syntax Error at line %d:\n", yylineno);
+        fprintf(stderr, "   Missing semicolon after variable declaration\n");
+        fprintf(stderr, "   💡 Suggestion: Add ';' after 'int %s'\n\n", (yyvsp[-1].str));
+        free((yyvsp[-1].str));
+        (yyval.node) = NULL;
+        yyerrok;
+    }
+#line 1152 "parser.tab.c"
+    break;
+
+  case 10: /* decl: INT error  */
+#line 90 "parser.y"
+                {
+        fprintf(stderr, "\n❌ Syntax Error at line %d:\n", yylineno);
+        fprintf(stderr, "   Invalid or missing identifier in declaration\n");
+        fprintf(stderr, "   💡 Suggestion: Expected 'int <identifier>;'\n\n");
+        (yyval.node) = NULL;
+        yyerrok;
+    }
+#line 1164 "parser.tab.c"
+    break;
+
+  case 11: /* assign: ID '=' expr ';'  */
+#line 101 "parser.y"
+                    {
         /* Create assignment node with variable name and expression */
         (yyval.node) = createAssign((yyvsp[-3].str), (yyvsp[-1].node));  /* $1 = ID, $3 = expr */
         free((yyvsp[-3].str));                   /* Free the identifier string */
     }
-#line 1137 "parser.tab.c"
+#line 1174 "parser.tab.c"
     break;
 
-  case 10: /* expr: NUM  */
-#line 93 "parser.y"
+  case 12: /* assign: ID '=' expr error  */
+#line 106 "parser.y"
+                        {
+        fprintf(stderr, "\n❌ Syntax Error at line %d:\n", yylineno);
+        fprintf(stderr, "   Missing semicolon after assignment\n");
+        fprintf(stderr, "   💡 Suggestion: Add ';' after '%s = <expression>'\n\n", (yyvsp[-3].str));
+        free((yyvsp[-3].str));
+        (yyval.node) = NULL;
+        yyerrok;
+    }
+#line 1187 "parser.tab.c"
+    break;
+
+  case 13: /* assign: ID '=' error  */
+#line 114 "parser.y"
+                   {
+        fprintf(stderr, "\n❌ Syntax Error at line %d:\n", yylineno);
+        fprintf(stderr, "   Invalid expression in assignment\n");
+        fprintf(stderr, "   💡 Suggestion: Check the expression after '=' for '%s'\n\n", (yyvsp[-2].str));
+        free((yyvsp[-2].str));
+        (yyval.node) = NULL;
+        yyerrok;
+    }
+#line 1200 "parser.tab.c"
+    break;
+
+  case 14: /* assign: ID error  */
+#line 122 "parser.y"
+               {
+        fprintf(stderr, "\n❌ Syntax Error at line %d:\n", yylineno);
+        fprintf(stderr, "   Missing '=' in assignment statement\n");
+        fprintf(stderr, "   💡 Suggestion: Use '%s = <expression>;'\n\n", (yyvsp[-1].str));
+        free((yyvsp[-1].str));
+        (yyval.node) = NULL;
+        yyerrok;
+    }
+#line 1213 "parser.tab.c"
+    break;
+
+  case 15: /* expr: NUM  */
+#line 134 "parser.y"
         { 
         /* Literal number */
         (yyval.node) = createNum((yyvsp[0].num));  /* Create leaf node with number value */
     }
-#line 1146 "parser.tab.c"
+#line 1222 "parser.tab.c"
     break;
 
-  case 11: /* expr: ID  */
-#line 97 "parser.y"
+  case 16: /* expr: ID  */
+#line 138 "parser.y"
          { 
         /* Variable reference */
         (yyval.node) = createVar((yyvsp[0].str));  /* Create leaf node with variable name */
         free((yyvsp[0].str));            /* Free the identifier string */
     }
-#line 1156 "parser.tab.c"
+#line 1232 "parser.tab.c"
     break;
 
-  case 12: /* expr: expr '+' expr  */
-#line 102 "parser.y"
+  case 17: /* expr: expr '+' expr  */
+#line 143 "parser.y"
                     { 
         /* Addition operation - builds binary tree */
         (yyval.node) = createBinOp('+', (yyvsp[-2].node), (yyvsp[0].node));  /* Left child, op, right child */
     }
-#line 1165 "parser.tab.c"
+#line 1241 "parser.tab.c"
     break;
 
-  case 13: /* print_stmt: PRINT '(' expr ')' ';'  */
-#line 110 "parser.y"
-                           { 
+  case 18: /* print_stmt: PRINT '(' expr ')' ';'  */
+#line 151 "parser.y"
+                           {
         /* Create print node with expression to print */
         (yyval.node) = createPrint((yyvsp[-2].node));  /* $3 is the expression inside parens */
     }
-#line 1174 "parser.tab.c"
+#line 1250 "parser.tab.c"
+    break;
+
+  case 19: /* print_stmt: PRINT '(' expr ')' error  */
+#line 155 "parser.y"
+                               {
+        fprintf(stderr, "\n❌ Syntax Error at line %d:\n", yylineno);
+        fprintf(stderr, "   Missing semicolon after print statement\n");
+        fprintf(stderr, "   💡 Suggestion: Add ';' after 'print(<expression>)'\n\n");
+        (yyval.node) = NULL;
+        yyerrok;
+    }
+#line 1262 "parser.tab.c"
+    break;
+
+  case 20: /* print_stmt: PRINT '(' expr error  */
+#line 162 "parser.y"
+                           {
+        fprintf(stderr, "\n❌ Syntax Error at line %d:\n", yylineno);
+        fprintf(stderr, "   Missing closing parenthesis in print statement\n");
+        fprintf(stderr, "   💡 Suggestion: Add ')' before semicolon\n\n");
+        (yyval.node) = NULL;
+        yyerrok;
+    }
+#line 1274 "parser.tab.c"
+    break;
+
+  case 21: /* print_stmt: PRINT '(' error  */
+#line 169 "parser.y"
+                      {
+        fprintf(stderr, "\n❌ Syntax Error at line %d:\n", yylineno);
+        fprintf(stderr, "   Invalid expression in print statement\n");
+        fprintf(stderr, "   💡 Suggestion: Use 'print(<expression>);'\n\n");
+        (yyval.node) = NULL;
+        yyerrok;
+    }
+#line 1286 "parser.tab.c"
+    break;
+
+  case 22: /* print_stmt: PRINT error  */
+#line 176 "parser.y"
+                  {
+        fprintf(stderr, "\n❌ Syntax Error at line %d:\n", yylineno);
+        fprintf(stderr, "   Missing opening parenthesis in print statement\n");
+        fprintf(stderr, "   💡 Suggestion: Use 'print(<expression>);'\n\n");
+        (yyval.node) = NULL;
+        yyerrok;
+    }
+#line 1298 "parser.tab.c"
     break;
 
 
-#line 1178 "parser.tab.c"
+#line 1302 "parser.tab.c"
 
       default: break;
     }
@@ -1367,10 +1491,23 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 116 "parser.y"
+#line 185 "parser.y"
 
 
 /* ERROR HANDLING - Called by Bison when syntax error detected */
 void yyerror(const char* s) {
-    fprintf(stderr, "Syntax Error: %s\n", s);
+    fprintf(stderr, "\n❌ Syntax Error at line %d:\n", yylineno);
+    fprintf(stderr, "   %s", s);
+
+    if (yytext && yytext[0] != '\0') {
+        fprintf(stderr, " (near token: '%s')\n", yytext);
+    } else {
+        fprintf(stderr, "\n");
+    }
+
+    fprintf(stderr, "   💡 Common fixes:\n");
+    fprintf(stderr, "      • Check for missing semicolons\n");
+    fprintf(stderr, "      • Verify parentheses and brackets are balanced\n");
+    fprintf(stderr, "      • Ensure variables are declared before use\n");
+    fprintf(stderr, "      • Check for typos in keywords (int, print)\n\n");
 }
