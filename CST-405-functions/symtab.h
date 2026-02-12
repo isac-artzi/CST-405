@@ -11,8 +11,10 @@
 
 /* SYMBOL ENTRY - Information about each variable */
 typedef struct {
-    char* name;     /* Variable identifier */
-    int offset;     /* Stack offset in bytes (for MIPS stack frame) */
+    char* name;      /* Variable identifier */
+    int offset;      /* Stack offset in bytes (for MIPS stack frame) */
+    int isArray;     /* 1 if this is an array, 0 for scalar */
+    int arraySize;   /* Number of elements (0 for non-arrays) */
 } Symbol;
 
 /* SYMBOL TABLE STRUCTURE */
@@ -25,8 +27,11 @@ typedef struct {
 /* SYMBOL TABLE OPERATIONS */
 void initSymTab();               /* Initialize empty symbol table */
 int addVar(char* name);          /* Add new variable, returns offset or -1 if duplicate */
+int addArray(char* name, int size);  /* Add array, returns offset or -1 if duplicate */
 int getVarOffset(char* name);    /* Get stack offset for variable, -1 if not found */
+int getArraySize(char* name);    /* Get array size, -1 if not array */
 int isVarDeclared(char* name);   /* Check if variable exists (1=yes, 0=no) */
+int isArray(char* name);         /* Check if variable is an array (1=yes, 0=no) */
 void printSymTab();              /* Print current symbol table contents for tracing */
 
 #endif

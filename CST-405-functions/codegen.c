@@ -466,6 +466,20 @@ void generateMIPSFromTAC(const char* filename) {
                 break;
             }
 
+            case TAC_ARRAY_DECL: {
+                // Declare array in symbol table
+                int size = atoi(curr->arg1);
+                printf("[TAC %3d] ARRAY_DECL: %s[%d]\n", tacLineNum, curr->result, size);
+                int offset = addArray(curr->result, size);
+                if (offset == -1) {
+                    fprintf(stderr, "Error: Array %s already declared\n", curr->result);
+                    exit(1);
+                }
+                fprintf(output, "    # Declared array '%s[%d]' at offset %d (%d bytes)\n",
+                        curr->result, size, offset, size * 4);
+                break;
+            }
+
             case TAC_ADD: {
                 // result = arg1 + arg2
                 printf("[TAC %3d] ADD: %s = %s + %s\n", tacLineNum, curr->result, curr->arg1, curr->arg2);
@@ -752,6 +766,125 @@ void generateMIPSFromTAC(const char* filename) {
                     freeReg(regReturn);
                 }
                 fprintf(output, "    # Return from function\n");
+                break;
+            }
+
+            case TAC_ARRAY_LOAD: {
+                // result = array[index]
+                printf("[TAC %3d] ARRAY_LOAD: %s = %s[%s]\n",
+                       tacLineNum, curr->result, curr->arg1, curr->arg2);
+
+                // Load or compute index
+                int indexReg;
+                if (isConstant(curr->arg2)) {
+                    indexReg = allocReg("const_index");
+                    fprintf(output, "    li $t%d, %s         # Load index\n", indexReg, curr->arg2);
+                } else {
+                    indexReg = findVarReg(curr->arg2);
+                    if (indexReg == -1) {
+                        if (isTACTemp(curr->arg2)) {
+                            fprintf(stderr, "Error: TAC temporary '%s' not in register\n", curr->arg2);
+                            exit(1);
+                        }
+                        int offset = getVarOffset(curr->arg2);
+                        if (offset == -1) {
+                            fprintf(stderr, "Error: Index variable '%s' not found\n", curr->arg2);
+                            exit(1);
+                        }
+                        indexReg = allocReg(curr->arg2);
+                        fprintf(output, "    lw $t%d, %d($sp)     # Load index\n", indexReg, offset);
+                    }
+                }
+
+                // Get array base offset
+                int arrayOffset = getVarOffset(curr->arg1);
+
+                // Calculate element address: base + (index * 4)
+                int offsetReg = allocReg("offset_temp");
+                int addrReg = allocReg("temp_addr");
+                fprintf(output, "    sll $t%d, $t%d, 2\n", offsetReg, indexReg);  // offset = index * 4
+                fprintf(output, "    addi $t%d, $sp, %d\n", addrReg, arrayOffset); // addr = sp + base
+                fprintf(output, "    add $t%d, $t%d, $t%d\n", addrReg, addrReg, offsetReg); // addr = base + offset
+
+                // Load value
+                int resultReg = allocReg(curr->result);
+                fprintf(output, "    lw $t%d, 0($t%d)\n", resultReg, addrReg);
+
+                freeReg(offsetReg);
+
+                freeReg(indexReg);
+                freeReg(addrReg);
+                break;
+            }
+
+            case TAC_ARRAY_STORE: {
+                // array[index] = value
+                printf("[TAC %3d] ARRAY_STORE: %s[%s] = %s\n",
+                       tacLineNum, curr->arg1, curr->arg2, curr->result);
+
+                // Get array base offset
+                int arrayOffset = getVarOffset(curr->arg1);
+                if (arrayOffset == -1) {
+                    fprintf(stderr, "Error: Array '%s' not found in symbol table\n", curr->arg1);
+                    exit(1);
+                }
+
+                // Load index
+                int indexReg;
+                if (isConstant(curr->arg2)) {
+                    indexReg = allocReg("const_index");
+                    fprintf(output, "    li $t%d, %s         # Load index\n", indexReg, curr->arg2);
+                } else {
+                    indexReg = findVarReg(curr->arg2);
+                    if (indexReg == -1) {
+                        int offset = getVarOffset(curr->arg2);
+                        if (offset == -1) {
+                            fprintf(stderr, "Error: Index variable '%s' not found\n", curr->arg2);
+                            exit(1);
+                        }
+                        indexReg = allocReg(curr->arg2);
+                        fprintf(output, "    lw $t%d, %d($sp)     # Load index\n", indexReg, offset);
+                    }
+                }
+
+                // Load value
+                int valueReg;
+                if (isConstant(curr->result)) {
+                    valueReg = allocReg("const_value");
+                    fprintf(output, "    li $t%d, %s         # Load value\n", valueReg, curr->result);
+                } else {
+                    valueReg = findVarReg(curr->result);
+                    if (valueReg == -1) {
+                        if (isTACTemp(curr->result)) {
+                            fprintf(stderr, "Error: TAC temporary '%s' not in register\n", curr->result);
+                            exit(1);
+                        }
+                        int offset = getVarOffset(curr->result);
+                        if (offset == -1) {
+                            fprintf(stderr, "Error: Value variable '%s' not found\n", curr->result);
+                            exit(1);
+                        }
+                        valueReg = allocReg(curr->result);
+                        fprintf(output, "    lw $t%d, %d($sp)     # Load value\n", valueReg, offset);
+                    }
+                }
+
+                // Calculate element address: base + (index * 4)
+                int offsetReg = allocReg("offset_temp");
+                int addrReg = allocReg("temp_addr");
+                fprintf(output, "    sll $t%d, $t%d, 2     # offset = index * 4\n", offsetReg, indexReg);
+                fprintf(output, "    addi $t%d, $sp, %d    # addr = sp + base\n", addrReg, arrayOffset);
+                fprintf(output, "    add $t%d, $t%d, $t%d  # addr = base + offset\n", addrReg, addrReg, offsetReg);
+
+                // Store value
+                fprintf(output, "    sw $t%d, 0($t%d)      # Store to array element\n", valueReg, addrReg);
+
+                printf("          → Stored value into %s[%s]\n\n", curr->arg1, curr->arg2);
+
+                freeReg(offsetReg);
+                freeReg(indexReg);
+                freeReg(valueReg);
+                freeReg(addrReg);
                 break;
             }
 

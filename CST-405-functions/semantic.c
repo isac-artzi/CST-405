@@ -17,6 +17,7 @@ typedef struct {
     char* name;
     int paramCount;
     char* params[MAX_PARAMS];
+    int paramIsArray[MAX_PARAMS];  /* Track which params are arrays */
     int isDefined;
 } FunctionSymbol;
 
@@ -137,6 +138,33 @@ static int addVarToScope(char* name) {
     return 0;
 }
 
+/* Add array to current scope */
+static int addArrayToScope(char* name, int size) {
+    if (scopeDepth == 0) {
+        fprintf(stderr, "SEMANTIC ERROR: No scope to add array to\n");
+        return -1;
+    }
+
+    Scope* currentScope = &scopes[scopeDepth - 1];
+
+    /* Check if already declared in current scope */
+    for (int i = 0; i < currentScope->count; i++) {
+        if (strcmp(currentScope->names[i], name) == 0) {
+            return -1;  /* Already declared in this scope */
+        }
+    }
+
+    /* Add to current scope */
+    if (currentScope->count >= MAX_VARS) {
+        fprintf(stderr, "SEMANTIC ERROR: Too many variables in scope\n");
+        return -1;
+    }
+
+    currentScope->names[currentScope->count] = strdup(name);
+    currentScope->count++;
+    return 0;
+}
+
 /* Check if variable is declared in any visible scope */
 static int isVarDeclaredInScope(char* name) {
     /* Search from innermost to outermost scope */
@@ -160,7 +188,7 @@ static FunctionSymbol* findFunction(char* name) {
     return NULL;
 }
 
-static int addFunction(char* name, int paramCount, char** params) {
+static int addFunction(char* name, int paramCount, char** params, int* paramIsArray) {
     if (functionCount >= MAX_FUNCTIONS) {
         fprintf(stderr, "SEMANTIC ERROR: Too many functions\n");
         return -1;
@@ -177,6 +205,7 @@ static int addFunction(char* name, int paramCount, char** params) {
     functions[functionCount].paramCount = paramCount;
     for (int i = 0; i < paramCount; i++) {
         functions[functionCount].params[i] = strdup(params[i]);
+        functions[functionCount].paramIsArray[i] = paramIsArray ? paramIsArray[i] : 0;
     }
     functions[functionCount].isDefined = 1;
     functionCount++;
@@ -186,7 +215,7 @@ static int addFunction(char* name, int paramCount, char** params) {
 }
 
 /* Count parameters in parameter list */
-static int countParams(ASTNode* params, char** paramNames) {
+static int countParams(ASTNode* params, char** paramNames, int* paramIsArray) {
     if (!params) return 0;
 
     int count = 0;
@@ -195,13 +224,31 @@ static int countParams(ASTNode* params, char** paramNames) {
     while (current && count < MAX_PARAMS) {
         if (current->type == NODE_PARAM) {
             paramNames[count] = current->data.param.name;
+            paramIsArray[count] = 0;
+            count++;
+            break;
+        } else if (current->type == NODE_ARRAY_DECL && current->data.array_decl.isParam) {
+            paramNames[count] = current->data.array_decl.name;
+            paramIsArray[count] = 1;
             count++;
             break;
         } else if (current->type == NODE_PARAM_LIST) {
-            if (current->data.param_list.param &&
-                current->data.param_list.param->type == NODE_PARAM) {
-                paramNames[count] = current->data.param_list.param->data.param.name;
-                count++;
+            if (current->data.param_list.param) {
+                if (current->data.param_list.param->type == NODE_PARAM) {
+                    paramNames[count] = current->data.param_list.param->data.param.name;
+                    paramIsArray[count] = 0;
+                    count++;
+                } else if (current->data.param_list.param->type == NODE_ARRAY_DECL) {
+                    paramNames[count] = current->data.param_list.param->data.array_decl.name;
+                    paramIsArray[count] = 1;
+                    count++;
+                } else if (current->data.param_list.param->type == NODE_PARAM_LIST) {
+                    // Recursively process nested param list
+                    int nestedCount = countParams(current->data.param_list.param,
+                                                  &paramNames[count],
+                                                  &paramIsArray[count]);
+                    count += nestedCount;
+                }
             }
             current = current->data.param_list.next;
         } else {
@@ -216,27 +263,26 @@ static int countParams(ASTNode* params, char** paramNames) {
 static int countArgs(ASTNode* args) {
     if (!args) return 0;
 
-    int count = 0;
-    ASTNode* current = args;
-
-    while (current) {
-        if (current->type == NODE_ARG_LIST) {
-            count++;
-            current = current->data.arg_list.next;
+    if (args->type == NODE_ARG_LIST) {
+        // Check if expr is also an ARG_LIST (nested)
+        if (args->data.arg_list.expr && args->data.arg_list.expr->type == NODE_ARG_LIST) {
+            // Nested ARG_LIST - recursively process
+            return countArgs(args->data.arg_list.expr) + countArgs(args->data.arg_list.next);
         } else {
-            /* Single argument */
-            count++;
-            break;
+            // expr is actual expression, count it + rest
+            return 1 + countArgs(args->data.arg_list.next);
         }
+    } else {
+        // Single argument (expression)
+        return 1;
     }
-
-    return count;
 }
 
 /* Forward declarations */
 static void checkExpr(ASTNode* node);
 static void checkStmt(ASTNode* node);
 static void checkStmtList(ASTNode* node);
+static int addArrayToScope(char* name, int size);
 
 /* Check expression for semantic correctness */
 static void checkExpr(ASTNode* node) {
@@ -294,6 +340,17 @@ static void checkExpr(ASTNode* node) {
             break;
         }
 
+        case NODE_ARRAY_INDEX:
+            /* Check if array is declared */
+            if (!isVarDeclaredInScope(node->data.array_index.name)) {
+                fprintf(stderr, "  ✗ SEMANTIC ERROR (line %d): Array '%s' not declared\n",
+                        node->lineno, node->data.array_index.name);
+                semInfo.errorCount++;
+            }
+            /* Check index expression */
+            checkExpr(node->data.array_index.index);
+            break;
+
         default:
             break;
     }
@@ -315,12 +372,19 @@ static void checkStmt(ASTNode* node) {
             break;
 
         case NODE_ASSIGN:
-            if (!isVarDeclaredInScope(node->data.assign.var)) {
-                fprintf(stderr, "  ✗ SEMANTIC ERROR (line %d): Assignment to undeclared variable '%s'\n",
-                        node->lineno, node->data.assign.var);
-                semInfo.errorCount++;
+            if (node->data.assign.arrayLHS) {
+                /* Array element assignment: arr[i] = expr */
+                checkExpr(node->data.assign.arrayLHS);
+                printf("  ✓ Array element assignment is valid (line %d)\n", node->lineno);
             } else {
-                printf("  ✓ Assignment to '%s' is valid (line %d)\n", node->data.assign.var, node->lineno);
+                /* Scalar assignment: x = expr */
+                if (!isVarDeclaredInScope(node->data.assign.var)) {
+                    fprintf(stderr, "  ✗ SEMANTIC ERROR (line %d): Assignment to undeclared variable '%s'\n",
+                            node->lineno, node->data.assign.var);
+                    semInfo.errorCount++;
+                } else {
+                    printf("  ✓ Assignment to '%s' is valid (line %d)\n", node->data.assign.var, node->lineno);
+                }
             }
             checkExpr(node->data.assign.value);
             break;
@@ -370,6 +434,34 @@ static void checkStmt(ASTNode* node) {
             checkStmtList(node);
             break;
 
+        case NODE_ARRAY_DECL:
+            if (node->data.array_decl.isParam) {
+                /* Array parameter - don't check size */
+                if (addArrayToScope(node->data.array_decl.name, 0) == -1) {
+                    fprintf(stderr, "  ✗ SEMANTIC ERROR (line %d): Array parameter '%s' already declared\n",
+                            node->lineno, node->data.array_decl.name);
+                    semInfo.errorCount++;
+                } else {
+                    printf("  ✓ Array parameter '%s[]' declared (line %d)\n",
+                           node->data.array_decl.name, node->lineno);
+                }
+            } else {
+                /* Array declaration - check size is positive */
+                if (node->data.array_decl.size <= 0) {
+                    fprintf(stderr, "  ✗ SEMANTIC ERROR (line %d): Array '%s' size must be positive\n",
+                            node->lineno, node->data.array_decl.name);
+                    semInfo.errorCount++;
+                } else if (addArrayToScope(node->data.array_decl.name, node->data.array_decl.size) == -1) {
+                    fprintf(stderr, "  ✗ SEMANTIC ERROR (line %d): Array '%s' already declared\n",
+                            node->lineno, node->data.array_decl.name);
+                    semInfo.errorCount++;
+                } else {
+                    printf("  ✓ Array '%s[%d]' declared (line %d)\n",
+                           node->data.array_decl.name, node->data.array_decl.size, node->lineno);
+                }
+            }
+            break;
+
         default:
             break;
     }
@@ -387,6 +479,24 @@ static void checkStmtList(ASTNode* node) {
     }
 }
 
+/* Recursively add parameters to function scope */
+static void addParamsToScope(ASTNode* param) {
+    if (!param) return;
+
+    if (param->type == NODE_PARAM) {
+        addVarToScope(param->data.param.name);
+        printf("  ✓ Parameter '%s' added to function scope\n", param->data.param.name);
+    } else if (param->type == NODE_ARRAY_DECL && param->data.array_decl.isParam) {
+        addArrayToScope(param->data.array_decl.name, 0);
+        printf("  ✓ Array parameter '%s[]' added to function scope\n",
+               param->data.array_decl.name);
+    } else if (param->type == NODE_PARAM_LIST) {
+        // Recursively process nested param list
+        addParamsToScope(param->data.param_list.param);
+        addParamsToScope(param->data.param_list.next);
+    }
+}
+
 /* Check function definition */
 static void checkFuncDef(ASTNode* node) {
     if (!node || node->type != NODE_FUNC_DEF) return;
@@ -399,27 +509,11 @@ static void checkFuncDef(ASTNode* node) {
     printf("  Entered function '%s' scope\n", currentFunction);
     printSemanticScopes();
 
-    /* Add parameters as variables in function scope */
-    ASTNode* param = node->data.func_def.params;
+    /* Add all parameters to scope */
     int paramAdded = 0;
-    while (param) {
-        if (param->type == NODE_PARAM) {
-            addVarToScope(param->data.param.name);
-            printf("  ✓ Parameter '%s' added to function scope\n", param->data.param.name);
-            paramAdded = 1;
-            break;
-        } else if (param->type == NODE_PARAM_LIST) {
-            if (param->data.param_list.param &&
-                param->data.param_list.param->type == NODE_PARAM) {
-                addVarToScope(param->data.param_list.param->data.param.name);
-                printf("  ✓ Parameter '%s' added to function scope\n",
-                       param->data.param_list.param->data.param.name);
-                paramAdded = 1;
-            }
-            param = param->data.param_list.next;
-        } else {
-            break;
-        }
+    if (node->data.func_def.params) {
+        addParamsToScope(node->data.func_def.params);
+        paramAdded = 1;
     }
 
     if (paramAdded) {
@@ -442,8 +536,9 @@ static void registerFunction(ASTNode* node) {
     if (!node || node->type != NODE_FUNC_DEF) return;
 
     char* paramNames[MAX_PARAMS];
-    int paramCount = countParams(node->data.func_def.params, paramNames);
-    addFunction(node->data.func_def.name, paramCount, paramNames);
+    int paramIsArray[MAX_PARAMS];
+    int paramCount = countParams(node->data.func_def.params, paramNames, paramIsArray);
+    addFunction(node->data.func_def.name, paramCount, paramNames, paramIsArray);
 }
 
 /* Helper to recursively register all functions in AST */

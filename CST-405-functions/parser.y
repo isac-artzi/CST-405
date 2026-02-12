@@ -102,6 +102,10 @@ param:
         $$ = createParam($2);
         free($2);
     }
+    | INT ID '[' ']' {
+        $$ = createArrayParam($2);
+        free($2);
+    }
     ;
 
 /* BLOCK STATEMENT */
@@ -136,18 +140,28 @@ stmt:
     | func_call ';' { $$ = $1; }
     ;
 
-/* DECLARATION - int x; */
+/* DECLARATION - int x; or int arr[10]; */
 decl:
     INT ID ';' {
         $$ = createDecl($2);
         free($2);
     }
+    | INT ID '[' NUM ']' ';' {
+        $$ = createArrayDecl($2, $4);
+        free($2);
+    }
     ;
 
-/* ASSIGNMENT - x = expr; */
+/* ASSIGNMENT - x = expr; or arr[i] = expr; */
 assign:
     ID '=' expr ';' {
         $$ = createAssign($1, $3);
+        free($1);
+    }
+    | ID '[' expr ']' '=' expr ';' {
+        ASTNode* lhs = createArrayIndex($1, $3);
+        $$ = createAssign(NULL, $6);
+        $$->data.assign.arrayLHS = lhs;
         free($1);
     }
     ;
@@ -186,6 +200,10 @@ expr:
     }
     | ID {
         $$ = createVar($1);
+        free($1);
+    }
+    | ID '[' expr ']' {
+        $$ = createArrayIndex($1, $3);
         free($1);
     }
     | func_call {

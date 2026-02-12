@@ -24,7 +24,9 @@ typedef enum {
     NODE_RETURN,      /* Return statement */
     NODE_IF,          /* If statement */
     NODE_WHILE,       /* While loop */
-    NODE_BLOCK        /* Block statement { ... } */
+    NODE_BLOCK,       /* Block statement { ... } */
+    NODE_ARRAY_DECL,  /* Array declaration (e.g., int arr[10] or int arr[]) */
+    NODE_ARRAY_INDEX  /* Array indexing (e.g., arr[i]) */
 } NodeType;
 
 /* AST NODE STRUCTURE
@@ -54,8 +56,9 @@ typedef struct ASTNode {
         
         /* Assignment structure (NODE_ASSIGN) */
         struct {
-            char* var;                  /* Variable being assigned to */
+            char* var;                  /* Variable being assigned to (NULL for array) */
             struct ASTNode* value;      /* Expression being assigned */
+            struct ASTNode* arrayLHS;   /* Array index node (NULL for scalar) */
         } assign;
         
         /* Print expression (NODE_PRINT) */
@@ -119,6 +122,19 @@ typedef struct ASTNode {
         struct {
             struct ASTNode* stmt_list;  /* Statements in block */
         } block;
+
+        /* Array declaration (NODE_ARRAY_DECL) */
+        struct {
+            char* name;                 /* Array name */
+            int size;                   /* Array size (0 for parameters) */
+            int isParam;                /* 1 if this is a parameter, 0 otherwise */
+        } array_decl;
+
+        /* Array indexing (NODE_ARRAY_INDEX) */
+        struct {
+            char* name;                 /* Array name */
+            struct ASTNode* index;      /* Index expression */
+        } array_index;
     } data;
 } ASTNode;
 
@@ -146,6 +162,11 @@ ASTNode* createReturn(ASTNode* expr);                           /* Create return
 ASTNode* createIf(ASTNode* condition, ASTNode* then_stmt, ASTNode* else_stmt);  /* Create if statement */
 ASTNode* createWhile(ASTNode* condition, ASTNode* body);        /* Create while loop */
 ASTNode* createBlock(ASTNode* stmt_list);                       /* Create block statement */
+
+/* Array nodes */
+ASTNode* createArrayDecl(char* name, int size);                 /* Create array declaration */
+ASTNode* createArrayParam(char* name);                          /* Create array parameter */
+ASTNode* createArrayIndex(char* name, ASTNode* index);          /* Create array indexing */
 
 /* AST DISPLAY FUNCTION */
 void printAST(ASTNode* node, int level);                        /* Pretty-print the AST */

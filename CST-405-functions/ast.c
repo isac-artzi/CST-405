@@ -64,8 +64,9 @@ ASTNode* createAssign(char* var, ASTNode* value) {
     ASTNode* node = malloc(sizeof(ASTNode));
     node->type = NODE_ASSIGN;
     node->lineno = yylineno;
-    node->data.assign.var = strdup(var);  /* Variable name */
+    node->data.assign.var = var ? strdup(var) : NULL;  /* Variable name (NULL for array assignments) */
     node->data.assign.value = value;      /* Expression tree */
+    node->data.assign.arrayLHS = NULL;    /* Initialize to NULL */
     return node;
 }
 
@@ -177,6 +178,38 @@ ASTNode* createBlock(ASTNode* stmt_list) {
     return node;
 }
 
+/* Create an array declaration node */
+ASTNode* createArrayDecl(char* name, int size) {
+    ASTNode* node = malloc(sizeof(ASTNode));
+    node->type = NODE_ARRAY_DECL;
+    node->lineno = yylineno;
+    node->data.array_decl.name = strdup(name);
+    node->data.array_decl.size = size;
+    node->data.array_decl.isParam = 0;
+    return node;
+}
+
+/* Create an array parameter node (size unknown) */
+ASTNode* createArrayParam(char* name) {
+    ASTNode* node = malloc(sizeof(ASTNode));
+    node->type = NODE_ARRAY_DECL;
+    node->lineno = yylineno;
+    node->data.array_decl.name = strdup(name);
+    node->data.array_decl.size = 0;  /* Size unknown for parameters */
+    node->data.array_decl.isParam = 1;
+    return node;
+}
+
+/* Create an array indexing node */
+ASTNode* createArrayIndex(char* name, ASTNode* index) {
+    ASTNode* node = malloc(sizeof(ASTNode));
+    node->type = NODE_ARRAY_INDEX;
+    node->lineno = yylineno;
+    node->data.array_index.name = strdup(name);
+    node->data.array_index.index = index;
+    return node;
+}
+
 /* Display the AST structure (for debugging and education) */
 void printAST(ASTNode* node, int level) {
     if (!node) return;
@@ -201,8 +234,17 @@ void printAST(ASTNode* node, int level) {
             printf("DECL: %s\n", node->data.name);
             break;
         case NODE_ASSIGN:
-            printf("ASSIGN: %s\n", node->data.assign.var);
-            printAST(node->data.assign.value, level + 1);
+            if (node->data.assign.arrayLHS) {
+                printf("ASSIGN (array element)\n");
+                for (int i = 0; i < level + 1; i++) printf("  ");
+                printf("LHS:\n");
+                printAST(node->data.assign.arrayLHS, level + 2);
+            } else {
+                printf("ASSIGN: %s\n", node->data.assign.var);
+            }
+            for (int i = 0; i < level + 1; i++) printf("  ");
+            printf("VALUE:\n");
+            printAST(node->data.assign.value, level + 2);
             break;
         case NODE_PRINT:
             printf("PRINT\n");
@@ -275,6 +317,21 @@ void printAST(ASTNode* node, int level) {
         case NODE_BLOCK:
             printf("BLOCK\n");
             printAST(node->data.block.stmt_list, level + 1);
+            break;
+        case NODE_ARRAY_DECL:
+            if (node->data.array_decl.isParam) {
+                printf("ARRAY_PARAM: %s[]\n", node->data.array_decl.name);
+            } else {
+                printf("ARRAY_DECL: %s[%d]\n",
+                       node->data.array_decl.name,
+                       node->data.array_decl.size);
+            }
+            break;
+        case NODE_ARRAY_INDEX:
+            printf("ARRAY_INDEX: %s\n", node->data.array_index.name);
+            for (int i = 0; i < level + 1; i++) printf("  ");
+            printf("INDEX:\n");
+            printAST(node->data.array_index.index, level + 2);
             break;
     }
 }

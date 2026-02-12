@@ -110,8 +110,33 @@ void appendOptimizedTAC(TACInstr* instr) {
     }
 }
 
-/* Forward declaration */
+/* Forward declarations */
 static void generateTACStmt(ASTNode* node);
+static int generateArgTAC(ASTNode* arg);
+
+/* Recursively generate TAC for function call arguments, returns count */
+static int generateArgTAC(ASTNode* arg) {
+    if (!arg) return 0;
+
+    if (arg->type == NODE_ARG_LIST) {
+        // Check if expr is nested ARG_LIST
+        if (arg->data.arg_list.expr && arg->data.arg_list.expr->type == NODE_ARG_LIST) {
+            // Recursively process nested list
+            return generateArgTAC(arg->data.arg_list.expr) + generateArgTAC(arg->data.arg_list.next);
+        } else {
+            // Process this argument
+            char* argTemp = generateTACExpr(arg->data.arg_list.expr);
+            appendTAC(createTAC(TAC_ARG, argTemp, NULL, NULL));
+            // Process remaining arguments
+            return 1 + generateArgTAC(arg->data.arg_list.next);
+        }
+    } else {
+        // Single argument
+        char* argTemp = generateTACExpr(arg);
+        appendTAC(createTAC(TAC_ARG, argTemp, NULL, NULL));
+        return 1;
+    }
+}
 
 /* Generate TAC for expression - returns the temp/var holding result */
 char* generateTACExpr(ASTNode* node) {
@@ -164,25 +189,8 @@ char* generateTACExpr(ASTNode* node) {
         }
 
         case NODE_FUNC_CALL: {
-            /* Generate TAC for arguments first */
-            ASTNode* arg = node->data.func_call.args;
-            int argCount = 0;
-
-            /* Generate args in order */
-            while (arg) {
-                char* argTemp;
-                if (arg->type == NODE_ARG_LIST) {
-                    argTemp = generateTACExpr(arg->data.arg_list.expr);
-                    appendTAC(createTAC(TAC_ARG, argTemp, NULL, NULL));
-                    argCount++;
-                    arg = arg->data.arg_list.next;
-                } else {
-                    argTemp = generateTACExpr(arg);
-                    appendTAC(createTAC(TAC_ARG, argTemp, NULL, NULL));
-                    argCount++;
-                    break;
-                }
-            }
+            /* Generate TAC for arguments and count them */
+            int argCount = generateArgTAC(node->data.func_call.args);
 
             /* Generate call instruction */
             char* result = allocTemp();
@@ -191,6 +199,20 @@ char* generateTACExpr(ASTNode* node) {
             appendTAC(createTAC(TAC_CALL, node->data.func_call.name, argCountStr, result));
 
             return result;
+        }
+
+        case NODE_ARRAY_INDEX: {
+            /* Generate index expression */
+            char* indexTemp = generateTACExpr(node->data.array_index.index);
+
+            /* Allocate temporary for result */
+            char* resultTemp = allocTemp();
+
+            /* Generate TAC_ARRAY_LOAD: result = array[index] */
+            appendTAC(createTAC(TAC_ARRAY_LOAD, node->data.array_index.name, indexTemp, resultTemp));
+
+            freeTemp(indexTemp);
+            return resultTemp;
         }
 
         default:
@@ -221,7 +243,20 @@ static void generateTACStmt(ASTNode* node) {
 
         case NODE_ASSIGN: {
             char* expr = generateTACExpr(node->data.assign.value);
-            appendTAC(createTAC(TAC_ASSIGN, expr, NULL, node->data.assign.var));
+
+            if (node->data.assign.arrayLHS) {
+                /* Array element assignment: arr[index] = expr */
+                ASTNode* arrayIndex = node->data.assign.arrayLHS;
+                char* indexTemp = generateTACExpr(arrayIndex->data.array_index.index);
+
+                /* Generate TAC_ARRAY_STORE: array[index] = value */
+                appendTAC(createTAC(TAC_ARRAY_STORE, arrayIndex->data.array_index.name, indexTemp, expr));
+
+                freeTemp(indexTemp);
+            } else {
+                /* Regular assignment */
+                appendTAC(createTAC(TAC_ASSIGN, expr, NULL, node->data.assign.var));
+            }
             freeTemp(expr);
             break;
         }
@@ -318,8 +353,36 @@ static void generateTACStmt(ASTNode* node) {
             generateTACStmtList(node);
             break;
 
+        case NODE_ARRAY_DECL: {
+            /* Generate array declaration */
+            if (!node->data.array_decl.isParam) {
+                char sizeStr[20];
+                sprintf(sizeStr, "%d", node->data.array_decl.size);
+                appendTAC(createTAC(TAC_ARRAY_DECL, sizeStr, NULL, node->data.array_decl.name));
+            } else {
+                /* Array parameter - handled by TAC_PARAM */
+                appendTAC(createTAC(TAC_PARAM, NULL, NULL, node->data.array_decl.name));
+            }
+            break;
+        }
+
         default:
             break;
+    }
+}
+
+/* Recursively generate TAC for function parameters */
+static void generateParamTAC(ASTNode* param) {
+    if (!param) return;
+
+    if (param->type == NODE_PARAM) {
+        appendTAC(createTAC(TAC_PARAM, NULL, NULL, param->data.param.name));
+    } else if (param->type == NODE_ARRAY_DECL && param->data.array_decl.isParam) {
+        appendTAC(createTAC(TAC_PARAM, NULL, NULL, param->data.array_decl.name));
+    } else if (param->type == NODE_PARAM_LIST) {
+        // Recursively process nested param lists
+        generateParamTAC(param->data.param_list.param);
+        generateParamTAC(param->data.param_list.next);
     }
 }
 
@@ -331,22 +394,7 @@ static void generateTACFuncDef(ASTNode* node) {
     appendTAC(createTAC(TAC_FUNC_BEGIN, NULL, NULL, node->data.func_def.name));
 
     /* Generate parameter declarations */
-    ASTNode* param = node->data.func_def.params;
-    while (param) {
-        if (param->type == NODE_PARAM) {
-            appendTAC(createTAC(TAC_PARAM, NULL, NULL, param->data.param.name));
-            break;
-        } else if (param->type == NODE_PARAM_LIST) {
-            if (param->data.param_list.param &&
-                param->data.param_list.param->type == NODE_PARAM) {
-                appendTAC(createTAC(TAC_PARAM, NULL, NULL,
-                         param->data.param_list.param->data.param.name));
-            }
-            param = param->data.param_list.next;
-        } else {
-            break;
-        }
-    }
+    generateParamTAC(node->data.func_def.params);
 
     /* Generate function body */
     generateTACStmt(node->data.func_def.body);
@@ -461,6 +509,15 @@ void printTAC() {
                 break;
             case TAC_IF_TRUE:
                 printf("IF_TRUE %s GOTO %s\n", curr->arg1, curr->arg2);
+                break;
+            case TAC_ARRAY_DECL:
+                printf("ARRAY_DECL %s[%s]\n", curr->result, curr->arg1);
+                break;
+            case TAC_ARRAY_LOAD:
+                printf("%s = %s[%s]\n", curr->result, curr->arg1, curr->arg2);
+                break;
+            case TAC_ARRAY_STORE:
+                printf("%s[%s] = %s\n", curr->arg1, curr->arg2, curr->result);
                 break;
             default:
                 printf("UNKNOWN\n");
@@ -654,6 +711,15 @@ void printOptimizedTAC() {
             case TAC_IF_TRUE:
                 printf("IF_TRUE %s GOTO %s\n", curr->arg1, curr->arg2);
                 break;
+            case TAC_ARRAY_DECL:
+                printf("ARRAY_DECL %s[%s]\n", curr->result, curr->arg1);
+                break;
+            case TAC_ARRAY_LOAD:
+                printf("%s = %s[%s]\n", curr->result, curr->arg1, curr->arg2);
+                break;
+            case TAC_ARRAY_STORE:
+                printf("%s[%s] = %s\n", curr->arg1, curr->arg2, curr->result);
+                break;
             default:
                 printf("UNKNOWN\n");
                 break;
@@ -741,6 +807,15 @@ void saveTACToFile(const char* filename) {
             case TAC_IF_TRUE:
                 fprintf(file, "IF_TRUE %s GOTO %s\n", curr->arg1, curr->arg2);
                 break;
+            case TAC_ARRAY_DECL:
+                fprintf(file, "ARRAY_DECL %s[%s]\n", curr->result, curr->arg1);
+                break;
+            case TAC_ARRAY_LOAD:
+                fprintf(file, "%s = %s[%s]\n", curr->result, curr->arg1, curr->arg2);
+                break;
+            case TAC_ARRAY_STORE:
+                fprintf(file, "%s[%s] = %s\n", curr->arg1, curr->arg2, curr->result);
+                break;
             default:
                 fprintf(file, "UNKNOWN\n");
                 break;
@@ -826,6 +901,15 @@ void saveOptimizedTACToFile(const char* filename) {
                 break;
             case TAC_IF_TRUE:
                 fprintf(file, "IF_TRUE %s GOTO %s\n", curr->arg1, curr->arg2);
+                break;
+            case TAC_ARRAY_DECL:
+                fprintf(file, "ARRAY_DECL %s[%s]\n", curr->result, curr->arg1);
+                break;
+            case TAC_ARRAY_LOAD:
+                fprintf(file, "%s = %s[%s]\n", curr->result, curr->arg1, curr->arg2);
+                break;
+            case TAC_ARRAY_STORE:
+                fprintf(file, "%s[%s] = %s\n", curr->arg1, curr->arg2, curr->result);
                 break;
             default:
                 fprintf(file, "UNKNOWN\n");

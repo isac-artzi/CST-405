@@ -53,6 +53,8 @@
 ")"             { return ')'; }
 "{"             { return '{'; }
 "}"             { return '}'; }
+"["             { return '['; }
+"]"             { return ']'; }
 ","             { return ','; }
 
 "//".*          { /* Skip single-line comments */ }

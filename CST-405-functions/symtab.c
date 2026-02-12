@@ -29,6 +29,8 @@ int addVar(char* name) {
     /* Add new symbol entry */
     symtab.vars[symtab.count].name = strdup(name);
     symtab.vars[symtab.count].offset = symtab.nextOffset;
+    symtab.vars[symtab.count].isArray = 0;     /* Scalar variable */
+    symtab.vars[symtab.count].arraySize = 0;   /* Not an array */
 
     /* Advance offset by 4 bytes (size of int in MIPS) */
     symtab.nextOffset += 4;
@@ -38,6 +40,31 @@ int addVar(char* name) {
            name, symtab.vars[symtab.count - 1].offset);
 
     /* Return the offset for this variable */
+    return symtab.vars[symtab.count - 1].offset;
+}
+
+/* Add a new array to the symbol table */
+int addArray(char* name, int size) {
+    /* Check for duplicate declaration */
+    if (isVarDeclared(name)) {
+        printf("SYMBOL TABLE: ✗ Failed to add array '%s' - already declared\n", name);
+        return -1;
+    }
+
+    /* Add new symbol entry */
+    symtab.vars[symtab.count].name = strdup(name);
+    symtab.vars[symtab.count].offset = symtab.nextOffset;
+    symtab.vars[symtab.count].isArray = 1;      /* This is an array */
+    symtab.vars[symtab.count].arraySize = size; /* Store element count */
+
+    /* Allocate size * 4 bytes (each int is 4 bytes) */
+    int totalBytes = size * 4;
+    symtab.nextOffset += totalBytes;
+    symtab.count++;
+
+    printf("SYMBOL TABLE: ✓ Added array '%s[%d]' at stack offset %d (%d bytes)\n",
+           name, size, symtab.vars[symtab.count - 1].offset, totalBytes);
+
     return symtab.vars[symtab.count - 1].offset;
 }
 
@@ -60,6 +87,26 @@ int isVarDeclared(char* name) {
     return getVarOffset(name) != -1;  /* True if found, false otherwise */
 }
 
+/* Get array size */
+int getArraySize(char* name) {
+    for (int i = 0; i < symtab.count; i++) {
+        if (strcmp(symtab.vars[i].name, name) == 0) {
+            return symtab.vars[i].isArray ? symtab.vars[i].arraySize : -1;
+        }
+    }
+    return -1;  /* Not found or not an array */
+}
+
+/* Check if variable is an array */
+int isArray(char* name) {
+    for (int i = 0; i < symtab.count; i++) {
+        if (strcmp(symtab.vars[i].name, name) == 0) {
+            return symtab.vars[i].isArray;
+        }
+    }
+    return 0;  /* Not found, so not an array */
+}
+
 /* Print current symbol table contents for debugging/tracing */
 void printSymTab() {
     printf("\n=== SYMBOL TABLE STATE ===\n");
@@ -69,7 +116,14 @@ void printSymTab() {
     } else {
         printf("Variables:\n");
         for (int i = 0; i < symtab.count; i++) {
-            printf("  [%d] %s -> offset %d\n", i, symtab.vars[i].name, symtab.vars[i].offset);
+            if (symtab.vars[i].isArray) {
+                printf("  [%d] %s[%d] -> offset %d (%d bytes)\n",
+                       i, symtab.vars[i].name, symtab.vars[i].arraySize,
+                       symtab.vars[i].offset, symtab.vars[i].arraySize * 4);
+            } else {
+                printf("  [%d] %s -> offset %d\n",
+                       i, symtab.vars[i].name, symtab.vars[i].offset);
+            }
         }
     }
     printf("==========================\n\n");
