@@ -196,7 +196,16 @@ static int addFunction(char* name, int paramCount, char** params, int* paramIsAr
 
     /* Check if function already exists */
     if (findFunction(name)) {
-        fprintf(stderr, "  ✗ SEMANTIC ERROR: Function '%s' already defined\n", name);
+        fprintf(stderr, "\n╔════════════════════════════════════════════════════════════╗\n");
+        fprintf(stderr, "║ SEMANTIC ERROR - Duplicate Function Definition            ║\n");
+        fprintf(stderr, "╚════════════════════════════════════════════════════════════╝\n");
+        fprintf(stderr, "  📍 Location: Function '%s'\n", name);
+        fprintf(stderr, "  ❌ Error: This function is already defined elsewhere in the program\n");
+        fprintf(stderr, "  💡 Suggestion: Each function can only be defined once\n");
+        fprintf(stderr, "     → Option 1: Remove one of the duplicate definitions\n");
+        fprintf(stderr, "     → Option 2: Rename one function: %s2(), my%s(), etc.\n", name, name);
+        fprintf(stderr, "  📖 Note: If you want to use the function in multiple places,\n");
+        fprintf(stderr, "     define it once and call it multiple times\n\n");
         semInfo.errorCount++;
         return -1;
     }
@@ -295,8 +304,14 @@ static void checkExpr(ASTNode* node) {
 
         case NODE_VAR:
             if (!isVarDeclaredInScope(node->data.name)) {
-                fprintf(stderr, "  ✗ SEMANTIC ERROR (line %d): Variable '%s' used before declaration\n",
-                        node->lineno, node->data.name);
+                fprintf(stderr, "\n╔════════════════════════════════════════════════════════════╗\n");
+                fprintf(stderr, "║ SEMANTIC ERROR - Undeclared Variable                      ║\n");
+                fprintf(stderr, "╚════════════════════════════════════════════════════════════╝\n");
+                fprintf(stderr, "  📍 Location: Line %d\n", node->lineno);
+                fprintf(stderr, "  ❌ Error: Variable '%s' is used before being declared\n", node->data.name);
+                fprintf(stderr, "  💡 Suggestion: Add a declaration before using this variable:\n");
+                fprintf(stderr, "     → int %s;  (add this before line %d)\n", node->data.name, node->lineno);
+                fprintf(stderr, "  📖 Note: In C-minus, all variables must be declared before use\n\n");
                 semInfo.errorCount++;
             }
             break;
@@ -311,14 +326,38 @@ static void checkExpr(ASTNode* node) {
         case NODE_FUNC_CALL: {
             FunctionSymbol* func = findFunction(node->data.func_call.name);
             if (!func) {
-                fprintf(stderr, "  ✗ SEMANTIC ERROR (line %d): Function '%s' not declared\n",
-                        node->lineno, node->data.func_call.name);
+                fprintf(stderr, "\n╔════════════════════════════════════════════════════════════╗\n");
+                fprintf(stderr, "║ SEMANTIC ERROR - Undeclared Function                      ║\n");
+                fprintf(stderr, "╚════════════════════════════════════════════════════════════╝\n");
+                fprintf(stderr, "  📍 Location: Line %d\n", node->lineno);
+                fprintf(stderr, "  ❌ Error: Function '%s()' is called but not declared\n", node->data.func_call.name);
+                fprintf(stderr, "  💡 Suggestion: Make sure the function is defined before calling it\n");
+                fprintf(stderr, "  📖 Example function definition:\n");
+                fprintf(stderr, "     int %s(...params...) {\n", node->data.func_call.name);
+                fprintf(stderr, "         // function body\n");
+                fprintf(stderr, "         return value;\n");
+                fprintf(stderr, "     }\n\n");
                 semInfo.errorCount++;
             } else {
                 int argCount = countArgs(node->data.func_call.args);
                 if (argCount != func->paramCount) {
-                    fprintf(stderr, "  ✗ SEMANTIC ERROR (line %d): Function '%s' expects %d arguments, got %d\n",
-                            node->lineno, node->data.func_call.name, func->paramCount, argCount);
+                    fprintf(stderr, "\n╔════════════════════════════════════════════════════════════╗\n");
+                    fprintf(stderr, "║ SEMANTIC ERROR - Incorrect Argument Count                 ║\n");
+                    fprintf(stderr, "╚════════════════════════════════════════════════════════════╝\n");
+                    fprintf(stderr, "  📍 Location: Line %d\n", node->lineno);
+                    fprintf(stderr, "  ❌ Error: Function '%s()' expects %d argument(s), but got %d\n",
+                            node->data.func_call.name, func->paramCount, argCount);
+                    fprintf(stderr, "  💡 Suggestion: Check the function definition and match the parameters:\n");
+                    fprintf(stderr, "     → Function defined with %d parameter(s)\n", func->paramCount);
+                    fprintf(stderr, "     → You provided %d argument(s) in the call\n", argCount);
+                    if (argCount < func->paramCount) {
+                        fprintf(stderr, "     → Add %d more argument(s) to the function call\n",
+                                func->paramCount - argCount);
+                    } else {
+                        fprintf(stderr, "     → Remove %d argument(s) from the function call\n",
+                                argCount - func->paramCount);
+                    }
+                    fprintf(stderr, "\n");
                     semInfo.errorCount++;
                 } else {
                     printf("  ✓ Function call '%s' has correct argument count\n",
@@ -343,8 +382,14 @@ static void checkExpr(ASTNode* node) {
         case NODE_ARRAY_INDEX:
             /* Check if array is declared */
             if (!isVarDeclaredInScope(node->data.array_index.name)) {
-                fprintf(stderr, "  ✗ SEMANTIC ERROR (line %d): Array '%s' not declared\n",
-                        node->lineno, node->data.array_index.name);
+                fprintf(stderr, "\n╔════════════════════════════════════════════════════════════╗\n");
+                fprintf(stderr, "║ SEMANTIC ERROR - Undeclared Array                         ║\n");
+                fprintf(stderr, "╚════════════════════════════════════════════════════════════╝\n");
+                fprintf(stderr, "  📍 Location: Line %d\n", node->lineno);
+                fprintf(stderr, "  ❌ Error: Array '%s' is used before being declared\n", node->data.array_index.name);
+                fprintf(stderr, "  💡 Suggestion: Declare the array before using it:\n");
+                fprintf(stderr, "     → int %s[SIZE];  (replace SIZE with the desired array length)\n", node->data.array_index.name);
+                fprintf(stderr, "  📖 Example: int %s[10];  // Declares an array of 10 integers\n\n", node->data.array_index.name);
                 semInfo.errorCount++;
             }
             /* Check index expression */
@@ -363,8 +408,15 @@ static void checkStmt(ASTNode* node) {
     switch(node->type) {
         case NODE_DECL:
             if (addVarToScope(node->data.name) == -1) {
-                fprintf(stderr, "  ✗ SEMANTIC ERROR (line %d): Variable '%s' already declared in this scope\n",
-                        node->lineno, node->data.name);
+                fprintf(stderr, "\n╔════════════════════════════════════════════════════════════╗\n");
+                fprintf(stderr, "║ SEMANTIC ERROR - Duplicate Variable Declaration           ║\n");
+                fprintf(stderr, "╚════════════════════════════════════════════════════════════╝\n");
+                fprintf(stderr, "  📍 Location: Line %d\n", node->lineno);
+                fprintf(stderr, "  ❌ Error: Variable '%s' is already declared in the current scope\n", node->data.name);
+                fprintf(stderr, "  💡 Suggestion: Choose a different variable name or remove the duplicate declaration\n");
+                fprintf(stderr, "  📖 Note: Each variable can only be declared once per scope\n");
+                fprintf(stderr, "     → Use assignment (=) to change the value of an existing variable\n");
+                fprintf(stderr, "     → Or use a different name: %s2, my%s, etc.\n\n", node->data.name, node->data.name);
                 semInfo.errorCount++;
             } else {
                 printf("  ✓ Variable '%s' declared (line %d)\n", node->data.name, node->lineno);
@@ -379,8 +431,15 @@ static void checkStmt(ASTNode* node) {
             } else {
                 /* Scalar assignment: x = expr */
                 if (!isVarDeclaredInScope(node->data.assign.var)) {
-                    fprintf(stderr, "  ✗ SEMANTIC ERROR (line %d): Assignment to undeclared variable '%s'\n",
-                            node->lineno, node->data.assign.var);
+                    fprintf(stderr, "\n╔════════════════════════════════════════════════════════════╗\n");
+                    fprintf(stderr, "║ SEMANTIC ERROR - Assignment to Undeclared Variable        ║\n");
+                    fprintf(stderr, "╚════════════════════════════════════════════════════════════╝\n");
+                    fprintf(stderr, "  📍 Location: Line %d\n", node->lineno);
+                    fprintf(stderr, "  ❌ Error: Trying to assign to variable '%s' which hasn't been declared\n", node->data.assign.var);
+                    fprintf(stderr, "  💡 Suggestion: Declare the variable before assigning to it:\n");
+                    fprintf(stderr, "     → Add this before line %d:\n", node->lineno);
+                    fprintf(stderr, "       int %s;\n", node->data.assign.var);
+                    fprintf(stderr, "  📖 Remember: Variables must be declared before use in C-minus\n\n");
                     semInfo.errorCount++;
                 } else {
                     printf("  ✓ Assignment to '%s' is valid (line %d)\n", node->data.assign.var, node->lineno);
@@ -396,7 +455,18 @@ static void checkStmt(ASTNode* node) {
 
         case NODE_RETURN:
             if (!inFunction) {
-                fprintf(stderr, "  ✗ SEMANTIC ERROR: Return statement outside function\n");
+                fprintf(stderr, "\n╔════════════════════════════════════════════════════════════╗\n");
+                fprintf(stderr, "║ SEMANTIC ERROR - Misplaced Return Statement               ║\n");
+                fprintf(stderr, "╚════════════════════════════════════════════════════════════╝\n");
+                fprintf(stderr, "  📍 Location: Line %d\n", node->lineno);
+                fprintf(stderr, "  ❌ Error: Return statement found outside of a function\n");
+                fprintf(stderr, "  💡 Suggestion: Return statements can only appear inside functions\n");
+                fprintf(stderr, "     → Move this return statement inside a function body\n");
+                fprintf(stderr, "     → Or remove it if it's not needed\n");
+                fprintf(stderr, "  📖 Example of correct usage:\n");
+                fprintf(stderr, "     int myFunction() {\n");
+                fprintf(stderr, "         return 42;  ✓  (inside function - OK)\n");
+                fprintf(stderr, "     }\n\n");
                 semInfo.errorCount++;
             } else {
                 printf("  ✓ Return statement in function '%s'\n", currentFunction);
@@ -448,12 +518,28 @@ static void checkStmt(ASTNode* node) {
             } else {
                 /* Array declaration - check size is positive */
                 if (node->data.array_decl.size <= 0) {
-                    fprintf(stderr, "  ✗ SEMANTIC ERROR (line %d): Array '%s' size must be positive\n",
-                            node->lineno, node->data.array_decl.name);
+                    fprintf(stderr, "\n╔════════════════════════════════════════════════════════════╗\n");
+                    fprintf(stderr, "║ SEMANTIC ERROR - Invalid Array Size                       ║\n");
+                    fprintf(stderr, "╚════════════════════════════════════════════════════════════╝\n");
+                    fprintf(stderr, "  📍 Location: Line %d\n", node->lineno);
+                    fprintf(stderr, "  ❌ Error: Array '%s' declared with invalid size: %d\n",
+                            node->data.array_decl.name, node->data.array_decl.size);
+                    fprintf(stderr, "  💡 Suggestion: Array size must be a positive integer (> 0)\n");
+                    fprintf(stderr, "     → Change: int %s[%d];  ✗\n", node->data.array_decl.name, node->data.array_decl.size);
+                    fprintf(stderr, "     → To:     int %s[10]; ✓  (or any positive number)\n", node->data.array_decl.name);
+                    fprintf(stderr, "  📖 Common mistake: Using 0 or negative numbers for array size\n\n");
                     semInfo.errorCount++;
                 } else if (addArrayToScope(node->data.array_decl.name, node->data.array_decl.size) == -1) {
-                    fprintf(stderr, "  ✗ SEMANTIC ERROR (line %d): Array '%s' already declared\n",
-                            node->lineno, node->data.array_decl.name);
+                    fprintf(stderr, "\n╔════════════════════════════════════════════════════════════╗\n");
+                    fprintf(stderr, "║ SEMANTIC ERROR - Duplicate Array Declaration              ║\n");
+                    fprintf(stderr, "╚════════════════════════════════════════════════════════════╝\n");
+                    fprintf(stderr, "  📍 Location: Line %d\n", node->lineno);
+                    fprintf(stderr, "  ❌ Error: Array '%s' is already declared in this scope\n", node->data.array_decl.name);
+                    fprintf(stderr, "  💡 Suggestion: Remove the duplicate declaration or use a different name\n");
+                    fprintf(stderr, "     → Option 1: Delete this line if it's redundant\n");
+                    fprintf(stderr, "     → Option 2: Use a different name: %s2, my%s, etc.\n",
+                            node->data.array_decl.name, node->data.array_decl.name);
+                    fprintf(stderr, "  📖 Note: Each array can only be declared once per scope\n\n");
                     semInfo.errorCount++;
                 } else {
                     printf("  ✓ Array '%s[%d]' declared (line %d)\n",
