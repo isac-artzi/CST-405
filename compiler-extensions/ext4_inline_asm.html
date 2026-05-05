@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CST-405 — Extension 4: Inline Assembly</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f1117; --surface: #1a1d27; --surface2: #222636; --border: #2e3250;
+      --accent: #6c8ef5; --accent2: #a78bfa; --green: #4ade80; --red: #f87171;
+      --yellow: #fbbf24; --cyan: #22d3ee; --orange: #fb923c; --text: #e2e8f0;
+      --muted: #94a3b8; --mono: 'Fira Code','Cascadia Code','Consolas',monospace; --radius: 10px;
+    }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI',system-ui,sans-serif; font-size: 16px; line-height: 1.75; }
+    .page-wrap { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+    .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 1.75rem 1.1rem; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+    .sidebar .logo { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.2rem; }
+    .sidebar h2 { font-size: 0.95rem; color: var(--text); margin-bottom: 1.25rem; line-height: 1.3; }
+    .sidebar nav ul { list-style: none; }
+    .sidebar nav li { margin-bottom: 0.05rem; }
+    .sidebar nav a { display: block; padding: 0.3rem 0.55rem; border-radius: 6px; color: var(--muted); text-decoration: none; font-size: 0.82rem; transition: background 0.15s,color 0.15s; }
+    .sidebar nav a:hover { background: var(--surface2); color: var(--text); }
+    .sidebar nav .sec { font-size: 0.67rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent2); padding: 0.85rem 0.55rem 0.2rem; }
+    main { padding: 2.75rem 3.5rem 6rem; max-width: 880px; }
+    .hero { background: linear-gradient(135deg,#1a1d27,#161929); border: 1px solid var(--border); border-radius: var(--radius); padding: 2.25rem; margin-bottom: 2.75rem; position: relative; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at top left,rgba(74,222,128,.10) 0%,transparent 55%); }
+    .badge { display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(74,222,128,.15); border: 1px solid rgba(74,222,128,.35); color: var(--green); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.75rem; border-radius: 999px; margin-bottom: 0.9rem; }
+    .hero h1 { font-size: 2rem; font-weight: 800; line-height: 1.15; margin-bottom: 0.6rem; }
+    .hero h1 span { color: var(--green); }
+    .hero p { color: var(--muted); font-size: 1rem; max-width: 580px; }
+    .hero-meta { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--border); font-size: 0.78rem; color: var(--muted); }
+    .hero-meta span { display: flex; align-items: center; gap: 0.35rem; }
+    section { margin-bottom: 3rem; scroll-margin-top: 1.5rem; }
+    h2.sec-title { font-size: 1.35rem; font-weight: 700; color: var(--text); margin-bottom: 0.9rem; display: flex; align-items: center; gap: 0.55rem; }
+    h2.sec-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    h3 { font-size: 1.05rem; font-weight: 600; color: var(--accent2); margin: 1.5rem 0 0.5rem; }
+    h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.4rem; }
+    p { margin-bottom: 0.9rem; color: var(--text); }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.4rem; margin-bottom: 0.85rem; }
+    .card.info { border-left: 3px solid var(--accent); } .card.warn { border-left: 3px solid var(--yellow); }
+    .card.tip  { border-left: 3px solid var(--green); }  .card.task { border-left: 3px solid var(--orange); }
+    .card h4.info { color: var(--accent); } .card h4.warn { color: var(--yellow); }
+    .card h4.tip  { color: var(--green); }  .card h4.task { color: var(--orange); }
+    .card p, .card li { font-size: 0.875rem; color: var(--muted); margin-bottom: 0.3rem; }
+    .card ul, .card ol { padding-left: 1.2rem; } .card li { margin-bottom: 0.25rem; }
+    .code-block { background: #0d0f18; border: 1px solid var(--border); border-radius: var(--radius); margin: 0.75rem 0 1.25rem; overflow: hidden; }
+    .cb-header { display: flex; justify-content: space-between; align-items: center; padding: 0.45rem 1rem; background: var(--surface); border-bottom: 1px solid var(--border); font-size: 0.72rem; color: var(--muted); }
+    .cb-lang { font-weight: 700; color: var(--accent); font-family: var(--mono); }
+    .code-block pre { padding: 1.1rem 1.35rem; overflow-x: auto; font-family: var(--mono); font-size: 0.855rem; line-height: 1.65; }
+    .kw { color: #c792ea; font-weight: 600; } .ty { color: #82aaff; } .fn { color: #82aaff; }
+    .num { color: #f78c6c; } .str { color: #c3e88d; } .cmt { color: #546e7a; font-style: italic; }
+    .step-grid { display: flex; flex-direction: column; gap: 0; margin: 1rem 0; }
+    .step { display: grid; grid-template-columns: 48px 1fr; gap: 0; position: relative; }
+    .step-line { position: absolute; }
+    .step:not(:last-child) .step-line { left: 23px; top: 48px; bottom: 0; width: 2px; background: var(--border); }
+    .step-num { width: 46px; height: 46px; border-radius: 50%; background: var(--surface2); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; color: var(--green); flex-shrink: 0; margin-top: 0.1rem; position: relative; z-index: 1; }
+    .step-body { padding: 0 0 2rem 1.25rem; }
+    .step-body h3 { margin-top: 0.1rem; font-size: 1rem; color: var(--text); }
+    .step-body p { font-size: 0.875rem; }
+    .callout { display: flex; gap: 0.85rem; align-items: flex-start; background: rgba(108,142,245,0.08); border: 1px solid rgba(108,142,245,0.25); border-radius: var(--radius); padding: 0.9rem 1.1rem; margin: 1rem 0; }
+    .callout.warn { background: rgba(251,191,36,0.08); border-color: rgba(251,191,36,0.25); }
+    .callout.tip  { background: rgba(74,222,128,0.08);  border-color: rgba(74,222,128,0.25); }
+    .callout .icon { font-size: 1.15rem; flex-shrink: 0; }
+    .callout p { margin: 0; font-size: 0.875rem; color: var(--muted); }
+    .callout strong { color: var(--text); }
+    .file { display: inline-block; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 0.15em 0.55em; font-family: var(--mono); font-size: 0.82em; color: var(--cyan); }
+    code { font-family: var(--mono); font-size: 0.875em; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 0.1em 0.4em; color: var(--cyan); }
+    .deliverable { background: var(--surface); border: 2px solid var(--green); border-radius: var(--radius); padding: 1.5rem; margin-top: 1rem; }
+    .deliverable h3 { color: var(--green); font-size: 1.05rem; margin-top: 0; margin-bottom: 0.75rem; }
+    .deliverable li { color: var(--muted); font-size: 0.875rem; margin-bottom: 0.35rem; }
+    .deliverable ul { padding-left: 1.2rem; }
+    .challenge-banner { background: linear-gradient(135deg,rgba(167,139,250,0.12),rgba(108,142,245,0.08)); border: 2px solid var(--accent2); border-radius: var(--radius); padding: 2rem; margin-top: 1rem; position: relative; overflow: hidden; }
+    .challenge-banner h3 { color: var(--accent2); font-size: 1.15rem; margin-top: 0; margin-bottom: 0.5rem; }
+    .challenge-banner p { color: var(--muted); font-size: 0.9rem; }
+    .challenge-banner ul { padding-left: 1.2rem; }
+    .challenge-banner li { color: var(--muted); font-size: 0.875rem; margin-bottom: 0.35rem; }
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    @media (max-width: 860px) { .page-wrap { grid-template-columns: 1fr; } .sidebar { display: none; } main { padding: 2rem 1.25rem 4rem; } }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+  <aside class="sidebar">
+    <div class="logo">CST-405</div>
+    <h2>Extension 4: Inline Assembly</h2>
+    <nav><ul>
+      <li class="sec">Overview</li>
+      <li><a href="#overview">Goals &amp; Scope</a></li>
+      <li><a href="#why">Why Inline Asm?</a></li>
+      <li class="sec">Session 1</li>
+      <li><a href="#s1-lex">Keyword &amp; Token</a></li>
+      <li><a href="#s1-ast">AST Node</a></li>
+      <li><a href="#s1-codegen">Passthrough Emit</a></li>
+      <li><a href="#s1-test">Session 1 Test</a></li>
+      <li class="sec">Session 2</li>
+      <li><a href="#s2-syntax">Operand Syntax</a></li>
+      <li><a href="#s2-parse">Parsing Operands</a></li>
+      <li><a href="#s2-subst">Placeholder Substitution</a></li>
+      <li><a href="#s2-test">Session 2 Test</a></li>
+    </ul></nav>
+  </aside>
+
+  <main>
+    <div class="hero">
+      <div class="badge">&#9889; Extension 4 &mdash; Light-Moderate</div>
+      <h1>Inline<br><span>Assembly</span></h1>
+      <p>Add an <code>asm("...")</code> statement that passes raw MIPS instructions through the compiler verbatim, then extend it with <code>%0</code>-style variable operands that are automatically resolved to stack offsets.</p>
+      <div class="hero-meta">
+        <span>&#128218; 3 files modified</span>
+        <span>&#9200; 2 × 75-min sessions</span>
+        <span>&#128293; Difficulty: Light-Moderate</span>
+        <span>&#127381; Easiest option with great "cool factor"</span>
+      </div>
+    </div>
+
+    <section id="overview">
+      <h2 class="sec-title">Goals &amp; Scope</h2>
+      <div class="code-block">
+        <div class="cb-header"><span class="cb-lang">C-minus — session 1 goal</span></div>
+        <pre><span class="cmt">/* Raw passthrough: print 42 using a hand-written syscall */</span>
+<span class="kw">asm</span>(<span class="str">"li $v0, 1\nli $a0, 42\nsyscall\n"</span>);
+<span class="cmt">/* expected output: 42 */</span></pre>
+      </div>
+      <div class="code-block">
+        <div class="cb-header"><span class="cb-lang">C-minus — session 2 goal</span></div>
+        <pre><span class="kw">int</span> x;
+x <span class="op">=</span> <span class="num">100</span>;
+<span class="kw">asm</span>(<span class="str">"lw $a0, %0\nli $v0, 1\nsyscall\n"</span>, x);
+<span class="cmt">/* %0 is replaced by the frame offset of x, e.g. -8($fp) */</span>
+<span class="cmt">/* expected output: 100 */</span></pre>
+      </div>
+      <div class="card info">
+        <h4 class="info">Files to modify</h4>
+        <ul>
+          <li><span class="file">scanner.l</span> — add <code>asm</code> keyword token</li>
+          <li><span class="file">parser.y</span> + <span class="file">ast.h/ast.c</span> — <code>NODE_ASM_STMT</code> with string + variable list</li>
+          <li><span class="file">tac.c/tac.h</span> — <code>TAC_ASM</code> instruction (passes string through)</li>
+          <li><span class="file">codegen.c</span> — emit verbatim (session 1), substitute <code>%N</code> (session 2)</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="why">
+      <h2 class="sec-title">Why Inline Assembly?</h2>
+      <p>Real compilers (GCC, Clang, MSVC) all support inline assembly for low-level operations that cannot be expressed in the high-level language: special instructions, precise register control, or performance-critical inner loops. By adding this feature you are opening a deliberate "trap door" in your compiler: the front end stops checking the code inside the <code>asm()</code> block.</p>
+      <p>This extension is deliberately simple to implement, which gives you time to think deeply about the <em>implications</em> — you cannot do register allocation, optimize, or even parse the inline assembly, so the surrounding compiler state must be stable when control reaches the block.</p>
+      <div class="callout warn">
+        <span class="icon">&#9888;</span>
+        <p><strong>Important design note:</strong> Before entering an <code>asm()</code> block your codegen must spill all registers to memory (call <code>spillAllRegisters()</code>). The inline MIPS code may clobber any <code>$t</code> register, so all live values must be in memory before the block executes, and all registers must be invalidated after it.</p>
+      </div>
+    </section>
+
+    <!-- Session 1 -->
+    <section id="session1">
+      <h2 class="sec-title">Session 1 — Pass-Through Assembly</h2>
+      <div class="callout">
+        <span class="icon">&#127919;</span>
+        <p><strong>Goal:</strong> The compiler accepts <code>asm("...");</code>, creates a TAC node for it, and emits the string contents verbatim into the output file without any processing.</p>
+      </div>
+
+      <div class="step-grid">
+        <div class="step" id="s1-lex">
+          <div class="step-num">1</div><div class="step-line"></div>
+          <div class="step-body">
+            <h3>Lexer — asm keyword</h3>
+            <p>In <span class="file">scanner.l</span>, add one keyword rule in the same block as <code>if</code>, <code>while</code>, etc.:</p>
+            <div class="code-block"><div class="cb-header"><span class="cb-lang">scanner.l</span></div>
+            <pre><span class="str">"asm"</span>   { <span class="kw">return</span> ASM_KW; }</pre></div>
+            <p>Declare in <span class="file">parser.y</span>: <code>%token ASM_KW</code>. No new lexer state is needed because the string body is captured by your existing <code>STRING_LITERAL</code> rule (which you added or will add). If you haven't added that rule, add it now — it's the same rule needed for Extension 1.</p>
+          </div>
+        </div>
+
+        <div class="step" id="s1-ast">
+          <div class="step-num">2</div><div class="step-line"></div>
+          <div class="step-body">
+            <h3>AST node — NODE_ASM_STMT</h3>
+            <p>Add to <span class="file">ast.h</span>:</p>
+            <div class="code-block"><div class="cb-header"><span class="cb-lang">ast.h</span></div>
+            <pre>NODE_ASM_STMT,   <span class="cmt">/* inline asm block */</span>
+                 <span class="cmt">/* sval = asm string text             */</span>
+                 <span class="cmt">/* children = variable operand list   */</span></pre></div>
+            <p>In <span class="file">parser.y</span>, add a grammar rule inside <code>stmt</code>:</p>
+            <div class="code-block"><div class="cb-header"><span class="cb-lang">parser.y</span></div>
+            <pre>stmt: ASM_KW <span class="str">'('</span> STRING_LITERAL <span class="str">')'</span> <span class="str">';'</span>
+      { $$ = makeAsmStmt($<span class="num">3</span>, NULL); }
+    | ASM_KW <span class="str">'('</span> STRING_LITERAL <span class="str">','</span> operand_list <span class="str">')'</span> <span class="str">';'</span>
+      { $$ = makeAsmStmt($<span class="num">3</span>, $<span class="num">5</span>); }
+    ;</pre></div>
+            <p>For session 1, you only need the first rule. The <code>operand_list</code> will be added in session 2.</p>
+          </div>
+        </div>
+
+        <div class="step" id="s1-codegen">
+          <div class="step-num">3</div><div class="step-line"></div>
+          <div class="step-body">
+            <h3>TAC &amp; codegen passthrough</h3>
+            <p>In <span class="file">tac.h</span> add <code>TAC_ASM</code>. In <span class="file">tac.c</span>, when visiting <code>NODE_ASM_STMT</code>, emit one <code>TAC_ASM</code> instruction carrying the raw string in <code>arg1</code>.</p>
+            <p>In <span class="file">codegen.c</span>, handle <code>TAC_ASM</code>:</p>
+            <div class="code-block"><div class="cb-header"><span class="cb-lang">codegen.c — TAC_ASM handler (session 1)</span></div>
+            <pre><span class="kw">case</span> TAC_ASM:
+    spillAllRegisters(out);        <span class="cmt">/* flush dirty regs to memory */</span>
+    fprintf(out, <span class="str">"%s"</span>, instr->arg1);  <span class="cmt">/* emit verbatim */</span>
+    invalidateAllRegisters();      <span class="cmt">/* asm may have clobbered $t regs */</span>
+    <span class="kw">break</span>;</pre></div>
+            <div class="callout tip">
+              <span class="icon">&#128161;</span>
+              <p><strong>Multiline support:</strong> Your string literal rule should already preserve newlines inside the string (they are literal characters between the quotes). The <code>fprintf</code> passthrough emits them unchanged. Test that <code>"li $v0, 1\nli $a0, 42\nsyscall\n"</code> — where <code>\n</code> is a literal backslash-n escape in the source — becomes actual newlines in the output. You may need to process the <code>\n</code> escape in the lexer rule when copying the string.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="deliverable" id="s1-test">
+        <h3>&#10003; Session 1 Checkpoint</h3>
+        <div class="code-block"><div class="cb-header"><span class="cb-lang">test_asm1.c</span></div>
+        <pre><span class="cmt">/* Test 1: raw syscall — print 42 */</span>
+<span class="kw">asm</span>(<span class="str">"li $v0, 1\nli $a0, 42\nsyscall\n"</span>);
+
+<span class="cmt">/* Test 2: print newline char */</span>
+<span class="kw">asm</span>(<span class="str">"li $v0, 11\nli $a0, 10\nsyscall\n"</span>);
+
+<span class="cmt">/* Test 3: asm block inside a function */</span>
+<span class="kw">int</span> foo() {
+    <span class="kw">asm</span>(<span class="str">"li $v0, 1\nli $a0, 99\nsyscall\n"</span>);
+    <span class="kw">return</span> <span class="num">0</span>;
+}
+foo();
+<span class="cmt">/* expected output: 42, newline, 99 */</span></pre></div>
+        <ul>
+          <li>Generated <code>.s</code> file contains the verbatim MIPS text at the right location</li>
+          <li>Surrounding C-minus variables are not corrupted (registers are spilled/invalidated)</li>
+          <li>Running in MARS produces the expected output</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Session 2 -->
+    <section id="session2">
+      <h2 class="sec-title">Session 2 — Operand Substitution</h2>
+      <div class="callout">
+        <span class="icon">&#127919;</span>
+        <p><strong>Goal:</strong> Allow <code>asm("...", x, y)</code> where <code>%0</code> in the string is replaced by the frame offset of <code>x</code>, <code>%1</code> by the frame offset of <code>y</code>, etc.</p>
+      </div>
+
+      <div class="step-grid">
+        <div class="step" id="s2-syntax">
+          <div class="step-num">1</div><div class="step-line"></div>
+          <div class="step-body">
+            <h3>Design: what %0 means</h3>
+            <p>Given <code>asm("lw $a0, %0", x)</code>, the compiler knows that <code>x</code> is at frame offset <code>-8($fp)</code>. It substitutes <code>%0</code> with the string <code>"-8($fp)"</code>, producing <code>lw $a0, -8($fp)</code>. This is the MIPS addressing mode for a memory operand.</p>
+            <div class="code-block"><div class="cb-header"><span class="cb-lang">Before / After substitution</span></div>
+            <pre><span class="cmt">/* Source: */</span>  <span class="kw">asm</span>(<span class="str">"lw $t0, %0\nadd $t0, $t0, 1\nsw $t0, %0\n"</span>, x);
+<span class="cmt">/* Emitted: */</span>  lw  $t0, -8($fp)
+                add $t0, $t0, 1
+                sw  $t0, -8($fp)</pre></div>
+          </div>
+        </div>
+
+        <div class="step" id="s2-parse">
+          <div class="step-num">2</div><div class="step-line"></div>
+          <div class="step-body">
+            <h3>Parsing the operand list</h3>
+            <p>In <span class="file">parser.y</span>, add the <code>operand_list</code> rule and complete the second <code>asm</code> variant:</p>
+            <div class="code-block"><div class="cb-header"><span class="cb-lang">parser.y</span></div>
+            <pre>operand_list:
+    operand_list <span class="str">','</span> ID  { $$ = appendOperand($<span class="num">1</span>, makeIdNode($<span class="num">3</span>)); }
+  | ID                  { $$ = makeOperandList(makeIdNode($<span class="num">1</span>)); }
+  ;</pre></div>
+            <p>Store the operand list as child nodes of <code>NODE_ASM_STMT</code> (use the <code>children[]</code> array that other nodes use). In <span class="file">tac.c</span>, extend <code>TAC_ASM</code> to carry both the raw string and an array of variable names (resolve each variable name to its TAC temp or direct name at this point).</p>
+          </div>
+        </div>
+
+        <div class="step" id="s2-subst">
+          <div class="step-num">3</div><div class="step-line"></div>
+          <div class="step-body">
+            <h3>Placeholder substitution in codegen</h3>
+            <p>Write a helper function <code>substituteOperands(const char *tmpl, char **vars, int numVars)</code> in <span class="file">codegen.c</span>. Walk the template string character by character. When you encounter <code>%</code> followed by a digit <em>N</em>, replace it with the frame offset string for <code>vars[N]</code>.</p>
+            <div class="code-block"><div class="cb-header"><span class="cb-lang">codegen.c — substituteOperands sketch</span></div>
+            <pre><span class="kw">char</span> *substituteOperands(<span class="kw">const char</span> *tmpl,
+                          <span class="kw">char</span> **vars, <span class="kw">int</span> n) {
+    <span class="kw">static char</span> buf[<span class="num">4096</span>];
+    <span class="kw">int</span> i = <span class="num">0</span>, j = <span class="num">0</span>;
+    <span class="kw">while</span> (tmpl[i]) {
+        <span class="kw">if</span> (tmpl[i] == <span class="str">'%'</span> &amp;&amp; isdigit(tmpl[i+<span class="num">1</span>])) {
+            <span class="kw">int</span> idx = tmpl[++i] - <span class="str">'0'</span>;
+            <span class="kw">int</span> off = getFrameOffset(vars[idx]);
+            j += sprintf(buf+j, <span class="str">"%d($fp)"</span>, off);
+        } <span class="kw">else</span> {
+            buf[j++] = tmpl[i];
+        }
+        i++;
+    }
+    buf[j] = <span class="str">'\0'</span>;
+    <span class="kw">return</span> buf;
+}</pre></div>
+            <p>Call this function from the <code>TAC_ASM</code> handler and emit the result instead of the raw template.</p>
+            <div class="callout warn">
+              <span class="icon">&#9888;</span>
+              <p><strong>Remember:</strong> Still call <code>spillAllRegisters()</code> before emitting and <code>invalidateAllRegisters()</code> after — the substituted asm code may still write to any <code>$t</code> register.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="deliverable" id="s2-test">
+        <h3>&#10003; Session 2 Checkpoint</h3>
+        <div class="code-block"><div class="cb-header"><span class="cb-lang">test_asm2.c</span></div>
+        <pre><span class="kw">int</span> x; <span class="kw">int</span> y;
+x <span class="op">=</span> <span class="num">10</span>;
+y <span class="op">=</span> <span class="num">20</span>;
+
+<span class="cmt">/* Use inline asm to add x and y and print the result */</span>
+<span class="kw">asm</span>(<span class="str">"lw $t0, %0\nlw $t1, %1\nadd $a0,$t0,$t1\nli $v0,1\nsyscall\n"</span>, x, y);
+<span class="cmt">/* expected: 30 */</span>
+
+<span class="cmt">/* Increment x in-place via asm */</span>
+<span class="kw">asm</span>(<span class="str">"lw $t0, %0\naddiu $t0,$t0,1\nsw $t0, %0\n"</span>, x);
+print(x);
+<span class="cmt">/* expected: 11 (x was 10, incremented by asm) */</span></pre></div>
+        <ul>
+          <li>Generated <code>.s</code> shows correct offsets substituted for <code>%0</code>, <code>%1</code></li>
+          <li>After the asm block <code>x = 11</code> is visible to the C-minus code that follows</li>
+          <li>Operands with multiple variables in one block all resolve to distinct, correct offsets</li>
+        </ul>
+      </div>
+
+      <div class="challenge-banner">
+        <h3>Challenge Extensions</h3>
+        <ul>
+          <li>Support <code>%=out:x</code> modifier — emit a <code>sw</code> after the block to flush <code>$t0</code> back to <code>x</code></li>
+          <li>Support <code>%=in:x</code> modifier — emit a <code>lw</code> before the block to load <code>x</code> into <code>$t0</code></li>
+          <li>Support multi-line block syntax: <code>asm { line1; line2; }</code> without the string quotes</li>
+          <li>Emit a warning if a <code>%N</code> operand index is out of range</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

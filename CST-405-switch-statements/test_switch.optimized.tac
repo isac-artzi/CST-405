@@ -1,0 +1,246 @@
+Optimized Three-Address Code (TAC)
+===================================
+With function support and control flow
+
+  1: FUNC_BEGIN grade
+  2: PARAM score
+  3: DECL __sw0
+  4: __sw0 = score
+  5: t0 = __sw0 == 1
+  6: IF_FALSE t0 GOTO L6
+  7: GOTO L0
+  8: L6:
+  9: t0 = __sw0 == 2
+ 10: IF_FALSE t0 GOTO L7
+ 11: GOTO L1
+ 12: L7:
+ 13: t0 = __sw0 == 3
+ 14: IF_FALSE t0 GOTO L4
+ 15: GOTO L2
+ 16: L4:
+ 17: GOTO L3
+ 18: L0:
+ 19: RETURN 10
+ 20: L1:
+ 21: RETURN 20
+ 22: L2:
+ 23: RETURN 30
+ 24: L3:
+ 25: RETURN 99
+ 26: L5:
+ 27: FUNC_END grade
+ 28: FUNC_BEGIN main
+ 29: DECL x
+ 30: x = 2
+ 31: DECL __sw8
+ 32: __sw8 = x
+ 33: t0 = __sw8 == 1
+ 34: IF_FALSE t0 GOTO L14
+ 35: GOTO L8
+ 36: L14:
+ 37: t0 = __sw8 == 2
+ 38: IF_FALSE t0 GOTO L15
+ 39: GOTO L9
+ 40: L15:
+ 41: t0 = __sw8 == 3
+ 42: IF_FALSE t0 GOTO L12
+ 43: GOTO L10
+ 44: L12:
+ 45: GOTO L11
+ 46: L8:
+ 47: PRINT 10
+ 48: GOTO L13
+ 49: L9:
+ 50: PRINT 20
+ 51: GOTO L13
+ 52: L10:
+ 53: PRINT 30
+ 54: GOTO L13
+ 55: L11:
+ 56: PRINT 0
+ 57: GOTO L13
+ 58: L13:
+ 59: x = 99
+ 60: DECL __sw16
+ 61: __sw16 = x
+ 62: t0 = __sw16 == 1
+ 63: IF_FALSE t0 GOTO L21
+ 64: GOTO L16
+ 65: L21:
+ 66: t0 = __sw16 == 2
+ 67: IF_FALSE t0 GOTO L19
+ 68: GOTO L17
+ 69: L19:
+ 70: GOTO L18
+ 71: L16:
+ 72: PRINT 10
+ 73: GOTO L20
+ 74: L17:
+ 75: PRINT 20
+ 76: GOTO L20
+ 77: L18:
+ 78: PRINT 0
+ 79: GOTO L20
+ 80: L20:
+ 81: x = 3
+ 82: DECL __sw22
+ 83: __sw22 = x
+ 84: t0 = __sw22 == 3
+ 85: IF_FALSE t0 GOTO L27
+ 86: GOTO L22
+ 87: L27:
+ 88: t0 = __sw22 == 4
+ 89: IF_FALSE t0 GOTO L25
+ 90: GOTO L23
+ 91: L25:
+ 92: GOTO L24
+ 93: L22:
+ 94: PRINT 30
+ 95: GOTO L26
+ 96: L23:
+ 97: PRINT 40
+ 98: GOTO L26
+ 99: L24:
+100: PRINT 0
+101: GOTO L26
+102: L26:
+103: x = 4
+104: DECL __sw28
+105: __sw28 = x
+106: t0 = __sw28 == 4
+107: IF_FALSE t0 GOTO L33
+108: GOTO L28
+109: L33:
+110: t0 = __sw28 == 5
+111: IF_FALSE t0 GOTO L31
+112: GOTO L29
+113: L31:
+114: GOTO L30
+115: L28:
+116: L29:
+117: PRINT 10
+118: GOTO L32
+119: L30:
+120: PRINT 0
+121: GOTO L32
+122: L32:
+123: x = 15
+124: DECL d
+125: t0 = x / 10
+126: d = t0
+127: DECL __sw34
+128: __sw34 = d
+129: t0 = __sw34 == 0
+130: IF_FALSE t0 GOTO L40
+131: GOTO L34
+132: L40:
+133: t0 = __sw34 == 1
+134: IF_FALSE t0 GOTO L41
+135: GOTO L35
+136: L41:
+137: t0 = __sw34 == 2
+138: IF_FALSE t0 GOTO L38
+139: GOTO L36
+140: L38:
+141: GOTO L37
+142: L34:
+143: PRINT 0
+144: GOTO L39
+145: L35:
+146: PRINT 1
+147: GOTO L39
+148: L36:
+149: PRINT 2
+150: GOTO L39
+151: L37:
+152: PRINT 9
+153: GOTO L39
+154: L39:
+155: DECL g
+156: ARG 3
+157: t0 = CALL grade, 1
+158: g = t0
+159: DECL __sw42
+160: __sw42 = g
+161: t0 = __sw42 == 30
+162: IF_FALSE t0 GOTO L44
+163: GOTO L42
+164: L44:
+165: GOTO L43
+166: L42:
+167: PRINT 7
+168: GOTO L45
+169: L43:
+170: PRINT 0
+171: GOTO L45
+172: L45:
+173: DECL outer
+174: DECL inner
+175: outer = 2
+176: inner = 10
+177: DECL __sw46
+178: __sw46 = outer
+179: t0 = __sw46 == 1
+180: IF_FALSE t0 GOTO L51
+181: GOTO L46
+182: L51:
+183: t0 = __sw46 == 2
+184: IF_FALSE t0 GOTO L49
+185: GOTO L47
+186: L49:
+187: GOTO L48
+188: L46:
+189: DECL __sw52
+190: __sw52 = inner
+191: t0 = __sw52 == 10
+192: IF_FALSE t0 GOTO L54
+193: GOTO L52
+194: L54:
+195: GOTO L53
+196: L52:
+197: PRINT 100
+198: GOTO L55
+199: L53:
+200: PRINT 0
+201: GOTO L55
+202: L55:
+203: GOTO L50
+204: L47:
+205: DECL __sw56
+206: __sw56 = inner
+207: t0 = __sw56 == 10
+208: IF_FALSE t0 GOTO L58
+209: GOTO L56
+210: L58:
+211: GOTO L57
+212: L56:
+213: PRINT 200
+214: GOTO L59
+215: L57:
+216: PRINT 0
+217: GOTO L59
+218: L59:
+219: GOTO L50
+220: L48:
+221: PRINT 0
+222: GOTO L50
+223: L50:
+224: DECL i
+225: i = 0
+226: DECL __sw60
+227: __sw60 = i
+228: t0 = __sw60 == 0
+229: IF_FALSE t0 GOTO L62
+230: GOTO L60
+231: L62:
+232: GOTO L61
+233: L60:
+234: i = 1
+235: GOTO L63
+236: L61:
+237: i = 0
+238: GOTO L63
+239: L63:
+240: PRINT i
+241: RETURN 0
+242: FUNC_END main

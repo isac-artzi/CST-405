@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CST-405 — Extension 5: Closures &amp; First-Class Functions</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f1117; --surface: #1a1d27; --surface2: #222636; --border: #2e3250;
+      --accent: #6c8ef5; --accent2: #a78bfa; --green: #4ade80; --red: #f87171;
+      --yellow: #fbbf24; --cyan: #22d3ee; --orange: #fb923c; --text: #e2e8f0;
+      --muted: #94a3b8; --mono: 'Fira Code','Cascadia Code','Consolas',monospace; --radius: 10px;
+    }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI',system-ui,sans-serif; font-size: 16px; line-height: 1.75; }
+    .page-wrap { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+    .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 1.75rem 1.1rem; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+    .sidebar .logo { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.2rem; }
+    .sidebar h2 { font-size: 0.95rem; color: var(--text); margin-bottom: 1.25rem; line-height: 1.3; }
+    .sidebar nav ul { list-style: none; }
+    .sidebar nav li { margin-bottom: 0.05rem; }
+    .sidebar nav a { display: block; padding: 0.3rem 0.55rem; border-radius: 6px; color: var(--muted); text-decoration: none; font-size: 0.82rem; transition: background 0.15s,color 0.15s; }
+    .sidebar nav a:hover { background: var(--surface2); color: var(--text); }
+    .sidebar nav .sec { font-size: 0.67rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent2); padding: 0.85rem 0.55rem 0.2rem; }
+    main { padding: 2.75rem 3.5rem 6rem; max-width: 880px; }
+    .hero { background: linear-gradient(135deg,#1a1d27,#161929); border: 1px solid var(--border); border-radius: var(--radius); padding: 2.25rem; margin-bottom: 2.75rem; position: relative; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at top left,rgba(248,113,113,.10) 0%,transparent 55%); }
+    .badge { display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(248,113,113,.15); border: 1px solid rgba(248,113,113,.35); color: var(--red); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.75rem; border-radius: 999px; margin-bottom: 0.9rem; }
+    .hero h1 { font-size: 2rem; font-weight: 800; line-height: 1.15; margin-bottom: 0.6rem; }
+    .hero h1 span { color: var(--red); }
+    .hero p { color: var(--muted); font-size: 1rem; max-width: 580px; }
+    .hero-meta { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--border); font-size: 0.78rem; color: var(--muted); }
+    .hero-meta span { display: flex; align-items: center; gap: 0.35rem; }
+    section { margin-bottom: 3rem; scroll-margin-top: 1.5rem; }
+    h2.sec-title { font-size: 1.35rem; font-weight: 700; color: var(--text); margin-bottom: 0.9rem; display: flex; align-items: center; gap: 0.55rem; }
+    h2.sec-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    h3 { font-size: 1.05rem; font-weight: 600; color: var(--accent2); margin: 1.5rem 0 0.5rem; }
+    h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.4rem; }
+    p { margin-bottom: 0.9rem; color: var(--text); }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.4rem; margin-bottom: 0.85rem; }
+    .card.info { border-left: 3px solid var(--accent); } .card.warn { border-left: 3px solid var(--yellow); }
+    .card.tip  { border-left: 3px solid var(--green); }
+    .card h4.info { color: var(--accent); } .card h4.warn { color: var(--yellow); } .card h4.tip { color: var(--green); }
+    .card p, .card li { font-size: 0.875rem; color: var(--muted); margin-bottom: 0.3rem; }
+    .card ul, .card ol { padding-left: 1.2rem; } .card li { margin-bottom: 0.25rem; }
+    .code-block { background: #0d0f18; border: 1px solid var(--border); border-radius: var(--radius); margin: 0.75rem 0 1.25rem; overflow: hidden; }
+    .cb-header { display: flex; justify-content: space-between; align-items: center; padding: 0.45rem 1rem; background: var(--surface); border-bottom: 1px solid var(--border); font-size: 0.72rem; color: var(--muted); }
+    .cb-lang { font-weight: 700; color: var(--accent); font-family: var(--mono); }
+    .code-block pre { padding: 1.1rem 1.35rem; overflow-x: auto; font-family: var(--mono); font-size: 0.855rem; line-height: 1.65; }
+    .kw { color: #c792ea; font-weight: 600; } .ty { color: #82aaff; } .fn { color: #82aaff; }
+    .num { color: #f78c6c; } .str { color: #c3e88d; } .cmt { color: #546e7a; font-style: italic; }
+    .step-grid { display: flex; flex-direction: column; gap: 0; margin: 1rem 0; }
+    .step { display: grid; grid-template-columns: 48px 1fr; gap: 0; position: relative; }
+    .step-line { position: absolute; }
+    .step:not(:last-child) .step-line { left: 23px; top: 48px; bottom: 0; width: 2px; background: var(--border); }
+    .step-num { width: 46px; height: 46px; border-radius: 50%; background: var(--surface2); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; color: var(--red); flex-shrink: 0; margin-top: 0.1rem; position: relative; z-index: 1; }
+    .step-body { padding: 0 0 2rem 1.25rem; }
+    .step-body h3 { margin-top: 0.1rem; font-size: 1rem; color: var(--text); }
+    .step-body p { font-size: 0.875rem; }
+    .callout { display: flex; gap: 0.85rem; align-items: flex-start; background: rgba(108,142,245,0.08); border: 1px solid rgba(108,142,245,0.25); border-radius: var(--radius); padding: 0.9rem 1.1rem; margin: 1rem 0; }
+    .callout.warn { background: rgba(251,191,36,0.08); border-color: rgba(251,191,36,0.25); }
+    .callout.tip  { background: rgba(74,222,128,0.08);  border-color: rgba(74,222,128,0.25); }
+    .callout .icon { font-size: 1.15rem; flex-shrink: 0; }
+    .callout p { margin: 0; font-size: 0.875rem; color: var(--muted); }
+    .callout strong { color: var(--text); }
+    .file { display: inline-block; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 0.15em 0.55em; font-family: var(--mono); font-size: 0.82em; color: var(--cyan); }
+    code { font-family: var(--mono); font-size: 0.875em; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 0.1em 0.4em; color: var(--cyan); }
+    .deliverable { background: var(--surface); border: 2px solid var(--green); border-radius: var(--radius); padding: 1.5rem; margin-top: 1rem; }
+    .deliverable h3 { color: var(--green); font-size: 1.05rem; margin-top: 0; margin-bottom: 0.75rem; }
+    .deliverable li { color: var(--muted); font-size: 0.875rem; margin-bottom: 0.35rem; }
+    .deliverable ul { padding-left: 1.2rem; }
+    .challenge-banner { background: linear-gradient(135deg,rgba(167,139,250,0.12),rgba(108,142,245,0.08)); border: 2px solid var(--accent2); border-radius: var(--radius); padding: 2rem; margin-top: 1rem; position: relative; overflow: hidden; }
+    .challenge-banner h3 { color: var(--accent2); font-size: 1.15rem; margin-top: 0; margin-bottom: 0.5rem; }
+    .challenge-banner p { color: var(--muted); font-size: 0.9rem; }
+    .challenge-banner ul { padding-left: 1.2rem; }
+    .challenge-banner li { color: var(--muted); font-size: 0.875rem; margin-bottom: 0.35rem; }
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    @media (max-width: 860px) { .page-wrap { grid-template-columns: 1fr; } .sidebar { display: none; } main { padding: 2rem 1.25rem 4rem; } }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+  <aside class="sidebar">
+    <div class="logo">CST-405</div>
+    <h2>Extension 5: Closures</h2>
+    <nav><ul>
+      <li class="sec">Overview</li>
+      <li><a href="#overview">Goals &amp; Scope</a></li>
+      <li><a href="#background">The Closure Problem</a></li>
+      <li class="sec">Session 1</li>
+      <li><a href="#s1-lambda">Lambda Syntax</a></li>
+      <li><a href="#s1-lift">Lambda Lifting</a></li>
+      <li><a href="#s1-call">Anonymous Call</a></li>
+      <li><a href="#s1-test">Session 1 Test</a></li>
+      <li class="sec">Session 2</li>
+      <li><a href="#s2-capture">Capture Analysis</a></li>
+      <li><a href="#s2-env">Environment Struct</a></li>
+      <li><a href="#s2-fat">Fat Pointer</a></li>
+      <li><a href="#s2-test">Session 2 Test</a></li>
+    </ul></nav>
+  </aside>
+
+  <main>
+    <div class="hero">
+      <div class="badge">&#128293; Extension 5 &mdash; Very Heavy</div>
+      <h1>Closures &amp;<br><span>First-Class Functions</span></h1>
+      <p>Add anonymous functions with <code>fun(x) -&gt; int { ... }</code> syntax, then implement variable capture using a heap-allocated environment struct — the same technique used by Python, JavaScript, and Rust.</p>
+      <div class="hero-meta">
+        <span>&#128218; All files modified</span>
+        <span>&#9200; 2 × 75-min sessions</span>
+        <span>&#128293; Difficulty: Very Heavy</span>
+        <span>&#127919; For strongest students / teams</span>
+      </div>
+    </div>
+
+    <section id="overview">
+      <h2 class="sec-title">Goals &amp; Scope</h2>
+      <div class="code-block">
+        <div class="cb-header"><span class="cb-lang">C-minus — session targets</span></div>
+        <pre><span class="cmt">/* Session 1: anonymous function, no capture */</span>
+<span class="kw">int</span> (*f)(<span class="kw">int</span>);
+f <span class="op">=</span> <span class="kw">fun</span>(<span class="kw">int</span> x) <span class="op">-&gt;</span> <span class="kw">int</span> { <span class="kw">return</span> x <span class="op">*</span> <span class="num">2</span>; };
+print(f(<span class="num">5</span>));    <span class="cmt">/* 10 */</span>
+print(f(<span class="num">7</span>));    <span class="cmt">/* 14 */</span>
+
+<span class="cmt">/* Session 2: capture an outer variable */</span>
+<span class="kw">int</span> base;
+base <span class="op">=</span> <span class="num">100</span>;
+<span class="kw">int</span> (*g)(<span class="kw">int</span>);
+g <span class="op">=</span> <span class="kw">fun</span>(<span class="kw">int</span> x) <span class="op">-&gt;</span> <span class="kw">int</span> { <span class="kw">return</span> x <span class="op">+</span> base; };  <span class="cmt">/* captures base */</span>
+base <span class="op">=</span> <span class="num">200</span>;   <span class="cmt">/* change after closure creation */</span>
+print(g(<span class="num">5</span>));   <span class="cmt">/* 105 — captured value at creation time (200+5 if by-ref) */</span></pre>
+      </div>
+      <div class="card info">
+        <h4 class="info">Files to modify</h4>
+        <ul>
+          <li><span class="file">scanner.l</span> — <code>fun</code> keyword, <code>-&gt;</code> token</li>
+          <li><span class="file">parser.y</span> + <span class="file">ast.h/ast.c</span> — <code>NODE_LAMBDA</code> with capture list</li>
+          <li><span class="file">semantic.c</span> — capture analysis: find variables referenced inside lambda but declared outside</li>
+          <li><span class="file">symtab.h/symtab.c</span> — environment struct types (session 2)</li>
+          <li><span class="file">tac.c/tac.h</span> — lambda lifting, environment allocation, fat pointer</li>
+          <li><span class="file">codegen.c</span> — environment load/store, fat pointer convention</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="background">
+      <h2 class="sec-title">The Closure Problem</h2>
+      <p>A closure is a function that <em>remembers</em> variables from the scope where it was created, even after that scope has returned. This is hard because the function and the captured variables must outlive the stack frame that created them.</p>
+      <div class="code-block">
+        <div class="cb-header"><span class="cb-lang">The problem visualised</span></div>
+        <pre><span class="kw">int</span> base <span class="op">=</span> <span class="num">100</span>;                  <span class="cmt">← lives at -8($fp) in outer frame</span>
+g <span class="op">=</span> <span class="kw">fun</span>(x) <span class="op">-&gt;</span> <span class="kw">int</span> { x <span class="op">+</span> base };   <span class="cmt">← needs base, but outer frame may be gone</span>
+<span class="cmt">/* when g(5) is called later, base's stack slot may be overwritten */</span></pre>
+      </div>
+      <p>The solution: copy the captured values into a <strong>heap-allocated environment struct</strong> at closure creation time. The closure carries two values as a "fat pointer": the code address and the environment address. Inside the lambda, references to captured variables read from the environment struct instead of the stack.</p>
+      <div class="code-block">
+        <div class="cb-header"><span class="cb-lang">Fat pointer layout</span></div>
+        <pre>g variable on stack:
+  [  code_ptr  ] ← address of _lambda_0  (4 bytes)
+  [  env_ptr   ] ← address on heap       (4 bytes)
+  <span class="cmt">total: 8 bytes per closure variable</span>
+
+Heap environment for this closure:
+  [ base_copy  ] ← value of base at creation time (4 bytes)</pre>
+      </div>
+    </section>
+
+    <section id="session1">
+      <h2 class="sec-title">Session 1 — First-Class Function Values</h2>
+      <div class="callout">
+        <span class="icon">&#127919;</span>
+        <p><strong>Goal:</strong> Parse <code>fun(params) -&gt; type { body }</code>, generate a named function in MIPS (lambda lifting), and call it indirectly. No variable capture yet.</p>
+      </div>
+
+      <div class="step-grid">
+        <div class="step" id="s1-lambda">
+          <div class="step-num">1</div><div class="step-line"></div>
+          <div class="step-body">
+            <h3>Lambda syntax</h3>
+            <p>In <span class="file">scanner.l</span>:</p>
+            <div class="code-block"><div class="cb-header"><span class="cb-lang">scanner.l</span></div>
+            <pre><span class="str">"fun"</span>   { <span class="kw">return</span> FUN; }
+<span class="str">"->"</span>    { <span class="kw">return</span> ARROW; }</pre></div>
+            <p>In <span class="file">parser.y</span>, add a new expression rule:</p>
+            <div class="code-block"><div class="cb-header"><span class="cb-lang">parser.y</span></div>
+            <pre>expr: FUN <span class="str">'('</span> param_list <span class="str">')'</span> ARROW type <span class="str">'{'</span> stmt_list <span class="str">'}'</span>
+      { $$ = makeLambda($<span class="num">3</span>, $<span class="num">6</span>, $<span class="num">8</span>); }</pre></div>
+            <p>Reuse the existing <code>param_list</code> and <code>type</code> rules from function definitions. Add to <span class="file">ast.h</span>: <code>NODE_LAMBDA</code> with a body child, param list, return type, and a <code>captureList[]</code> array (populated in session 2). Also add a <code>generatedName[64]</code> field that will hold the compiler-assigned name like <code>_lambda_0</code>.</p>
+          </div>
+        </div>
+
+        <div class="step" id="s1-lift">
+          <div class="step-num">2</div><div class="step-line"></div>
+          <div class="step-body">
+            <h3>Lambda lifting in tac.c</h3>
+            <p>"Lambda lifting" means generating a regular named function for each lambda. In <span class="file">tac.c</span>, maintain a static counter <code>lambdaCount</code>. When you encounter <code>NODE_LAMBDA</code>:</p>
+            <ol style="font-size:0.875rem;color:var(--muted);padding-left:1.4rem;margin-bottom:0.9rem;">
+              <li>Assign a generated name: <code>_lambda_0</code>, <code>_lambda_1</code>, etc.</li>
+              <li>Emit a <code>TAC_FUNC_BEGIN</code> for the lambda (same as a regular function)</li>
+              <li>Recursively generate TAC for the body</li>
+              <li>Emit <code>TAC_FUNC_END</code></li>
+              <li>Return the lambda expression's <em>value</em> as a <code>TAC_FUNC_ADDR</code> of <code>_lambda_0</code></li>
+            </ol>
+            <div class="callout warn">
+              <span class="icon">&#9888;</span>
+              <p><strong>Order matters:</strong> Lambda TAC must be emitted <em>before</em> the surrounding function's TAC, or place it in a separate queue and flush it at the end. In MIPS, all functions must be defined before any code that calls them (or you can use forward labels — check how your existing <code>codegen.c</code> handles function ordering).</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="step" id="s1-call">
+          <div class="step-num">3</div><div class="step-line"></div>
+          <div class="step-body">
+            <h3>Calling an anonymous function</h3>
+            <p>For session 1, a closure variable is just a regular function pointer (one word, the code address — no fat pointer yet). Calling it works exactly like Extension 3 session 1: load the address, <code>jalr</code>. In session 2 you'll expand this to two words.</p>
+            <p>The key session 1 test: assign a lambda to a function pointer variable, call it multiple times with different arguments, see correct results. No outer variable references inside the lambda body yet.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="deliverable" id="s1-test">
+        <h3>&#10003; Session 1 Checkpoint</h3>
+        <div class="code-block"><div class="cb-header"><span class="cb-lang">test_lambda1.c</span></div>
+        <pre><span class="kw">int</span> (*double_it)(<span class="kw">int</span>);
+double_it <span class="op">=</span> <span class="kw">fun</span>(<span class="kw">int</span> x) <span class="op">-&gt;</span> <span class="kw">int</span> { <span class="kw">return</span> x <span class="op">*</span> <span class="num">2</span>; };
+print(double_it(<span class="num">5</span>));    <span class="cmt">/* 10 */</span>
+print(double_it(<span class="num">21</span>));   <span class="cmt">/* 42 */</span>
+
+<span class="cmt">/* pass lambda as argument */</span>
+<span class="kw">int</span> apply(<span class="kw">int</span> (*f)(<span class="kw">int</span>), <span class="kw">int</span> v) { <span class="kw">return</span> f(v); }
+print(apply(double_it, <span class="num">7</span>));   <span class="cmt">/* 14 */</span>
+
+<span class="cmt">/* lambda returned from function */</span>
+<span class="kw">int</span> (*makeLambda())(<span class="kw">int</span>) {
+    <span class="kw">return</span> <span class="kw">fun</span>(<span class="kw">int</span> x) <span class="op">-&gt;</span> <span class="kw">int</span> { <span class="kw">return</span> x <span class="op">+</span> <span class="num">1</span>; };
+}
+<span class="kw">int</span> (*incr)(<span class="kw">int</span>) <span class="op">=</span> makeLambda();
+print(incr(<span class="num">9</span>));    <span class="cmt">/* 10 */</span></pre></div>
+        <ul>
+          <li>Generated MIPS contains a labeled <code>_lambda_0</code> function with the correct body</li>
+          <li>Calling through the function pointer invokes the lambda body</li>
+          <li>Lambdas can be passed to and returned from functions</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="session2">
+      <h2 class="sec-title">Session 2 — Variable Capture</h2>
+      <div class="callout">
+        <span class="icon">&#127919;</span>
+        <p><strong>Goal:</strong> When a lambda references a variable from the enclosing scope, allocate a heap environment struct at closure creation time, copy the captured values, and pass the environment as a hidden argument. Inside the lambda, reads of captured variables come from the environment.</p>
+      </div>
+
+      <div class="step-grid">
+        <div class="step" id="s2-capture">
+          <div class="step-num">1</div><div class="step-line"></div>
+          <div class="step-body">
+            <h3>Capture analysis in semantic.c</h3>
+            <p>Walk the lambda body AST. For each identifier reference, look it up in the symbol table. If it resolves to a variable declared in an <em>outer</em> scope (depth less than the lambda's scope depth), add it to the lambda's <code>captureList[]</code>.</p>
+            <div class="code-block"><div class="cb-header"><span class="cb-lang">semantic.c — capture detection sketch</span></div>
+            <pre><span class="kw">void</span> findCaptures(ASTNode *lambdaNode, <span class="kw">int</span> lambdaDepth) {
+    <span class="cmt">/* walk all ID nodes in the body */</span>
+    <span class="cmt">/* for each ID: look up in symtab */</span>
+    <span class="cmt">/* if entry->scopeDepth &lt; lambdaDepth → capture it */</span>
+    <span class="cmt">/* add to lambdaNode->captureList[] if not already there */</span>
+}</pre></div>
+            <p>Store each captured variable's name and its outer-scope frame offset in the capture list. These will be copied into the environment at closure creation time.</p>
+          </div>
+        </div>
+
+        <div class="step" id="s2-env">
+          <div class="step-num">2</div><div class="step-line"></div>
+          <div class="step-body">
+            <h3>Environment allocation in tac.c</h3>
+            <p>Add a new TAC instruction <code>TAC_ALLOC_ENV</code> that allocates <em>N × 4</em> bytes on the heap (using the same bump-pointer heap from Extension 1, or a fresh one). Emit one <code>TAC_ENV_STORE</code> instruction per captured variable to copy its current value into the environment.</p>
+            <div class="code-block"><div class="cb-header"><span class="cb-lang">TAC emitted at closure creation</span></div>
+            <pre>t0 = ALLOC_ENV 4             <span class="cmt">← allocate 1 slot (base is captured)</span>
+ENV_STORE t0[0] = base       <span class="cmt">← copy current value of base into env</span>
+g_code = &amp;_lambda_0          <span class="cmt">← code pointer</span>
+g_env  = t0                  <span class="cmt">← env pointer — store adjacent on stack</span></pre></div>
+            <p>A closure variable <code>g</code> now occupies <em>two</em> stack words: the code address at <code>offset</code> and the env address at <code>offset - 4</code> (or <code>offset + 4</code>, depending on your layout). Update the symbol table entry for closure-typed variables to allocate 8 bytes instead of 4.</p>
+          </div>
+        </div>
+
+        <div class="step" id="s2-fat">
+          <div class="step-num">3</div><div class="step-line"></div>
+          <div class="step-body">
+            <h3>Fat pointer calling convention</h3>
+            <p>When calling through a closure variable, you must pass the environment pointer as a hidden last (or first) argument. The convention choice is yours — just be consistent. Let's use "last argument":</p>
+            <div class="code-block"><div class="cb-header"><span class="cb-lang">TAC for g(5) where g is a closure</span></div>
+            <pre>PARAM 5               <span class="cmt">← explicit argument</span>
+t1 = LOAD g_env       <span class="cmt">← load env pointer</span>
+PARAM t1              <span class="cmt">← hidden last argument</span>
+t2 = LOAD g_code      <span class="cmt">← load code pointer</span>
+CALL_INDIRECT t2</pre></div>
+            <p>Inside the generated lambda function body, the last parameter is the env pointer. Inside the lambda, any access to a captured variable like <code>base</code> becomes a load from the env: <code>lw $t0, 0($env_reg)</code>. In codegen, when translating TAC for the lambda body, intercept reads of captured variables and redirect them to offset loads from the env parameter register.</p>
+            <div class="callout tip">
+              <span class="icon">&#128161;</span>
+              <p><strong>Simplification:</strong> For the two-session scope, implement <em>capture by value</em> (copy the value at creation time). This is simpler and still demonstrates the core concept. Capture by reference (sharing the actual variable) requires an additional level of indirection and is a challenge extension.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="deliverable" id="s2-test">
+        <h3>&#10003; Session 2 Checkpoint</h3>
+        <div class="code-block"><div class="cb-header"><span class="cb-lang">test_closure.c</span></div>
+        <pre><span class="kw">int</span> base;
+base <span class="op">=</span> <span class="num">10</span>;
+
+<span class="kw">int</span> (*adder)(<span class="kw">int</span>);
+adder <span class="op">=</span> <span class="kw">fun</span>(<span class="kw">int</span> x) <span class="op">-&gt;</span> <span class="kw">int</span> { <span class="kw">return</span> x <span class="op">+</span> base; };
+<span class="cmt">/* base is captured by value as 10 */</span>
+
+base <span class="op">=</span> <span class="num">999</span>;   <span class="cmt">/* change base AFTER closure creation */</span>
+print(adder(<span class="num">5</span>));    <span class="cmt">/* 15 — captured value 10, not 999 */</span>
+print(adder(<span class="num">20</span>));   <span class="cmt">/* 30 */</span>
+
+<span class="cmt">/* two closures capturing the same variable */</span>
+base <span class="op">=</span> <span class="num">1</span>;
+<span class="kw">int</span> (*c1)(<span class="kw">int</span>) <span class="op">=</span> <span class="kw">fun</span>(<span class="kw">int</span> x) <span class="op">-&gt;</span> <span class="kw">int</span> { <span class="kw">return</span> x <span class="op">+</span> base; };
+base <span class="op">=</span> <span class="num">2</span>;
+<span class="kw">int</span> (*c2)(<span class="kw">int</span>) <span class="op">=</span> <span class="kw">fun</span>(<span class="kw">int</span> x) <span class="op">-&gt;</span> <span class="kw">int</span> { <span class="kw">return</span> x <span class="op">+</span> base; };
+print(c1(<span class="num">0</span>));   <span class="cmt">/* 1 — captured when base was 1 */</span>
+print(c2(<span class="num">0</span>));   <span class="cmt">/* 2 — captured when base was 2 */</span></pre></div>
+        <ul>
+          <li>Heap environment is allocated at closure creation, not at call time</li>
+          <li>Changing <code>base</code> after closure creation does not affect the captured value</li>
+          <li>Two closures capturing the same variable at different times have independent copies</li>
+          <li>Memory debugger (examine heap in MARS) shows the env struct with the correct value</li>
+        </ul>
+      </div>
+
+      <div class="challenge-banner">
+        <h3>Challenge Extensions</h3>
+        <ul>
+          <li>Implement <strong>capture by reference</strong>: the env struct stores the address of the variable, not its value — changes to <code>base</code> after creation <em>are</em> visible through the closure</li>
+          <li>Implement a <code>makeCounter()</code> function that returns a closure which increments a captured counter each time it is called</li>
+          <li>Support closures that capture other closures</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

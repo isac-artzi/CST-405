@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CST-405 — Extension 1: String Literals &amp; Operations</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f1117; --surface: #1a1d27; --surface2: #222636; --border: #2e3250;
+      --accent: #6c8ef5; --accent2: #a78bfa; --green: #4ade80; --red: #f87171;
+      --yellow: #fbbf24; --cyan: #22d3ee; --orange: #fb923c; --text: #e2e8f0;
+      --muted: #94a3b8; --mono: 'Fira Code','Cascadia Code','Consolas',monospace; --radius: 10px;
+    }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI',system-ui,sans-serif; font-size: 16px; line-height: 1.75; }
+    .page-wrap { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+    .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 1.75rem 1.1rem; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+    .sidebar .logo { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.2rem; }
+    .sidebar h2 { font-size: 0.95rem; color: var(--text); margin-bottom: 1.25rem; line-height: 1.3; }
+    .sidebar nav ul { list-style: none; }
+    .sidebar nav li { margin-bottom: 0.05rem; }
+    .sidebar nav a { display: block; padding: 0.3rem 0.55rem; border-radius: 6px; color: var(--muted); text-decoration: none; font-size: 0.82rem; transition: background 0.15s, color 0.15s; }
+    .sidebar nav a:hover { background: var(--surface2); color: var(--text); }
+    .sidebar nav .sec { font-size: 0.67rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent2); padding: 0.85rem 0.55rem 0.2rem; }
+    main { padding: 2.75rem 3.5rem 6rem; max-width: 880px; }
+    .hero { background: linear-gradient(135deg,#1a1d27,#161929); border: 1px solid var(--border); border-radius: var(--radius); padding: 2.25rem; margin-bottom: 2.75rem; position: relative; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at top left,rgba(108,142,245,.13) 0%,transparent 55%); }
+    .badge { display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(34,211,238,.15); border: 1px solid rgba(34,211,238,.35); color: var(--cyan); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.75rem; border-radius: 999px; margin-bottom: 0.9rem; }
+    .hero h1 { font-size: 2rem; font-weight: 800; line-height: 1.15; margin-bottom: 0.6rem; }
+    .hero h1 span { color: var(--cyan); }
+    .hero p { color: var(--muted); font-size: 1rem; max-width: 580px; }
+    .hero-meta { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--border); font-size: 0.78rem; color: var(--muted); }
+    .hero-meta span { display: flex; align-items: center; gap: 0.35rem; }
+    section { margin-bottom: 3rem; scroll-margin-top: 1.5rem; }
+    h2.sec-title { font-size: 1.35rem; font-weight: 700; color: var(--text); margin-bottom: 0.9rem; display: flex; align-items: center; gap: 0.55rem; }
+    h2.sec-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    h3 { font-size: 1.05rem; font-weight: 600; color: var(--accent2); margin: 1.5rem 0 0.5rem; }
+    h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.4rem; }
+    p { margin-bottom: 0.9rem; color: var(--text); }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.4rem; margin-bottom: 0.85rem; }
+    .card.info { border-left: 3px solid var(--accent); }
+    .card.warn { border-left: 3px solid var(--yellow); }
+    .card.tip  { border-left: 3px solid var(--green); }
+    .card.task { border-left: 3px solid var(--orange); }
+    .card h4.info { color: var(--accent); } .card h4.warn { color: var(--yellow); }
+    .card h4.tip  { color: var(--green); }  .card h4.task { color: var(--orange); }
+    .card p, .card li { font-size: 0.875rem; color: var(--muted); margin-bottom: 0.3rem; }
+    .card ul, .card ol { padding-left: 1.2rem; }
+    .card li { margin-bottom: 0.25rem; }
+    .code-block { background: #0d0f18; border: 1px solid var(--border); border-radius: var(--radius); margin: 0.75rem 0 1.25rem; overflow: hidden; }
+    .cb-header { display: flex; justify-content: space-between; align-items: center; padding: 0.45rem 1rem; background: var(--surface); border-bottom: 1px solid var(--border); font-size: 0.72rem; color: var(--muted); }
+    .cb-lang { font-weight: 700; color: var(--accent); font-family: var(--mono); }
+    .code-block pre { padding: 1.1rem 1.35rem; overflow-x: auto; font-family: var(--mono); font-size: 0.855rem; line-height: 1.65; }
+    .kw { color: #c792ea; font-weight: 600; } .ty { color: #82aaff; } .fn { color: #82aaff; }
+    .num { color: #f78c6c; } .str { color: #c3e88d; } .cmt { color: #546e7a; font-style: italic; }
+    .step-grid { display: flex; flex-direction: column; gap: 0; margin: 1rem 0; }
+    .step { display: grid; grid-template-columns: 48px 1fr; gap: 0; position: relative; }
+    .step-line { position: absolute; }
+    .step:not(:last-child) .step-line { left: 23px; top: 48px; bottom: 0; width: 2px; background: var(--border); }
+    .step-num { width: 46px; height: 46px; border-radius: 50%; background: var(--surface2); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; color: var(--cyan); flex-shrink: 0; margin-top: 0.1rem; position: relative; z-index: 1; }
+    .step-body { padding: 0 0 2rem 1.25rem; }
+    .step-body h3 { margin-top: 0.1rem; font-size: 1rem; color: var(--text); }
+    .step-body p { font-size: 0.875rem; }
+    .callout { display: flex; gap: 0.85rem; align-items: flex-start; background: rgba(108,142,245,0.08); border: 1px solid rgba(108,142,245,0.25); border-radius: var(--radius); padding: 0.9rem 1.1rem; margin: 1rem 0; }
+    .callout.warn { background: rgba(251,191,36,0.08); border-color: rgba(251,191,36,0.25); }
+    .callout.tip  { background: rgba(74,222,128,0.08);  border-color: rgba(74,222,128,0.25); }
+    .callout .icon { font-size: 1.15rem; flex-shrink: 0; }
+    .callout p { margin: 0; font-size: 0.875rem; color: var(--muted); }
+    .callout strong { color: var(--text); }
+    .checklist { list-style: none; display: flex; flex-direction: column; gap: 0.45rem; }
+    .checklist li { display: flex; align-items: flex-start; gap: 0.6rem; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.55rem 0.85rem; font-size: 0.86rem; color: var(--muted); }
+    .checklist li .box { width: 18px; height: 18px; border: 2px solid var(--border); border-radius: 4px; flex-shrink: 0; margin-top: 1px; }
+    .file { display: inline-block; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 0.15em 0.55em; font-family: var(--mono); font-size: 0.82em; color: var(--cyan); }
+    code { font-family: var(--mono); font-size: 0.875em; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 0.1em 0.4em; color: var(--cyan); }
+    .deliverable { background: var(--surface); border: 2px solid var(--green); border-radius: var(--radius); padding: 1.5rem; margin-top: 1rem; }
+    .deliverable h3 { color: var(--green); font-size: 1.05rem; margin-top: 0; margin-bottom: 0.75rem; }
+    .deliverable li { color: var(--muted); font-size: 0.875rem; margin-bottom: 0.35rem; }
+    .deliverable ul { padding-left: 1.2rem; }
+    .challenge-banner { background: linear-gradient(135deg,rgba(167,139,250,0.12),rgba(108,142,245,0.08)); border: 2px solid var(--accent2); border-radius: var(--radius); padding: 2rem; margin-top: 1rem; position: relative; overflow: hidden; }
+    .challenge-banner h3 { color: var(--accent2); font-size: 1.15rem; margin-top: 0; margin-bottom: 0.5rem; }
+    .challenge-banner p { color: var(--muted); font-size: 0.9rem; }
+    .challenge-banner ul { padding-left: 1.2rem; }
+    .challenge-banner li { color: var(--muted); font-size: 0.875rem; margin-bottom: 0.35rem; }
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    @media (max-width: 860px) { .page-wrap { grid-template-columns: 1fr; } .sidebar { display: none; } main { padding: 2rem 1.25rem 4rem; } }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+  <aside class="sidebar">
+    <div class="logo">CST-405</div>
+    <h2>Extension 1: String Literals</h2>
+    <nav>
+      <ul>
+        <li class="sec">Overview</li>
+        <li><a href="#overview">Goals &amp; Scope</a></li>
+        <li><a href="#background">Background</a></li>
+        <li class="sec">Session 1</li>
+        <li><a href="#s1-lexer">Lexer Token</a></li>
+        <li><a href="#s1-ast">AST Node</a></li>
+        <li><a href="#s1-symtab">Symbol Table Type</a></li>
+        <li><a href="#s1-tac">TAC &amp; Codegen</a></li>
+        <li><a href="#s1-test">Session 1 Test</a></li>
+        <li class="sec">Session 2</li>
+        <li><a href="#s2-heap">Heap Allocator</a></li>
+        <li><a href="#s2-concat">Concatenation</a></li>
+        <li><a href="#s2-cmp">Comparison</a></li>
+        <li><a href="#s2-test">Session 2 Test</a></li>
+        <li class="sec">Reference</li>
+        <li><a href="#mips-ref">MIPS Syscalls</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main>
+    <!-- Hero -->
+    <div class="hero">
+      <div class="badge">&#127381; Extension 1 &mdash; Moderate</div>
+      <h1>String Literals<br><span>&amp; Operations</span></h1>
+      <p>Add string values as a first-class type: storage in <code>.data</code>, <code>output_string</code> built-in, and a runtime heap supporting concatenation and comparison.</p>
+      <div class="hero-meta">
+        <span>&#128218; 4 files modified</span>
+        <span>&#9200; 2 × 75-min sessions</span>
+        <span>&#128293; Difficulty: Moderate</span>
+        <span>&#127919; New MIPS syscalls 4 &amp; 11</span>
+      </div>
+    </div>
+
+    <!-- Overview -->
+    <section id="overview">
+      <h2 class="sec-title">Goals &amp; Scope</h2>
+      <p>By the end of both sessions your compiler will accept programs like the one below and produce correct MIPS output.</p>
+      <div class="code-block">
+        <div class="cb-header"><span class="cb-lang">C-minus (target language)</span></div>
+        <pre><span class="cmt">/* Session 1 goal */</span>
+<span class="kw">string</span> s;
+s <span class="op">=</span> <span class="str">"hello world"</span>;
+output_string(s);          <span class="cmt">// prints: hello world</span>
+
+<span class="cmt">/* Session 2 goal */</span>
+<span class="kw">string</span> a; <span class="kw">string</span> b; <span class="kw">string</span> c;
+a <span class="op">=</span> <span class="str">"foo"</span>;
+b <span class="op">=</span> <span class="str">"bar"</span>;
+c <span class="op">=</span> string_concat(a, b);
+output_string(c);          <span class="cmt">// prints: foobar</span>
+<span class="kw">int</span> eq <span class="op">=</span> string_equal(a, b);
+print(eq);                 <span class="cmt">// prints: 0</span></pre>
+      </div>
+      <div class="card info">
+        <h4 class="info">Files you will modify</h4>
+        <ul>
+          <li><span class="file">scanner.l</span> — add string-literal rule</li>
+          <li><span class="file">parser.y</span> + <span class="file">ast.h/ast.c</span> — new node type <code>NODE_STRING_LIT</code></li>
+          <li><span class="file">symtab.h/symtab.c</span> — add <code>TYPE_STRING</code></li>
+          <li><span class="file">tac.c/tac.h</span> — emit string assignment TAC</li>
+          <li><span class="file">codegen.c</span> — <code>.data</code> section, syscall 4, heap routines</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Background -->
+    <section id="background">
+      <h2 class="sec-title">Background</h2>
+      <h3>How MIPS represents strings</h3>
+      <p>In MIPS, a string is a sequence of bytes in memory ending with a null byte (0x00). The <em>value</em> of a string variable is the <strong>address</strong> of its first byte — exactly like a <code>char *</code> in C. You store that address in a 4-byte stack slot, just like an integer.</p>
+      <div class="code-block">
+        <div class="cb-header"><span class="cb-lang">MIPS assembly concept</span></div>
+        <pre>.data
+_str0:  .asciiz "hello world"   <span class="cmt"># null-terminated in .data</span>
+
+.text
+        la  $t0, _str0          <span class="cmt"># load ADDRESS into register</span>
+        sw  $t0, -8($fp)        <span class="cmt"># store address on stack (string variable)</span>
+
+        lw  $a0, -8($fp)        <span class="cmt"># load address back</span>
+        li  $v0, 4              <span class="cmt"># syscall 4 = print_string</span>
+        syscall</pre>
+      </div>
+      <h3>The .data section in codegen.c</h3>
+      <p>Look at <span class="file">codegen.c</span> function <code>generateCode()</code>. It already emits a <code>.data</code> header before the <code>.text</code> header. You will add string literal entries there. Maintain a small table <code>strLiterals[]</code> — each entry maps a label like <code>_str0</code> to the string content — populated during TAC traversal and flushed into <code>.data</code> before emitting code.</p>
+    </section>
+
+    <!-- Session 1 -->
+    <section id="session1">
+      <h2 class="sec-title">Session 1 — Strings as First-Class Values</h2>
+      <div class="callout">
+        <span class="icon">&#127919;</span>
+        <p><strong>Session 1 goal:</strong> Declare a <code>string</code> variable, assign a literal to it, and call <code>output_string()</code>. No concatenation yet.</p>
+      </div>
+
+      <div class="step-grid">
+        <!-- Step 1 -->
+        <div class="step" id="s1-lexer">
+          <div class="step-num">1</div>
+          <div class="step-line"></div>
+          <div class="step-body">
+            <h3>Lexer — add the STRING_LITERAL token</h3>
+            <p>In <span class="file">scanner.l</span>, add a new token rule <em>before</em> the identifier rule so it takes priority. Handle escaped quotes (<code>\"</code>) and backslash (<code>\\</code>) inside the string.</p>
+            <div class="code-block">
+              <div class="cb-header"><span class="cb-lang">scanner.l</span></div>
+              <pre><span class="cmt">/* add after other token rules */</span>
+<span class="str">\"([^\\\"]|\\.)*\"</span>   {
+    <span class="cmt">/* strip surrounding quotes */</span>
+    yylval.sval = strndup(yytext+<span class="num">1</span>, yyleng-<span class="num">2</span>);
+    <span class="kw">return</span> STRING_LITERAL;
+}</pre>
+            </div>
+            <p>Also add <code>string</code> as a keyword token <code>STRING_KW</code> so <code>string s;</code> can be declared. Add it to the keywords block the same way <code>int</code> is handled.</p>
+            <p>In the <code>%union</code> block of <span class="file">parser.y</span> add <code>char *sval;</code> and declare <code>%token &lt;sval&gt; STRING_LITERAL</code> and <code>%token STRING_KW</code>.</p>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="step" id="s1-ast">
+          <div class="step-num">2</div>
+          <div class="step-line"></div>
+          <div class="step-body">
+            <h3>AST — add NODE_STRING_LIT</h3>
+            <p>In <span class="file">ast.h</span>, add to the <code>NodeType</code> enum:</p>
+            <div class="code-block">
+              <div class="cb-header"><span class="cb-lang">ast.h</span></div>
+              <pre>NODE_STRING_LIT,   <span class="cmt">/* string literal: sval holds the text */</span></pre>
+            </div>
+            <p>The existing <code>ASTNode</code> struct already has a <code>char *sval</code> field (used by identifiers). Reuse it. In <span class="file">ast.c</span>, add a constructor:</p>
+            <div class="code-block">
+              <div class="cb-header"><span class="cb-lang">ast.c</span></div>
+              <pre>ASTNode *makeStringLit(<span class="kw">const char</span> *s) {
+    ASTNode *n = makeNode(NODE_STRING_LIT);
+    n->sval = strdup(s);
+    <span class="kw">return</span> n;
+}</pre>
+            </div>
+            <p>In <span class="file">parser.y</span>, add a grammar rule that matches <code>STRING_LITERAL</code> as an expression and calls <code>makeStringLit()</code>. Wire it into the existing <code>expr</code> production.</p>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="step" id="s1-symtab">
+          <div class="step-num">3</div>
+          <div class="step-line"></div>
+          <div class="step-body">
+            <h3>Symbol Table — add TYPE_STRING</h3>
+            <p>In <span class="file">symtab.h</span>, add <code>TYPE_STRING</code> to the <code>VarType</code> enum. In <span class="file">semantic.c</span>, handle <code>STRING_KW</code> in the variable-declaration walk the same way <code>int</code> is mapped to <code>TYPE_INT</code>. String variables occupy one 4-byte slot on the stack (they store an address); no special size change needed.</p>
+            <div class="callout warn">
+              <span class="icon">&#9888;</span>
+              <p><strong>Type-checking:</strong> For now, do not allow arithmetic on string variables. Add a check in <code>semantic.c</code> that emits a warning/error if a string variable appears in a numeric expression.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="step" id="s1-tac">
+          <div class="step-num">4</div>
+          <div class="step-line"></div>
+          <div class="step-body">
+            <h3>TAC &amp; Code Generation</h3>
+            <p>In <span class="file">tac.h</span>, add a new opcode <code>TAC_STRING_ASSIGN</code>. Its <code>arg1</code> field carries the string text; <code>result</code> is the destination variable. In <span class="file">tac.c</span>, add a case in <code>generateTAC()</code> for <code>NODE_STRING_LIT</code> that allocates a new temporary and emits:</p>
+            <div class="code-block">
+              <div class="cb-header"><span class="cb-lang">tac.c — generateTAC for NODE_STRING_LIT</span></div>
+              <pre>TACInstr *instr = newTACInstr(TAC_STRING_ASSIGN);
+instr->arg1   = strdup(node->sval);   <span class="cmt">/* literal text */</span>
+instr->result = newTemp();
+emitTAC(instr);</pre>
+            </div>
+            <p>In <span class="file">codegen.c</span>, handle <code>TAC_STRING_ASSIGN</code>: allocate a label <code>_strN</code>, record it in your string table, emit <code>la $tX, _strN</code> and <code>sw $tX, offset($fp)</code>. Before emitting the <code>.text</code> section, loop over the string table and emit <code>.data</code> entries:</p>
+            <div class="code-block">
+              <div class="cb-header"><span class="cb-lang">codegen.c — .data section</span></div>
+              <pre><span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; numStrLiterals; i++) {
+    fprintf(out, <span class="str">"%s:\t.asciiz \"%s\"\n"</span>,
+            strLabels[i], strTexts[i]);
+}</pre>
+            </div>
+            <p>Handle <code>output_string</code> as a special built-in function call in codegen: load the address into <code>$a0</code>, set <code>$v0 = 4</code>, syscall.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Session 1 test -->
+      <div class="deliverable" id="s1-test">
+        <h3>&#10003; Session 1 Checkpoint</h3>
+        <p style="font-size:0.875rem;color:var(--muted);">Create <span class="file">test_str1.c</span> and verify the compiler produces correct MIPS:</p>
+        <div class="code-block">
+          <div class="cb-header"><span class="cb-lang">test_str1.c</span></div>
+          <pre><span class="kw">string</span> greeting;
+greeting <span class="op">=</span> <span class="str">"Hello, World!"</span>;
+output_string(greeting);   <span class="cmt">/* expected: Hello, World! */</span>
+
+<span class="kw">string</span> x;
+x <span class="op">=</span> <span class="str">"CST-405"</span>;
+output_string(x);          <span class="cmt">/* expected: CST-405 */</span></pre>
+        </div>
+        <ul>
+          <li>Lexer recognises <code>STRING_LITERAL</code> and <code>string</code> keyword</li>
+          <li>AST displays <code>STRING_LIT</code> node with the text</li>
+          <li>TAC shows <code>TAC_STRING_ASSIGN</code> instruction</li>
+          <li>Generated <code>.s</code> file contains <code>.asciiz</code> entries in <code>.data</code></li>
+          <li>Running in MARS/SPIM prints the correct strings</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Session 2 -->
+    <section id="session2">
+      <h2 class="sec-title">Session 2 — Concatenation &amp; Comparison</h2>
+      <div class="callout">
+        <span class="icon">&#127919;</span>
+        <p><strong>Session 2 goal:</strong> Implement <code>string_concat(a, b)</code> using a simple bump-pointer heap, and <code>string_equal(a, b)</code> using byte-by-byte comparison in MIPS.</p>
+      </div>
+
+      <div class="step-grid">
+        <!-- Step 1 -->
+        <div class="step" id="s2-heap">
+          <div class="step-num">1</div>
+          <div class="step-line"></div>
+          <div class="step-body">
+            <h3>Runtime heap in .data</h3>
+            <p>Add a heap block and a heap pointer to your <code>.data</code> section. The heap pointer is a word that holds the <em>next free address</em>.</p>
+            <div class="code-block">
+              <div class="cb-header"><span class="cb-lang">codegen.c — heap bootstrap in .data</span></div>
+              <pre>_heap_ptr:  .word _heap_mem   <span class="cmt"># pointer to next free byte</span>
+_heap_mem:  .space 4096       <span class="cmt"># 4 KB should be enough</span></pre>
+            </div>
+            <p>Emit these lines once, after your string literals. The heap pointer is initialised to the start of <code>_heap_mem</code> by the <code>.word _heap_mem</code> directive.</p>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="step" id="s2-concat">
+          <div class="step-num">2</div>
+          <div class="step-line"></div>
+          <div class="step-body">
+            <h3>string_concat built-in</h3>
+            <p>Emit a MIPS subroutine <code>_string_concat</code> that takes two string addresses in <code>$a0</code> and <code>$a1</code>, allocates space on the heap, copies both strings, and returns the new address in <code>$v0</code>. Use <code>lb</code>/<code>sb</code> to walk bytes; stop at the null terminator.</p>
+            <div class="code-block">
+              <div class="cb-header"><span class="cb-lang">MIPS _string_concat (sketch)</span></div>
+              <pre>_string_concat:
+    <span class="cmt"># compute len(a0): walk until lb == 0</span>
+    <span class="cmt"># compute len(a1): same</span>
+    <span class="cmt"># total = len0 + len1 + 1</span>
+    lw   $t8, _heap_ptr      <span class="cmt"># destination address</span>
+    <span class="cmt"># copy a0 bytes to $t8, then a1 bytes</span>
+    <span class="cmt"># write null terminator</span>
+    <span class="cmt"># advance heap pointer by total</span>
+    sw   $t8, _heap_ptr      <span class="cmt"># WRONG: see note below</span>
+    <span class="cmt"># actually: add $t9,$t8,total; sw $t9,_heap_ptr</span>
+    move $v0, $t8
+    jr   $ra</pre>
+            </div>
+            <p>When <code>string_concat</code> is called in the compiler, intercept it in <code>codegen.c</code> like you do with <code>output_string</code>: load the two argument addresses into <code>$a0</code>/<code>$a1</code>, <code>jal _string_concat</code>, and store <code>$v0</code> into the result variable.</p>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="step" id="s2-cmp">
+          <div class="step-num">3</div>
+          <div class="step-line"></div>
+          <div class="step-body">
+            <h3>string_equal built-in</h3>
+            <p>Emit a MIPS subroutine <code>_string_equal</code> that takes two addresses in <code>$a0</code>/<code>$a1</code> and returns 1 (equal) or 0 (not equal) in <code>$v0</code>. Walk both strings simultaneously with <code>lb</code>; at each position compare bytes. If they differ return 0. If both reach null at the same time return 1.</p>
+            <div class="callout tip">
+              <span class="icon">&#128161;</span>
+              <p><strong>Tip:</strong> Use a loop label like <code>_seq_loop</code> with a suffix number (e.g., <code>_seq_loop_0</code>) so multiple calls don't collide. Generate the suffix from a static counter in <code>codegen.c</code>.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Session 2 test -->
+      <div class="deliverable" id="s2-test">
+        <h3>&#10003; Session 2 Checkpoint</h3>
+        <div class="code-block">
+          <div class="cb-header"><span class="cb-lang">test_str2.c</span></div>
+          <pre><span class="kw">string</span> a; <span class="kw">string</span> b; <span class="kw">string</span> c;
+a <span class="op">=</span> <span class="str">"foo"</span>;
+b <span class="op">=</span> <span class="str">"bar"</span>;
+c <span class="op">=</span> string_concat(a, b);
+output_string(c);              <span class="cmt">/* foobar */</span>
+
+<span class="kw">int</span> r1 <span class="op">=</span> string_equal(a, a);
+<span class="kw">int</span> r2 <span class="op">=</span> string_equal(a, b);
+print(r1);                     <span class="cmt">/* 1 */</span>
+print(r2);                     <span class="cmt">/* 0 */</span>
+
+<span class="kw">string</span> d <span class="op">=</span> string_concat(c, <span class="str">"!"</span>);
+output_string(d);              <span class="cmt">/* foobar! */</span></pre>
+        </div>
+        <ul>
+          <li>Heap pointer advances correctly after each concat</li>
+          <li>Chained concat works (<code>concat(concat(a,b), "!")</code>)</li>
+          <li><code>string_equal</code> returns 1 for identical strings, 0 otherwise</li>
+        </ul>
+      </div>
+
+      <div class="challenge-banner">
+        <h3>Challenge Extensions</h3>
+        <p>If you finish early, try one of these:</p>
+        <ul>
+          <li>Implement <code>string_length(s)</code> returning an <code>int</code></li>
+          <li>Implement <code>string_at(s, i)</code> returning the character code at index <em>i</em> as an integer</li>
+          <li>Support string literals directly in <code>string_concat</code> calls without assigning to a variable first</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- MIPS reference -->
+    <section id="mips-ref">
+      <h2 class="sec-title">MIPS Quick Reference</h2>
+      <div class="card info">
+        <h4 class="info">Syscalls used in this extension</h4>
+        <ul>
+          <li><code>$v0 = 1</code> — print integer (existing)</li>
+          <li><code>$v0 = 4</code> — print string: <code>$a0</code> = address of null-terminated string</li>
+          <li><code>$v0 = 11</code> — print character: <code>$a0</code> = ASCII code (bonus)</li>
+        </ul>
+      </div>
+      <div class="card warn">
+        <h4 class="warn">Common pitfalls</h4>
+        <ul>
+          <li>Forgetting the null terminator when copying strings in the heap</li>
+          <li>Calling <code>sw _heap_ptr</code> instead of <code>sw $tX, _heap_ptr</code> (use a register as intermediate)</li>
+          <li>Not spilling registers before calling <code>_string_concat</code> — the subroutine clobbers <code>$t</code> registers</li>
+          <li>String literals with escape sequences: <code>\"</code> should become <code>"</code> in the stored text</li>
+        </ul>
+      </div>
+    </section>
+
+  </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CST-405 — Final Compiler Test &amp; Submission</title>
+  <style>
+    /* ── Reset &amp; base ─────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.65;
+      color: #1a1a2e;
+      background: #f5f6fa;
+    }
+
+    /* ── Page shell ─────────────────────────────────── */
+    .page {
+      max-width: 860px;
+      margin: 2rem auto 4rem;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.10);
+      overflow: hidden;
+    }
+
+    /* ── Header banner ──────────────────────────────── */
+    header {
+      background: linear-gradient(135deg, #0f3460 0%, #16213e 60%, #1a1a2e 100%);
+      color: #fff;
+      padding: 2.4rem 2.8rem 2rem;
+    }
+    header .course { font-size: .85rem; letter-spacing: .12em; text-transform: uppercase; opacity: .75; }
+    header h1 { font-size: 1.9rem; font-weight: 700; margin: .35rem 0 .2rem; }
+    header .subtitle { font-size: 1rem; opacity: .85; }
+    header .meta { margin-top: 1rem; font-size: .82rem; opacity: .65; }
+
+    /* ── Content area ───────────────────────────────── */
+    .content { padding: 2rem 2.8rem; }
+
+    /* ── Section headers ────────────────────────────── */
+    h2 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #0f3460;
+      border-left: 4px solid #e94560;
+      padding-left: .7rem;
+      margin: 2.2rem 0 .9rem;
+    }
+    h3 {
+      font-size: .97rem;
+      font-weight: 700;
+      color: #16213e;
+      margin: 1.4rem 0 .45rem;
+    }
+
+    /* ── Callout / intro box ────────────────────────── */
+    .callout {
+      background: #eef3ff;
+      border: 1px solid #c5d4f5;
+      border-radius: 7px;
+      padding: 1rem 1.3rem;
+      font-size: .9rem;
+      margin-bottom: 1.4rem;
+    }
+    .callout strong { color: #0f3460; }
+
+    /* ── Feature grid (Section requirements) ───────── */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: .9rem;
+      margin-top: .5rem;
+    }
+    .feature-card {
+      border: 1px solid #dde4f0;
+      border-radius: 8px;
+      padding: .85rem 1rem;
+      background: #fafbff;
+    }
+    .feature-card .label {
+      display: inline-block;
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      background: #0f3460;
+      color: #fff;
+      border-radius: 4px;
+      padding: .15em .55em;
+      margin-bottom: .4rem;
+    }
+    .feature-card ul {
+      list-style: disc;
+      padding-left: 1.1rem;
+      font-size: .87rem;
+      color: #333;
+    }
+    .feature-card ul li { margin-bottom: .15rem; }
+
+    /* ── Command blocks ─────────────────────────────── */
+    pre, code {
+      font-family: "Consolas", "Courier New", monospace;
+      font-size: .84rem;
+    }
+    pre {
+      background: #1a1a2e;
+      color: #c9d1d9;
+      border-radius: 7px;
+      padding: 1rem 1.2rem;
+      overflow-x: auto;
+      margin: .6rem 0 1rem;
+    }
+    pre .comment { color: #6a9955; }
+    pre .cmd     { color: #79c0ff; }
+    pre .flag    { color: #ffa657; }
+    pre .file    { color: #a5d6ff; }
+    code {
+      background: #eef0f8;
+      padding: .1em .38em;
+      border-radius: 3px;
+      color: #c0392b;
+    }
+
+    /* ── Tables ─────────────────────────────────────── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .88rem;
+      margin: .6rem 0 1rem;
+    }
+    thead th {
+      background: #0f3460;
+      color: #fff;
+      padding: .55rem .8rem;
+      text-align: left;
+      font-weight: 600;
+    }
+    tbody tr:nth-child(even) { background: #f4f6fb; }
+    tbody td { padding: .48rem .8rem; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+    tbody tr:last-child td { border-bottom: none; }
+
+    /* ── Deliverable list ───────────────────────────── */
+    .deliverable-list {
+      list-style: none;
+      padding: 0;
+      margin: .5rem 0;
+    }
+    .deliverable-list li {
+      display: flex;
+      align-items: baseline;
+      gap: .65rem;
+      padding: .55rem .7rem;
+      border-radius: 6px;
+      font-size: .9rem;
+      border: 1px solid #e2e8f0;
+      margin-bottom: .4rem;
+      background: #fafbff;
+    }
+    .deliverable-list li .num {
+      min-width: 1.5rem;
+      font-weight: 700;
+      color: #e94560;
+    }
+    .deliverable-list li .desc { color: #1a1a2e; }
+    .deliverable-list li .note { font-size: .8rem; color: #666; margin-left: auto; white-space: nowrap; }
+
+    /* ── Performance table highlight ───────────────── */
+    .perf-note {
+      background: #fff8e1;
+      border: 1px solid #ffe082;
+      border-radius: 6px;
+      padding: .75rem 1rem;
+      font-size: .87rem;
+      margin: .6rem 0 1rem;
+    }
+
+    /* ── Footer ─────────────────────────────────────── */
+    footer {
+      background: #f0f2f9;
+      border-top: 1px solid #dde4f0;
+      padding: 1rem 2.8rem;
+      font-size: .78rem;
+      color: #888;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ══ HEADER ══════════════════════════════════════════ -->
+  <header>
+    <div class="course">CST-405 · Compiler Design</div>
+    <h1>Final Compiler Test &amp; Project Submission</h1>
+    <div class="subtitle">Comprehensive integration test for the C-minus compiler</div>
+    <div class="meta">Spring 2026 &nbsp;|&nbsp; Final Submission</div>
+  </header>
+
+  <!-- ══ BODY ════════════════════════════════════════════ -->
+  <div class="content">
+
+    <!-- Overview -->
+    <div class="callout">
+      <strong>Overview.</strong>&nbsp; This is the capstone test for your C-minus compiler.
+      The provided source file <code>test_final.c</code> exercises every language feature
+      you have implemented across all phases of the semester.  Your compiler must process
+      this file correctly, produce valid MIPS assembly, and generate a performance
+      comparison report.
+    </div>
+
+    <!-- ══ SECTION 1 — LANGUAGE FEATURES ══════════════════ -->
+    <h2>1 &nbsp; Language Features Under Test</h2>
+    <p>The test file covers the following six areas.  Every area must compile and produce
+    the expected output.</p>
+
+    <div class="feature-grid">
+
+      <div class="feature-card">
+        <div class="label">1 · Variables</div>
+        <ul>
+          <li><code>int</code> — scalar &amp; array</li>
+          <li><code>float</code> — scalar &amp; array</li>
+          <li><code>boolean</code> — <code>true</code> / <code>false</code></li>
+          <li><code>char</code> — single character literals</li>
+          <li><code>string</code> — string literals</li>
+          <li>Global &amp; local scope</li>
+        </ul>
+      </div>
+
+      <div class="feature-card">
+        <div class="label">2 · Functions</div>
+        <ul>
+          <li><code>void</code> functions (no return)</li>
+          <li>Functions returning <code>int</code>, <code>float</code>, <code>boolean</code></li>
+          <li>No-parameter functions</li>
+          <li>Single &amp; mixed-type parameters</li>
+          <li>Array parameters</li>
+          <li>Recursive functions</li>
+          <li>Functions accessing globals</li>
+        </ul>
+      </div>
+
+      <div class="feature-card">
+        <div class="label">3 · Loops</div>
+        <ul>
+          <li><code>while</code> loop</li>
+          <li><code>for</code> loop</li>
+          <li>Nested loops (for inside for)</li>
+          <li><code>while</code> inside <code>for</code></li>
+          <li>Loop with array access</li>
+        </ul>
+      </div>
+
+      <div class="feature-card">
+        <div class="label">4 · Decisions</div>
+        <ul>
+          <li>Simple <code>if</code></li>
+          <li><code>if-else</code></li>
+          <li><code>if-else-if</code> chain</li>
+          <li>Nested <code>if</code></li>
+          <li><code>switch</code> / <code>case</code> / <code>default</code></li>
+          <li>Fall-through cases</li>
+          <li>Nested <code>switch</code></li>
+        </ul>
+      </div>
+
+      <div class="feature-card">
+        <div class="label">5 · Integration</div>
+        <ul>
+          <li>Fibonacci (iterative)</li>
+          <li>Fibonacci (recursive)</li>
+          <li>All types used together</li>
+          <li>Functions calling functions</li>
+        </ul>
+      </div>
+
+      <div class="feature-card">
+        <div class="label">6 · Performance</div>
+        <ul>
+          <li>Unoptimized TAC output</li>
+          <li>Optimized TAC output</li>
+          <li>Instruction-count comparison</li>
+          <li>Constant folding target</li>
+          <li>Dead-code elimination target</li>
+          <li>Loop-invariant computation</li>
+        </ul>
+      </div>
+
+    </div><!-- /feature-grid -->
+
+
+    <!-- ══ SECTION 2 — HOW TO RUN ══════════════════════════ -->
+    <h2>2 &nbsp; Compilation &amp; Execution Instructions</h2>
+
+    <h3>Step 1 — Build your compiler</h3>
+<pre>
+<span class="cmd">make</span>          <span class="comment"># builds ./minicompiler</span>
+</pre>
+
+    <h3>Step 2 — Compile the test file (unoptimized)</h3>
+<pre>
+<span class="cmd">./minicompiler</span> <span class="file">test_final.c</span> <span class="file">test_final.s</span>
+</pre>
+
+    <h3>Step 3 — Compile with optimization enabled</h3>
+<pre>
+<span class="cmd">./minicompiler</span> <span class="flag">--optimize</span> <span class="file">test_final.c</span> <span class="file">test_final_opt.s</span>
+</pre>
+
+    <h3>Step 4 — Run on the MIPS simulator</h3>
+<pre>
+<span class="comment"># Unoptimized</span>
+<span class="cmd">spim</span> <span class="flag">-file</span> <span class="file">test_final.s</span>
+
+<span class="comment"># Optimized</span>
+<span class="cmd">spim</span> <span class="flag">-file</span> <span class="file">test_final_opt.s</span>
+</pre>
+
+    <h3>Step 5 — Verify output</h3>
+    <p>Both assembly files must produce identical output to the annotated expected values
+    in <code>test_final.c</code>.</p>
+
+
+    <!-- ══ SECTION 3 — PERFORMANCE REPORT ══════════════════ -->
+    <h2>3 &nbsp; Performance Metrics Report</h2>
+
+    <div class="perf-note">
+      Your compiler must print (or write to a file) a <strong>performance report</strong>
+      after each compilation run.  The report compares the unoptimized and optimized
+      compilation results side-by-side.
+    </div>
+
+    <p>The report must include all of the following metrics:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>Unoptimized</th>
+          <th>Optimized</th>
+          <th>How to Measure</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>TAC instruction count</td>
+          <td>count all emitted TAC lines</td>
+          <td>count after optimization passes</td>
+          <td>iterate <code>tacList</code> and <code>optimizedList</code></td>
+        </tr>
+        <tr>
+          <td>MIPS instruction count</td>
+          <td>count non-directive, non-label lines in <code>.s</code></td>
+          <td>same for optimized <code>.s</code></td>
+          <td><code>grep</code> or counter in <code>codegen.c</code></td>
+        </tr>
+        <tr>
+          <td>Compilation time (ms)</td>
+          <td>wall-clock time for full compilation</td>
+          <td>wall-clock time for optimized compilation</td>
+          <td><code>clock()</code> / <code>gettimeofday()</code> in <code>main.c</code></td>
+        </tr>
+        <tr>
+          <td>Temporaries allocated</td>
+          <td><code>tempAlloc.maxUsed</code></td>
+          <td><code>tempAlloc.maxUsed</code> after optimization</td>
+          <td>read from <code>TempAllocator</code></td>
+        </tr>
+        <tr>
+          <td>Constant-fold reductions</td>
+          <td>— (n/a)</td>
+          <td>count of folded expressions</td>
+          <td>counter in optimizer</td>
+        </tr>
+        <tr>
+          <td>Dead-code eliminations</td>
+          <td>— (n/a)</td>
+          <td>count of removed TAC nodes</td>
+          <td>counter in optimizer</td>
+        </tr>
+        <tr>
+          <td>MIPS simulation time (ms)</td>
+          <td>execution time reported by SPIM</td>
+          <td>execution time reported by SPIM</td>
+          <td><code>spim</code> stats or <code>time spim …</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Sample report format</h3>
+<pre>
+<span class="comment">===== Compiler Performance Report =====</span>
+Source file       : test_final.c
+
+                     Unoptimized    Optimized    Reduction
+TAC instructions :        142           98          31%
+MIPS instructions:        310          207          33%
+Temporaries used :         37           24          35%
+Const folds      :          0           12
+Dead code removed:          0            4
+Compile time (ms):       12.4          14.1
+Sim time (ms)    :       8.30          5.60         33%
+<span class="comment">========================================</span>
+</pre>
+    <p style="font-size:.85rem; color:#666; margin-top:-.2rem;">
+      Note: actual numbers will differ from this example.
+      Compile time may be <em>slightly longer</em> with optimization enabled because
+      the optimizer itself takes time — this is expected and worth discussing.
+    </p>
+
+
+    <!-- ══ SECTION 4 — DELIVERABLES ════════════════════════ -->
+    <h2>4 &nbsp; Deliverables</h2>
+    <p>Submit a single <strong>ZIP archive</strong> named
+    <code>LastName_FirstName_CST405_Final.zip</code> containing the following:</p>
+
+    <ul class="deliverable-list">
+
+      <li>
+        <span class="num">1</span>
+        <span class="desc"><strong>All compiler source files</strong> — <code>scanner.l</code>,
+          <code>parser.y</code>, <code>semantic.c/h</code>, <code>tac.c/h</code>,
+          <code>codegen.c/h</code>, <code>ast.c/h</code>, <code>symtab.c/h</code>,
+          <code>main.c</code>, and <code>Makefile</code></span>
+      </li>
+
+      <li>
+        <span class="num">2</span>
+        <span class="desc"><strong>Test source file</strong> — the provided <code>test_final.c</code>
+          (unmodified)</span>
+      </li>
+
+      <li>
+        <span class="num">3</span>
+        <span class="desc"><strong>Generated assembly files</strong> — <code>test_final.s</code>
+          (unoptimized) and <code>test_final_opt.s</code> (optimized), both produced by
+          your compiler from <code>test_final.c</code></span>
+      </li>
+
+      <li>
+        <span class="num">4</span>
+        <span class="desc"><strong>Performance report</strong> — either printed to
+          <code>stdout</code> during compilation (captured to a file) or written directly
+          by your compiler as <code>report.txt</code></span>
+        <span class="note">required format: see §3</span>
+      </li>
+
+      <li>
+        <span class="num">5</span>
+        <span class="desc"><strong>Unoptimized TAC listing</strong> — the raw TAC output
+          emitted before any optimization passes run, saved as <code>tac_unopt.txt</code></span>
+      </li>
+
+      <li>
+        <span class="num">6</span>
+        <span class="desc"><strong>Optimized TAC listing</strong> — the TAC output after
+          all optimization passes, saved as <code>tac_opt.txt</code></span>
+      </li>
+
+      <li>
+        <span class="num">7</span>
+        <span class="desc"><strong>Execution transcript</strong> — terminal output
+          showing both SPIM runs (unoptimized and optimized) with matching expected
+          values, saved as <code>output_transcript.txt</code></span>
+      </li>
+
+      <li>
+        <span class="num">8</span>
+        <span class="desc"><strong>Written reflection</strong> — a short document
+          (<code>reflection.pdf</code> or <code>reflection.txt</code>, 300–500 words)
+          discussing: (a) the most challenging feature to implement, (b) what your
+          optimizer does and why it improves the output, and (c) one thing you would do
+          differently if starting over</span>
+      </li>
+
+    </ul>
+
+
+    <!-- ══ SECTION 5 — NOTES ════════════════════════════════ -->
+    <h2>5 &nbsp; Notes &amp; Reminders</h2>
+    <ul style="padding-left:1.4rem; font-size:.9rem; line-height:1.8;">
+      <li>Do <em>not</em> modify <code>test_final.c</code>.  The file will be compiled
+          against a reference solution for comparison.</li>
+      <li>Each <code>print()</code> call must produce exactly one value per line on
+          <code>stdout</code>.  The expected value is annotated in the source.</li>
+      <li>Your compiler must handle the file without crashing, even if a particular
+          feature is not fully implemented — emit a clear error message and continue.</li>
+      <li>Type coercion rules (e.g., <code>int</code> ÷ <code>int</code> vs.
+          <code>float</code> ÷ <code>int</code>) must follow C semantics and be documented
+          in your reflection.</li>
+      <li>The <code>--optimize</code> flag must be supported by your
+          <code>minicompiler</code> binary.  If you implement optimization unconditionally,
+          document this clearly.</li>
+      <li>Partial credit is available for any section where your compiler produces correct
+          output even if other sections fail.</li>
+    </ul>
+
+  </div><!-- /content -->
+
+  <footer>
+    CST-405 Compiler Design &nbsp;·&nbsp; Final Test Handout &nbsp;·&nbsp; Spring 2026
+  </footer>
+
+</div><!-- /page -->
+</body>
+</html>

@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CST-405 — Lecture: If-Statements in the Compiler</title>
+<style>
+  /* ── Base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:      #0f1117;
+    --surface: #1a1d27;
+    --card:    #21253a;
+    --accent:  #7c6af7;
+    --accent2: #4fc3f7;
+    --accent3: #f06292;
+    --green:   #66bb6a;
+    --amber:   #ffa726;
+    --text:    #e8eaf6;
+    --muted:   #8892b0;
+    --border:  #2e3450;
+    --code-bg: #111827;
+    --radius:  10px;
+  }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 16px;
+  }
+
+  /* ── Layout ── */
+  .wrapper { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+  @media (max-width: 720px) { .two-col, .three-col { grid-template-columns: 1fr; } }
+
+  /* ── Header ── */
+  header {
+    background: linear-gradient(135deg, #1a1d27 0%, #12153a 100%);
+    border-bottom: 2px solid var(--accent);
+    padding: 2.5rem 1.5rem 2rem;
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+  header .kicker {
+    font-size: .8rem; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--accent); font-weight: 600; margin-bottom: .5rem;
+  }
+  header h1 { font-size: 2.4rem; font-weight: 800; color: #fff; margin-bottom: .5rem; }
+  header p.sub { color: var(--muted); font-size: 1rem; }
+  .badge-row { display: flex; gap: .6rem; justify-content: center; flex-wrap: wrap; margin-top: 1rem; }
+  .badge {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 20px; padding: .25rem .9rem; font-size: .8rem; color: var(--muted);
+  }
+  .badge.accent { border-color: var(--accent); color: var(--accent); }
+
+  /* ── Sections ── */
+  section { margin-bottom: 2.5rem; }
+  h2 {
+    font-size: 1.35rem; font-weight: 700; color: var(--accent2);
+    border-left: 4px solid var(--accent2); padding-left: .8rem;
+    margin-bottom: 1.1rem; margin-top: 2rem;
+  }
+  h3 { font-size: 1.05rem; font-weight: 700; color: var(--accent); margin: 1.2rem 0 .5rem; }
+  p { margin-bottom: .8rem; }
+  ul, ol { padding-left: 1.4rem; margin-bottom: .8rem; }
+  li { margin-bottom: .35rem; }
+  strong { color: #fff; }
+  em { color: var(--amber); font-style: normal; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.2rem 1.4rem;
+  }
+  .card.highlight { border-color: var(--accent); }
+  .card.warn { border-left: 4px solid var(--amber); }
+  .card.success { border-left: 4px solid var(--green); }
+  .card.info { border-left: 4px solid var(--accent2); }
+  .card h4 { font-size: .9rem; text-transform: uppercase; letter-spacing: .1em; margin-bottom: .6rem; }
+  .card.highlight h4 { color: var(--accent); }
+  .card.warn h4 { color: var(--amber); }
+  .card.success h4 { color: var(--green); }
+  .card.info h4 { color: var(--accent2); }
+
+  /* ── Code ── */
+  pre, code {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: .875rem;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.2rem 1.4rem;
+    overflow-x: auto;
+    line-height: 1.6;
+    margin: .8rem 0;
+  }
+  code { background: #1f2335; border-radius: 4px; padding: .1em .4em; color: var(--accent2); }
+  .comment { color: #637777; }
+  .kw  { color: #c792ea; }
+  .fn  { color: #82aaff; }
+  .str { color: #c3e88d; }
+  .num { color: #f78c6c; }
+  .op  { color: #89ddff; }
+  .label { color: var(--amber); }
+  .reg  { color: var(--green); }
+
+  /* ── Pipeline diagram ── */
+  .pipeline {
+    display: flex; align-items: center; flex-wrap: wrap;
+    gap: .4rem; margin: 1.2rem 0;
+  }
+  .pipe-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: .5rem .9rem;
+    font-size: .85rem; text-align: center; min-width: 90px;
+  }
+  .pipe-box.active { border-color: var(--accent); background: #1e1a3a; color: var(--accent); font-weight: 700; }
+  .pipe-arrow { color: var(--muted); font-size: 1.1rem; }
+
+  /* ── Comparison table ── */
+  table { width: 100%; border-collapse: collapse; margin: .8rem 0; font-size: .9rem; }
+  th { background: var(--card); color: var(--accent2); padding: .6rem .9rem; text-align: left; border: 1px solid var(--border); }
+  td { padding: .55rem .9rem; border: 1px solid var(--border); vertical-align: top; }
+  tr:nth-child(even) td { background: #181c2a; }
+
+  /* ── Callout box ── */
+  .callout {
+    background: #1a1428;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 1rem 1.3rem;
+    margin: 1rem 0;
+    font-size: .95rem;
+  }
+  .callout .icon { font-size: 1.3rem; margin-right: .5rem; }
+
+  /* ── TAC box ── */
+  .tac { background: #0d1117; border-left: 4px solid var(--accent3); }
+
+  /* ── Numbered steps ── */
+  .steps { counter-reset: step; }
+  .step {
+    counter-increment: step;
+    display: flex; gap: 1rem; align-items: flex-start;
+    margin-bottom: 1rem;
+  }
+  .step::before {
+    content: counter(step);
+    min-width: 2rem; height: 2rem;
+    background: var(--accent); color: #fff;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: .85rem; font-weight: 700; flex-shrink: 0;
+  }
+
+  /* ── Footer ── */
+  footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 3rem; border-top: 1px solid var(--border); padding-top: 1.5rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="kicker">CST-405 · Compiler Design</div>
+  <h1>If-Statements: Control Flow in the Compiler</h1>
+  <p class="sub">Lecture Notes — All Six Compilation Phases</p>
+  <div class="badge-row">
+    <span class="badge accent">Lexer</span>
+    <span class="badge accent">Parser</span>
+    <span class="badge accent">AST</span>
+    <span class="badge accent">Semantic</span>
+    <span class="badge accent">TAC</span>
+    <span class="badge accent">Optimizer</span>
+    <span class="badge accent">Code Gen</span>
+  </div>
+</header>
+
+<div class="wrapper">
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 1. BIG PICTURE                                            -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section>
+<h2>1 · Where We Are in the Compiler</h2>
+
+<p>Over the past two weeks you added <strong>loops</strong> to the compiler.
+Today we add <strong>if-statements</strong> — the other major form of conditional
+control flow. Much of the infrastructure you built for loops
+(<code>TAC_IF_FALSE</code>, <code>TAC_LABEL</code>, <code>TAC_GOTO</code>, branch
+instructions in MIPS) already exists. What is <em>new</em> is in the parser
+grammar and a subtle correctness issue in the code generator.</p>
+
+<div class="pipeline">
+  <div class="pipe-box active">1 · Lexer</div><div class="pipe-arrow">→</div>
+  <div class="pipe-box active">2 · Parser</div><div class="pipe-arrow">→</div>
+  <div class="pipe-box active">3 · AST</div><div class="pipe-arrow">→</div>
+  <div class="pipe-box active">4 · Semantic</div><div class="pipe-arrow">→</div>
+  <div class="pipe-box active">5 · TAC</div><div class="pipe-arrow">→</div>
+  <div class="pipe-box active">6 · Optimizer</div><div class="pipe-arrow">→</div>
+  <div class="pipe-box active">7 · Code Gen</div>
+</div>
+
+<div class="callout">
+  <span class="icon">🔑</span>
+  <strong>Key insight:</strong> An <code>if-else</code> is structurally similar to a
+  <code>while</code> loop with the back-edge removed. Both compile down to the same
+  three TAC primitives — a conditional jump, a label, and an unconditional jump.
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 2. IF vs LOOPS — COMPARISON                               -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section>
+<h2>2 · If-Statements vs. Loops — What Is Reused, What Is New</h2>
+
+<table>
+  <thead>
+    <tr><th>Compiler Phase</th><th>Loops (while / for)</th><th>If-Statements</th><th>Change Needed?</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Lexer</strong></td>
+      <td><code>while</code>, <code>for</code> keywords</td>
+      <td><code>if</code>, <code>else</code> keywords</td>
+      <td>✅ Add 2 tokens</td>
+    </tr>
+    <tr>
+      <td><strong>Parser</strong></td>
+      <td><code>while_stmt</code>, <code>for_stmt</code> rules; no ambiguity</td>
+      <td><code>if_stmt</code> rule; <em>dangling-else ambiguity</em></td>
+      <td>✅ New rule + conflict resolution</td>
+    </tr>
+    <tr>
+      <td><strong>AST</strong></td>
+      <td><code>NODE_WHILE</code>, <code>NODE_FOR</code></td>
+      <td><code>NODE_IF</code> (condition, then, else?)</td>
+      <td>✅ New node type</td>
+    </tr>
+    <tr>
+      <td><strong>Semantic</strong></td>
+      <td>Check condition + body; warn on constant conditions</td>
+      <td>Same pattern; also check optional else branch</td>
+      <td>✅ New case (small)</td>
+    </tr>
+    <tr>
+      <td><strong>TAC</strong></td>
+      <td>Uses <code>IF_FALSE</code>, <code>LABEL</code>, <code>GOTO</code></td>
+      <td>Uses the <em>same</em> three instructions</td>
+      <td>✅ New generation logic (small)</td>
+    </tr>
+    <tr>
+      <td><strong>Optimizer</strong></td>
+      <td>Dead-loop elimination on constant conditions</td>
+      <td>Dead-branch elimination — <em>already works</em></td>
+      <td>⬛ No change required</td>
+    </tr>
+    <tr>
+      <td><strong>Code Gen</strong></td>
+      <td>Emits <code>beqz</code> / <code>j</code> / labels</td>
+      <td>Same instructions; <em>register state must be invalidated at labels</em></td>
+      <td>✅ Critical fix at merge points</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="card warn" style="margin-top:1rem">
+  <h4>⚠ The One Non-Obvious Change</h4>
+  <p>Loops always re-execute the body, so register state never "diverges."
+  If-statements <strong>create merge points</strong> — multiple paths converging on a
+  single label. After a merge point the register allocator's idea of which registers
+  hold which values may be wrong. We will fix this properly in Phase 7.</p>
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 3. PHASE 1 — LEXER                                        -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section>
+<h2>3 · Phase 1 — Lexer (scanner.l)</h2>
+
+<p>The lexer must recognize two new reserved words and return the corresponding tokens.
+Because identifiers are matched by a catch-all rule, reserved words must be listed
+<em>before</em> the identifier rule so Flex gives them priority.</p>
+
+<pre><span class="comment">/* Add these two lines with the other keyword rules */</span>
+<span class="str">"if"</span>      <span class="op">{</span> <span class="kw">return</span> <span class="fn">IF</span><span class="op">;</span>   <span class="op">}</span>
+<span class="str">"else"</span>    <span class="op">{</span> <span class="kw">return</span> <span class="fn">ELSE</span><span class="op">;</span> <span class="op">}</span></pre>
+
+<div class="callout">
+  <span class="icon">💡</span>
+  Flex uses <strong>maximal-munch + first-match</strong> ordering. Because
+  <code>"if"</code> is listed before the identifier pattern
+  <code>[a-zA-Z_][a-zA-Z0-9_]*</code>, the word <code>if</code> will always be
+  tokenised as <code>IF</code>, never as an identifier.
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 4. PHASE 2 — PARSER AND THE DANGLING-ELSE PROBLEM         -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section>
+<h2>4 · Phase 2 — Parser (parser.y) and the Dangling-Else Problem</h2>
+
+<h3>4.1 The grammar rule</h3>
+<pre><span class="comment">/* Two productions: if-without-else and if-with-else */</span>
+<span class="label">if_stmt:</span>
+    <span class="fn">IF</span> <span class="op">'('</span> expr <span class="op">')'</span> stmt                     <span class="comment">/* no else */</span>
+  <span class="op">|</span> <span class="fn">IF</span> <span class="op">'('</span> expr <span class="op">')'</span> stmt <span class="fn">ELSE</span> stmt            <span class="comment">/* with else */</span>
+  <span class="op">;</span></pre>
+
+<h3>4.2 The dangling-else ambiguity</h3>
+<p>Consider:</p>
+<pre><span class="kw">if</span> <span class="op">(</span>a<span class="op">)</span> <span class="kw">if</span> <span class="op">(</span>b<span class="op">)</span> x <span class="op">=</span> <span class="num">1</span><span class="op">;</span>  <span class="kw">else</span>  x <span class="op">=</span> <span class="num">2</span><span class="op">;</span></pre>
+
+<p>Which <code>if</code> does the <code>else</code> belong to? There are two valid parse trees:</p>
+
+<div class="two-col">
+  <div class="card warn">
+    <h4>❌ Wrong: else attaches to outer if</h4>
+    <pre style="background:transparent;border:none;padding:0">if (a) {
+  if (b) x = 1;
+}
+else {      <span class="comment">// outer else</span>
+  x = 2;
+}</pre>
+  </div>
+  <div class="card success">
+    <h4>✅ Correct: else attaches to inner if</h4>
+    <pre style="background:transparent;border:none;padding:0">if (a) {
+  if (b) x = 1;
+  else {    <span class="comment">// inner else</span>
+    x = 2;
+  }
+}</pre>
+  </div>
+</div>
+
+<p>All C-family languages use the <strong>"nearest if"</strong> rule.
+Bison's default behaviour (prefer <em>shift</em> over reduce) already implements this,
+but it reports a shift/reduce <em>conflict warning</em> unless we make the intent
+explicit with precedence directives.</p>
+
+<h3>4.3 Resolving the conflict cleanly</h3>
+<pre><span class="comment">/* In the %nonassoc declarations, LOWER_THAN_ELSE has lower precedence */</span>
+<span class="op">%</span><span class="kw">nonassoc</span> LOWER_THAN_ELSE   <span class="comment">/* pseudo-token, never appears in scanner */</span>
+<span class="op">%</span><span class="kw">nonassoc</span> ELSE               <span class="comment">/* higher prec → bison will SHIFT ELSE */</span>
+
+<span class="comment">/* Then annotate the if-without-else rule: */</span>
+<span class="label">if_stmt:</span>
+    <span class="fn">IF</span> <span class="op">'('</span> expr <span class="op">')'</span> stmt <span class="op">%</span><span class="kw">prec</span> LOWER_THAN_ELSE
+        <span class="op">{</span> $$ <span class="op">=</span> <span class="fn">createIf</span>($3, $5, <span class="kw">NULL</span>)<span class="op">;</span> <span class="op">}</span>
+  <span class="op">|</span> <span class="fn">IF</span> <span class="op">'('</span> expr <span class="op">')'</span> stmt <span class="fn">ELSE</span> stmt
+        <span class="op">{</span> $$ <span class="op">=</span> <span class="fn">createIf</span>($3, $5, $7)<span class="op">;</span> <span class="op">}</span>
+  <span class="op">;</span></pre>
+
+<div class="callout">
+  <span class="icon">🔍</span>
+  <strong>How the precedence rule works:</strong> When bison has just parsed
+  <code>IF ( expr ) stmt</code> and sees <code>ELSE</code> as the lookahead, it
+  compares the precedence of the reduction (<code>LOWER_THAN_ELSE</code>) with the
+  precedence of the shift (<code>ELSE</code>). Since <code>ELSE</code> >
+  <code>LOWER_THAN_ELSE</code>, bison shifts — consuming the <code>ELSE</code> and
+  attaching it to the current (innermost) if. Zero conflict warnings.
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 5. PHASE 3 — AST                                          -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section>
+<h2>5 · Phase 3 — Abstract Syntax Tree (ast.h / ast.c)</h2>
+
+<h3>5.1 New node type</h3>
+<pre><span class="comment">/* In the NodeType enum — add after NODE_FOR */</span>
+<span class="fn">NODE_IF</span>   <span class="comment">/* if (condition) then_stmt [else else_stmt] */</span></pre>
+
+<h3>5.2 Node data structure</h3>
+<pre><span class="comment">/* In the ASTNode union — add with the other control-flow structs */</span>
+<span class="kw">struct</span> <span class="op">{</span>
+    <span class="kw">struct</span> ASTNode<span class="op">*</span> condition<span class="op">;</span>  <span class="comment">/* condition expression          */</span>
+    <span class="kw">struct</span> ASTNode<span class="op">*</span> then_stmt<span class="op">;</span>  <span class="comment">/* executed when condition true  */</span>
+    <span class="kw">struct</span> ASTNode<span class="op">*</span> else_stmt<span class="op">;</span>  <span class="comment">/* executed when condition false */</span>
+                                 <span class="comment">/* NULL if no else clause        */</span>
+<span class="op">}</span> if_stmt<span class="op">;</span></pre>
+
+<h3>5.3 Constructor function</h3>
+<pre>ASTNode<span class="op">*</span> <span class="fn">createIf</span><span class="op">(</span>ASTNode<span class="op">*</span> condition,
+                   ASTNode<span class="op">*</span> then_stmt,
+                   ASTNode<span class="op">*</span> else_stmt<span class="op">) {</span>
+    ASTNode<span class="op">*</span> node <span class="op">=</span> <span class="fn">malloc</span><span class="op">(</span><span class="kw">sizeof</span><span class="op">(</span>ASTNode<span class="op">));</span>
+    node<span class="op">-></span>type <span class="op">=</span> <span class="fn">NODE_IF</span><span class="op">;</span>
+    node<span class="op">-></span>lineno <span class="op">=</span> yylineno<span class="op">;</span>
+    node<span class="op">-></span>data.if_stmt.condition <span class="op">=</span> condition<span class="op">;</span>
+    node<span class="op">-></span>data.if_stmt.then_stmt <span class="op">=</span> then_stmt<span class="op">;</span>
+    node<span class="op">-></span>data.if_stmt.else_stmt <span class="op">=</span> else_stmt<span class="op">;</span>
+    <span class="kw">return</span> node<span class="op">;</span>
+<span class="op">}</span></pre>
+
+<p>The <code>else_stmt</code> pointer being <code>NULL</code> vs. non-<code>NULL</code>
+encodes whether an else branch exists. Every later phase checks this pointer before
+processing the else.</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 6. PHASE 4 — SEMANTIC ANALYSIS                            -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section>
+<h2>6 · Phase 4 — Semantic Analysis (semantic.c)</h2>
+
+<p>The semantic checker walks the AST and verifies that variables are declared,
+functions are called correctly, etc. For if-statements it must:</p>
+
+<div class="steps">
+  <div class="step"><div>
+    <strong>Check the condition expression</strong> — all variables inside must be declared.
+    A condition like <code>x &gt; y</code> references <code>x</code> and <code>y</code>;
+    both must be in scope.
+  </div></div>
+  <div class="step"><div>
+    <strong>Warn on constant conditions</strong> — <code>if (0)</code> creates dead then-code;
+    <code>if (1)</code> creates dead else-code. These are valid but suspicious.
+  </div></div>
+  <div class="step"><div>
+    <strong>Recursively check the then-branch</strong> — any statements inside the
+    then-block must be semantically valid.
+  </div></div>
+  <div class="step"><div>
+    <strong>Recursively check the else-branch</strong> — only if
+    <code>else_stmt != NULL</code>.
+  </div></div>
+</div>
+
+<pre><span class="kw">case</span> <span class="fn">NODE_IF</span><span class="op">:</span>
+    <span class="comment">/* 1. Check the condition for undeclared variables */</span>
+    <span class="fn">checkExpr</span><span class="op">(</span>node<span class="op">-></span>data.if_stmt.condition<span class="op">);</span>
+
+    <span class="comment">/* 2. Warn if condition is a compile-time constant */</span>
+    <span class="kw">if</span> <span class="op">(</span>node<span class="op">-></span>data.if_stmt.condition<span class="op">-></span>type <span class="op">==</span> <span class="fn">NODE_NUM</span><span class="op">) {</span>
+        <span class="fn">warnConstantCondition</span><span class="op">(</span>node<span class="op">);</span>
+    <span class="op">}</span>
+
+    <span class="comment">/* 3. Check then-branch */</span>
+    <span class="fn">checkStmt</span><span class="op">(</span>node<span class="op">-></span>data.if_stmt.then_stmt<span class="op">);</span>
+
+    <span class="comment">/* 4. Check else-branch (only if it exists) */</span>
+    <span class="kw">if</span> <span class="op">(</span>node<span class="op">-></span>data.if_stmt.else_stmt<span class="op">) {</span>
+        <span class="fn">checkStmt</span><span class="op">(</span>node<span class="op">-></span>data.if_stmt.else_stmt<span class="op">);</span>
+    <span class="op">}</span>
+    <span class="kw">break</span><span class="op">;</span></pre>
+
+<div class="card info">
+  <h4>ℹ Scope Rules for If-Statements</h4>
+  <p>In our compiler, variables declared inside an <code>if</code> block are visible
+  only within that block (each <code>{ }</code> opens a new scope in the semantic
+  analyzer). A variable declared in the then-branch is <em>not</em> visible in the
+  else-branch or after the if-statement ends.</p>
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 7. PHASE 5 — TAC GENERATION                               -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section>
+<h2>7 · Phase 5 — Three-Address Code Generation (tac.c)</h2>
+
+<h3>7.1 The three building blocks</h3>
+<p>Loops already use these TAC instructions, so they are not new:</p>
+<table>
+  <thead><tr><th>Instruction</th><th>Meaning</th><th>MIPS equivalent</th></tr></thead>
+  <tbody>
+    <tr><td><code>IF_FALSE t goto L</code></td><td>Branch if t == 0</td><td><code>beqz $tX, L</code></td></tr>
+    <tr><td><code>GOTO L</code></td><td>Unconditional jump</td><td><code>j L</code></td></tr>
+    <tr><td><code>LABEL L</code></td><td>Jump target</td><td><code>L:</code></td></tr>
+  </tbody>
+</table>
+
+<h3>7.2 If-without-else lowering</h3>
+<pre><span class="comment">/* Source: if (x > 0) { print(x); } */</span>
+
+t0 <span class="op">=</span> x <span class="op">></span> 0             <span class="comment">; evaluate condition</span>
+<span class="kw">IF_FALSE</span> t0 <span class="kw">GOTO</span> <span class="label">L_end</span>  <span class="comment">; skip then-block if false</span>
+<span class="fn">PRINT</span> x                <span class="comment">; then-block</span>
+<span class="label">L_end:</span>                 <span class="comment">; merge point</span></pre>
+
+<h3>7.3 If-else lowering</h3>
+<pre><span class="comment">/* Source: if (x > 0) { r = 1; } else { r = 0; } */</span>
+
+t0 <span class="op">=</span> x <span class="op">></span> 0              <span class="comment">; evaluate condition</span>
+<span class="kw">IF_FALSE</span> t0 <span class="kw">GOTO</span> <span class="label">L_else</span>  <span class="comment">; jump to else if false</span>
+r <span class="op">=</span> 1                   <span class="comment">; then-block</span>
+<span class="kw">GOTO</span> <span class="label">L_end</span>              <span class="comment">; skip else-block</span>
+<span class="label">L_else:</span>                 <span class="comment">; else merge point</span>
+r <span class="op">=</span> 0                   <span class="comment">; else-block</span>
+<span class="label">L_end:</span>                  <span class="comment">; end merge point</span></pre>
+
+<h3>7.4 TAC generation code (C implementation)</h3>
+<pre><span class="kw">case</span> <span class="fn">NODE_IF</span><span class="op">: {</span>
+    <span class="kw">char</span><span class="op">*</span> labelElse <span class="op">=</span> <span class="fn">newLabel</span><span class="op">();</span>   <span class="comment">/* e.g. "L2" */</span>
+    <span class="kw">char</span><span class="op">*</span> labelEnd  <span class="op">=</span> <span class="fn">newLabel</span><span class="op">();</span>   <span class="comment">/* e.g. "L3" */</span>
+
+    <span class="comment">/* Evaluate the condition */</span>
+    <span class="kw">char</span><span class="op">*</span> cond <span class="op">=</span> <span class="fn">generateTACExpr</span><span class="op">(</span>node<span class="op">-></span>data.if_stmt.condition<span class="op">);</span>
+
+    <span class="comment">/* Choose jump target: else label (if else exists) or end label */</span>
+    <span class="kw">if</span> <span class="op">(</span>node<span class="op">-></span>data.if_stmt.else_stmt<span class="op">) {</span>
+        <span class="fn">appendTAC</span><span class="op">(</span><span class="fn">createTAC</span><span class="op">(</span><span class="fn">TAC_IF_FALSE</span>, cond, labelElse, <span class="kw">NULL</span><span class="op">));</span>
+    <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span>
+        <span class="fn">appendTAC</span><span class="op">(</span><span class="fn">createTAC</span><span class="op">(</span><span class="fn">TAC_IF_FALSE</span>, cond, labelEnd,  <span class="kw">NULL</span><span class="op">));</span>
+    <span class="op">}</span>
+
+    <span class="comment">/* Generate then-branch code */</span>
+    <span class="fn">generateTACStmt</span><span class="op">(</span>node<span class="op">-></span>data.if_stmt.then_stmt<span class="op">);</span>
+
+    <span class="kw">if</span> <span class="op">(</span>node<span class="op">-></span>data.if_stmt.else_stmt<span class="op">) {</span>
+        <span class="fn">appendTAC</span><span class="op">(</span><span class="fn">createTAC</span><span class="op">(</span><span class="fn">TAC_GOTO</span>,    labelEnd,  <span class="kw">NULL</span>, <span class="kw">NULL</span><span class="op">));</span>  <span class="comment">/* skip else */</span>
+        <span class="fn">appendTAC</span><span class="op">(</span><span class="fn">createTAC</span><span class="op">(</span><span class="fn">TAC_LABEL</span>,   <span class="kw">NULL</span>,      <span class="kw">NULL</span>, labelElse<span class="op">));</span>
+        <span class="fn">generateTACStmt</span><span class="op">(</span>node<span class="op">-></span>data.if_stmt.else_stmt<span class="op">);</span>
+    <span class="op">}</span>
+
+    <span class="fn">appendTAC</span><span class="op">(</span><span class="fn">createTAC</span><span class="op">(</span><span class="fn">TAC_LABEL</span>, <span class="kw">NULL</span>, <span class="kw">NULL</span>, labelEnd<span class="op">));</span>
+    <span class="kw">break</span><span class="op">;</span>
+<span class="op">}</span></pre>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 8. PHASE 6 — OPTIMIZER                                    -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section>
+<h2>8 · Phase 6 — Optimizer (tac.c)</h2>
+
+<p>The optimizer already handles the TAC instructions produced by if-statements.
+<strong>No new code is needed.</strong> The existing passes simply do more work.</p>
+
+<div class="two-col">
+  <div class="card info">
+    <h4>📐 Constant Folding in Conditions</h4>
+    <p>If an if-condition is a constant expression like <code>5 &gt; 3</code>,
+    constant folding evaluates it at compile time:</p>
+    <pre style="background:var(--code-bg);border:none">t0 = 5 > 3      → t0 = 1</pre>
+    <p>This then feeds the branch optimizer below.</p>
+  </div>
+  <div class="card info">
+    <h4>✂ Dead Branch Elimination</h4>
+    <p>Once the condition is a constant, the optimizer eliminates the dead branch:</p>
+    <pre style="background:var(--code-bg);border:none">IF_FALSE 1 GOTO L  → (removed)
+IF_FALSE 0 GOTO L  → GOTO L</pre>
+    <p>The "always false" branch becomes an unconditional jump.
+    The "always true" branch's conditional is deleted entirely.</p>
+  </div>
+</div>
+
+<div class="callout">
+  <span class="icon">📖</span>
+  <strong>Example:</strong> <code>if (0) { print(x); }</code> compiles to an
+  <code>IF_FALSE 0 GOTO L_end</code>. The optimizer replaces this with
+  <code>GOTO L_end</code>, so the then-block is never reached — the print is
+  completely eliminated from the output assembly.
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 9. PHASE 7 — CODE GENERATION                              -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section>
+<h2>9 · Phase 7 — Code Generation (codegen.c)</h2>
+
+<h3>9.1 MIPS instructions used</h3>
+<table>
+  <thead><tr><th>TAC Instruction</th><th>MIPS Output</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td><code>t0 = x > y</code></td><td><code>sgt $t2, $t0, $t1</code></td><td>Set if greater-than</td></tr>
+    <tr><td><code>t0 = x &lt; y</code></td><td><code>slt $t2, $t0, $t1</code></td><td>Set if less-than</td></tr>
+    <tr><td><code>t0 = x == y</code></td><td><code>seq $t2, $t0, $t1</code></td><td>Set if equal (pseudo)</td></tr>
+    <tr><td><code>t0 = x != y</code></td><td><code>sne $t2, $t0, $t1</code></td><td>Set if not-equal</td></tr>
+    <tr><td><code>IF_FALSE t0 GOTO L</code></td><td><code>beqz $t2, L</code></td><td>Branch if zero</td></tr>
+    <tr><td><code>GOTO L</code></td><td><code>j L</code></td><td>Unconditional jump</td></tr>
+    <tr><td><code>LABEL L</code></td><td><code>L:</code></td><td>+ invalidate regs</td></tr>
+  </tbody>
+</table>
+
+<h3>9.2 The merge-point register problem (the tricky part)</h3>
+
+<p>The register allocator works perfectly for <em>linear</em> code.
+Problems arise at <strong>merge points</strong>: locations that can be reached by
+two different paths.</p>
+
+<div class="callout" style="border-color:var(--accent3)">
+  <span class="icon">🐛</span>
+  <strong>The bug:</strong> After processing
+  <code>if (x &gt; 0) { result = 1; }</code>, the allocator records
+  "result is in $t0."  When it then generates <code>print(result)</code>
+  it emits <code>move $a0, $t0</code>.
+  <strong>At runtime, if the branch was taken and skipped the assignment,
+  $t0 does not hold result — it holds whatever was there before.</strong>
+</div>
+
+<pre><span class="comment">; Generated (WRONG) assembly for: if (x>0){r=1;} print(r);</span>
+    sgt $t1, $t0, $t2       <span class="comment">; t = x > 0</span>
+    beqz $t1, L3            <span class="comment">; skip then-block if false</span>
+    li $t0, 1               <span class="comment">; r = 1 in $t0</span>
+    sw $t0, 8($sp)          <span class="comment">; and in memory</span>
+<span class="label">L3:</span>                         <span class="comment">; ← merge point: $t0 may NOT hold r!</span>
+    move $a0, $t0           <span class="comment">; BUG: uses stale $t0</span>
+    li $v0, 1
+    syscall</pre>
+
+<h3>9.3 The fix: invalidate all registers at every label</h3>
+<pre><span class="kw">case</span> <span class="fn">TAC_LABEL</span><span class="op">:</span> <span class="op">{</span>
+    fprintf<span class="op">(</span>output, <span class="str">"%s:\n"</span>, curr<span class="op">-></span>result<span class="op">);</span>
+
+    <span class="comment">/* ── CRITICAL: invalidate all register state ──────────────
+     * A label is a merge point. Multiple code paths may arrive
+     * here via fall-through OR via a branch. We cannot trust
+     * that any register holds the value the allocator thinks it
+     * holds.  Clearing the descriptors forces every subsequent
+     * variable read to emit an lw from its stack slot, which is
+     * ALWAYS correct because every variable assignment already
+     * does an sw to memory.
+     * ────────────────────────────────────────────────────────── */</span>
+    <span class="fn">invalidateAllRegisters</span><span class="op">();</span>
+    <span class="kw">break</span><span class="op">;</span>
+<span class="op">}</span></pre>
+
+<pre><span class="comment">; Corrected assembly for: if (x>0){r=1;} print(r);</span>
+    sgt $t1, $t0, $t2       <span class="comment">; t = x > 0</span>
+    beqz $t1, L3
+    li $t0, 1
+    sw $t0, 8($sp)          <span class="comment">; r=1 written to memory</span>
+<span class="label">L3:</span>
+    <span class="comment">; ← invalidateAllRegisters() clears descriptors</span>
+    lw $t0, 8($sp)          <span class="comment">; CORRECT: reload r from memory</span>
+    move $a0, $t0
+    li $v0, 1
+    syscall</pre>
+
+<div class="card success">
+  <h4>✅ Why This Always Works</h4>
+  <p>Variables are written to their stack slot (<code>sw</code>) on <em>every</em>
+  assignment, so memory is always current. TAC temporaries (<code>t0</code>,
+  <code>t1</code>…) are freed immediately after use and never survive a branch.
+  Therefore invalidating registers at labels, combined with always storing
+  variables to memory, guarantees correctness regardless of which path was taken.</p>
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 10. END-TO-END WORKED EXAMPLE                             -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section>
+<h2>10 · End-to-End Worked Example</h2>
+
+<p>Source code:</p>
+<pre><span class="kw">int</span> <span class="fn">main</span><span class="op">() {</span>
+    <span class="kw">int</span> x<span class="op">;</span>  <span class="kw">int</span> r<span class="op">;</span>
+    x <span class="op">=</span> <span class="num">10</span><span class="op">;</span>
+    <span class="kw">if</span> <span class="op">(</span>x <span class="op">></span> <span class="num">5</span><span class="op">) {</span>
+        r <span class="op">=</span> <span class="num">1</span><span class="op">;</span>
+    <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span>
+        r <span class="op">=</span> <span class="num">0</span><span class="op">;</span>
+    <span class="op">}</span>
+    <span class="fn">print</span><span class="op">(</span>r<span class="op">);</span>
+    <span class="kw">return</span> <span class="num">0</span><span class="op">;</span>
+<span class="op">}</span></pre>
+
+<div class="three-col" style="margin-top:1rem">
+  <div>
+    <p style="color:var(--accent);font-weight:700;margin-bottom:.4rem">▸ AST</p>
+    <pre style="font-size:.75rem">FUNC_DEF: main
+  BLOCK
+    DECL: x
+    DECL: r
+    ASSIGN: x = 10
+    IF
+      COND: BINOP(>)
+        VAR: x
+        NUM: 5
+      THEN: BLOCK
+        ASSIGN: r = 1
+      ELSE: BLOCK
+        ASSIGN: r = 0
+    PRINT: VAR r
+    RETURN: NUM 0</pre>
+  </div>
+  <div>
+    <p style="color:var(--accent2);font-weight:700;margin-bottom:.4rem">▸ Unoptimized TAC</p>
+    <pre style="font-size:.75rem">FUNC_BEGIN main
+DECL x
+DECL r
+x = 10
+r = ?
+t0 = x > 5
+IF_FALSE t0 GOTO L0
+r = 1
+GOTO L1
+L0:
+r = 0
+L1:
+PRINT r
+RETURN 0
+FUNC_END main</pre>
+  </div>
+  <div>
+    <p style="color:var(--green);font-weight:700;margin-bottom:.4rem">▸ Generated MIPS</p>
+    <pre style="font-size:.75rem">main_start:
+  li $t0, 10
+  sw $t0, 0($sp)   # x=10
+  lw $t1, 0($sp)   # load x
+  li $t2, 5
+  sgt $t3,$t1,$t2  # x>5?
+  beqz $t3, L0
+  li $t0, 1
+  sw $t0, 4($sp)   # r=1
+  j L1
+L0:
+  # invalidate regs
+  li $t0, 0
+  sw $t0, 4($sp)   # r=0
+L1:
+  # invalidate regs
+  lw $t0, 4($sp)   # load r
+  move $a0, $t0
+  li $v0, 1
+  syscall</pre>
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 11. SUMMARY                                               -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section>
+<h2>11 · Summary — What Changes at Each Phase</h2>
+
+<div class="steps">
+  <div class="step"><div><strong>Lexer (scanner.l)</strong><br>
+    Add two keyword rules: <code>"if" → IF</code> and <code>"else" → ELSE</code>.
+    Place them before the identifier catch-all.
+  </div></div>
+  <div class="step"><div><strong>Parser (parser.y)</strong><br>
+    Add the <code>if_stmt</code> grammar rule with two productions (with and without
+    else). Use <code>%nonassoc LOWER_THAN_ELSE / ELSE</code> to resolve the
+    dangling-else conflict without warnings.
+  </div></div>
+  <div class="step"><div><strong>AST (ast.h / ast.c)</strong><br>
+    Add <code>NODE_IF</code> to the enum, add a three-pointer struct
+    (condition, then, else) to the union, and implement <code>createIf()</code>.
+  </div></div>
+  <div class="step"><div><strong>Semantic (semantic.c)</strong><br>
+    Add a <code>NODE_IF</code> case: check the condition, warn on constants, recurse
+    into both branches.
+  </div></div>
+  <div class="step"><div><strong>TAC (tac.c)</strong><br>
+    Add a <code>NODE_IF</code> case in <code>generateTACStmt</code>: generate two
+    labels, evaluate the condition, emit <code>IF_FALSE</code>, generate both
+    branches, emit <code>GOTO</code> and <code>LABEL</code> instructions.
+  </div></div>
+  <div class="step"><div><strong>Optimizer (tac.c)</strong><br>
+    No changes. The existing constant-folding and dead-branch-elimination passes
+    already handle the TAC produced by if-statements.
+  </div></div>
+  <div class="step"><div><strong>Code Generator (codegen.c)</strong><br>
+    Add <code>invalidateAllRegisters()</code>. Call it in the <code>TAC_LABEL</code>
+    case. This prevents stale register values from corrupting results after
+    conditional branches.
+  </div></div>
+</div>
+</section>
+
+</div><!-- /wrapper -->
+
+<footer>
+  <div class="wrapper">
+    CST-405 Compiler Design &nbsp;·&nbsp; If-Statements Lecture &nbsp;·&nbsp;
+    All code examples reference <code>CST-405-if-statements/</code>
+  </div>
+</footer>
+
+</body>
+</html>

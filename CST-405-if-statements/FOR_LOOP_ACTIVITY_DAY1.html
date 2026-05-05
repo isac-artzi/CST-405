@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 1 Activity — For-Loop: Lexer, Parser & AST</title>
+<style>
+  :root {
+    --bg:       #0f1117;
+    --surface:  #1a1d27;
+    --surface2: #22263a;
+    --border:   #2e3350;
+    --accent:   #4f8ef7;
+    --green:    #34d399;
+    --yellow:   #fbbf24;
+    --red:      #f87171;
+    --purple:   #a78bfa;
+    --text:     #e2e8f0;
+    --muted:    #8892a4;
+    --code-bg:  #141722;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; font-size: 15px; }
+
+  /* NAV */
+  nav { position: sticky; top: 0; z-index: 100; background: rgba(15,17,23,0.93); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; gap: 1rem; height: 52px; }
+  nav .logo { font-weight: 700; color: var(--accent); font-size: .9rem; white-space: nowrap; }
+  nav .day-badge { background: var(--accent); color: #fff; border-radius: 6px; padding: 3px 10px; font-size: .75rem; font-weight: 700; }
+  nav .time { margin-left: auto; color: var(--muted); font-size: .8rem; }
+
+  /* LAYOUT */
+  .page { max-width: 860px; margin: 0 auto; padding: 2rem 2rem 6rem; }
+
+  /* HERO */
+  .hero { border-bottom: 1px solid var(--border); padding-bottom: 2rem; margin-bottom: 2.5rem; }
+  .hero-meta { display: flex; align-items: center; gap: .8rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .tag { display: inline-block; padding: 2px 10px; border-radius: 5px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+  .tag-day1 { background: rgba(79,142,247,.18); color: var(--accent); border: 1px solid rgba(79,142,247,.3); }
+  .tag-75   { background: rgba(251,191,36,.12); color: var(--yellow); border: 1px solid rgba(251,191,36,.3); }
+  .tag-front{ background: rgba(167,139,250,.12); color: var(--purple); border: 1px solid rgba(167,139,250,.3); }
+  .hero h1 { font-size: 1.8rem; font-weight: 800; line-height: 1.2; margin-bottom: .6rem; }
+  .hero h1 span { color: var(--accent); }
+  .hero p { color: var(--muted); max-width: 640px; }
+
+  /* OBJECTIVES BOX */
+  .objectives { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.2rem 1.5rem; margin-bottom: 2rem; }
+  .objectives h3 { font-size: .85rem; text-transform: uppercase; letter-spacing: .07em; color: var(--accent); margin-bottom: .8rem; }
+  .obj-list { list-style: none; padding: 0; }
+  .obj-list li { padding: .3rem 0; display: flex; align-items: flex-start; gap: .6rem; font-size: .9rem; }
+  .obj-list li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+
+  /* TIMELINE */
+  .timeline { display: flex; gap: 0; margin-bottom: 2.5rem; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .tl-item { flex: 1; padding: .7rem .5rem; text-align: center; border-right: 1px solid var(--border); font-size: .75rem; }
+  .tl-item:last-child { border-right: none; }
+  .tl-item .tl-time { font-weight: 700; color: var(--accent); display: block; font-size: .8rem; }
+  .tl-item .tl-label { color: var(--muted); }
+  .tl-item.current { background: rgba(79,142,247,.08); }
+
+  /* PART HEADERS */
+  .part { margin-bottom: 3rem; }
+  .part-header {
+    display: flex; align-items: center; gap: 1rem; padding: 1rem 1.2rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px 10px 0 0; border-bottom: 2px solid var(--accent);
+  }
+  .part-num { background: var(--accent); color: #fff; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: .9rem; flex-shrink: 0; }
+  .part-title { font-size: 1.1rem; font-weight: 700; }
+  .part-time { margin-left: auto; color: var(--yellow); font-size: .8rem; font-weight: 600; background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.2); border-radius: 5px; padding: 2px 9px; }
+  .part-body { background: var(--surface); border: 1px solid var(--border); border-top: none; border-radius: 0 0 10px 10px; padding: 1.5rem; }
+
+  /* TASK CARDS */
+  .task { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 1.2rem; overflow: hidden; }
+  .task-head { display: flex; align-items: center; gap: .8rem; padding: .7rem 1rem; background: var(--surface2); }
+  .task-num { background: var(--border); color: var(--text); border-radius: 5px; padding: 1px 8px; font-size: .75rem; font-weight: 700; font-family: monospace; }
+  .task-title { font-weight: 600; font-size: .92rem; }
+  .task-file { margin-left: auto; font-family: monospace; font-size: .75rem; color: var(--muted); background: var(--code-bg); padding: 2px 7px; border-radius: 4px; border: 1px solid var(--border); }
+  .task-body { padding: 1rem 1.2rem; font-size: .9rem; }
+  .task-body p { margin-bottom: .7rem; }
+
+  /* CODE */
+  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 7px; padding: .9rem 1.1rem; overflow-x: auto; font-family: 'Cascadia Code','Fira Code','Consolas',monospace; font-size: .8rem; line-height: 1.65; margin: .7rem 0 .9rem; }
+  .kw { color: #c792ea; } .cmt { color: #546e7a; font-style: italic; } .str { color: #c3e88d; }
+  .num { color: #f78c6c; } .fn { color: #82aaff; }
+
+  /* CALLOUTS */
+  .callout { border-left: 3px solid var(--accent); background: rgba(79,142,247,.07); border-radius: 0 7px 7px 0; padding: .8rem 1.1rem; margin: .8rem 0; font-size: .88rem; }
+  .callout.warn { border-color: var(--yellow); background: rgba(251,191,36,.07); }
+  .callout.tip  { border-color: var(--green);  background: rgba(52,211,153,.07); }
+  .callout.stop { border-color: var(--red);    background: rgba(248,113,113,.07); }
+  .callout strong { display: block; margin-bottom: .3rem; font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; }
+  .callout.warn strong { color: var(--yellow); }
+  .callout.tip  strong { color: var(--green); }
+  .callout.stop strong { color: var(--red); }
+  .callout      strong { color: var(--accent); }
+
+  /* CHECKPOINT */
+  .checkpoint { background: rgba(52,211,153,.07); border: 1px solid rgba(52,211,153,.25); border-radius: 10px; padding: 1.2rem 1.5rem; margin: 1.5rem 0; }
+  .checkpoint h3 { color: var(--green); font-size: .85rem; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .8rem; }
+  .checkpoint ul { padding-left: 1.2rem; }
+  .checkpoint li { margin-bottom: .35rem; font-size: .9rem; }
+
+  /* QUESTIONS */
+  .questions { background: rgba(167,139,250,.06); border: 1px solid rgba(167,139,250,.2); border-radius: 8px; padding: 1rem 1.3rem; margin: 1rem 0; }
+  .questions h4 { color: var(--purple); font-size: .82rem; text-transform: uppercase; letter-spacing: .06em; margin-bottom: .7rem; }
+  .questions ol { padding-left: 1.2rem; font-size: .9rem; }
+  .questions li { margin-bottom: .5rem; }
+
+  /* ANSWER AREA */
+  .answer-area { border: 1px dashed var(--border); border-radius: 6px; padding: .6rem 1rem; min-height: 60px; margin: .4rem 0; background: rgba(255,255,255,.01); color: var(--muted); font-size: .8rem; font-style: italic; }
+
+  h3 { font-size: .97rem; font-weight: 700; color: var(--purple); margin: 1.2rem 0 .5rem; }
+  p { margin-bottom: .7rem; }
+  ul, ol { padding-left: 1.4rem; margin-bottom: .7rem; }
+  li { margin-bottom: .3rem; }
+
+  /* DELIVERABLE */
+  .deliverable { display: flex; align-items: flex-start; gap: .6rem; padding: .5rem .8rem; border-radius: 6px; background: var(--surface2); margin: .4rem 0; font-size: .88rem; }
+  .deliverable::before { content: '→'; color: var(--accent); font-weight: 700; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="logo">CST-405 — Compiler Design</span>
+  <span class="day-badge">Day 1 of 2</span>
+  <span class="time">75 minutes</span>
+</nav>
+
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-meta">
+      <span class="tag tag-day1">Session 1</span>
+      <span class="tag tag-75">75 min</span>
+      <span class="tag tag-front">Frontend Phases</span>
+    </div>
+    <h1>Adding <span>For-Loop</span> Support<br>Part 1: Lexer, Parser &amp; AST</h1>
+    <p>In this session you will extend the front-end of the compiler to recognize, parse, and represent <code>for</code> loops as AST nodes. By the end of class your compiler will parse a for-loop and display a correct Abstract Syntax Tree — with semantic analysis and code generation left for Day 2.</p>
+  </div>
+
+  <!-- OBJECTIVES -->
+  <div class="objectives">
+    <h3>Learning Objectives — Day 1</h3>
+    <ul class="obj-list">
+      <li>Explain why a <code>for</code> loop requires a new keyword token in the lexer</li>
+      <li>Write BNF grammar productions for <code>for_stmt</code>, <code>for_init</code>, <code>for_cond</code>, and <code>for_update</code></li>
+      <li>Identify how optional grammar components are handled using ε-productions in Bison</li>
+      <li>Extend the AST node type enum and union to accommodate a new node type</li>
+      <li>Implement a constructor function and a print case for a new AST node</li>
+      <li>Build the compiler and verify the AST output for a test for-loop program</li>
+    </ul>
+  </div>
+
+  <!-- TIMELINE -->
+  <div class="timeline">
+    <div class="tl-item"><span class="tl-time">0–10</span><span class="tl-label">Review &amp; Setup</span></div>
+    <div class="tl-item"><span class="tl-time">10–25</span><span class="tl-label">Part 1: Lexer</span></div>
+    <div class="tl-item"><span class="tl-time">25–50</span><span class="tl-label">Part 2: Parser</span></div>
+    <div class="tl-item"><span class="tl-time">50–70</span><span class="tl-label">Part 3: AST</span></div>
+    <div class="tl-item"><span class="tl-time">70–75</span><span class="tl-label">Checkpoint</span></div>
+  </div>
+
+  <!-- WARM-UP -->
+  <div class="part">
+    <div class="part-header">
+      <div class="part-num">0</div>
+      <div class="part-title">Warm-Up — Review &amp; Setup</div>
+      <span class="part-time">10 min</span>
+    </div>
+    <div class="part-body">
+      <p>Before writing any code, ground yourself in the existing codebase and the theory.</p>
+
+      <div class="task">
+        <div class="task-head">
+          <span class="task-num">0.1</span>
+          <span class="task-title">Locate and read the while-loop implementations</span>
+        </div>
+        <div class="task-body">
+          <p>Open the four files you will modify today: <code>scanner.l</code>, <code>parser.y</code>, <code>ast.h</code>, and <code>ast.c</code>. In each file, find how the existing <code>while</code> loop is handled. For each file, write the line number(s) where the while-loop logic appears:</p>
+          <div class="answer-area">scanner.l line(s): &nbsp;&nbsp;&nbsp; parser.y line(s): &nbsp;&nbsp;&nbsp; ast.h line(s): &nbsp;&nbsp;&nbsp; ast.c line(s):</div>
+        </div>
+      </div>
+
+      <div class="task">
+        <div class="task-head">
+          <span class="task-num">0.2</span>
+          <span class="task-title">Grammar exercise — before touching any code</span>
+        </div>
+        <div class="task-body">
+          <p>On paper, write out the BNF grammar for a for-loop in C-minus. Your grammar must include productions for all four non-terminals: <code>for_stmt</code>, <code>for_init</code>, <code>for_cond</code>, and <code>for_update</code>. Each optional part must have an ε alternative. Use the while-loop rule in <code>parser.y</code> as a structural reference.</p>
+          <p>Consider: why can't you reuse the existing <code>assign</code> rule for the init and update parts? What is different about its structure?</p>
+        </div>
+      </div>
+
+      <div class="callout tip">
+        <strong>Work on paper first</strong>
+        Writing the grammar before touching the code prevents the most common Day 1 error: syntactically invalid Bison rules that produce dozens of cryptic shift/reduce conflicts.
+      </div>
+    </div>
+  </div>
+
+
+  <!-- PART 1: LEXER -->
+  <div class="part">
+    <div class="part-header">
+      <div class="part-num">1</div>
+      <div class="part-title">Part 1 — Lexer: Recognizing the <code>for</code> Keyword</div>
+      <span class="part-time">15 min</span>
+    </div>
+    <div class="part-body">
+
+      <p>The lexer is the first phase of compilation. It reads the raw source characters and groups them into tokens. The parser cannot recognize a <code>for</code> loop until the lexer can produce a <code>FOR</code> token.</p>
+
+      <div class="task">
+        <div class="task-head">
+          <span class="task-num">1.1</span>
+          <span class="task-title">Observe how existing keywords are tokenized</span>
+          <span class="task-file">scanner.l</span>
+        </div>
+        <div class="task-body">
+          <p>Near the top of the rules section in <code>scanner.l</code>, you will find a set of string patterns for existing keywords (<code>while</code>, <code>if</code>, <code>else</code>, etc.). Each returns a corresponding token. Observe their placement relative to the general identifier rule <code>[a-zA-Z_][a-zA-Z0-9_]*</code>.</p>
+          <p>Answer the following before making any changes:</p>
+          <div class="questions">
+            <h4>Reflection Questions</h4>
+            <ol>
+              <li>If you placed the <code>for</code> keyword rule <em>after</em> the identifier rule, what would the scanner return when it sees the text <code>for</code>? Why?</li>
+              <li>Flex's rule-selection strategy is: longest match wins; ties broken by rule order. Knowing this, where must the <code>for</code> rule be placed?</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <div class="task">
+        <div class="task-head">
+          <span class="task-num">1.2</span>
+          <span class="task-title">Add the FOR token rule</span>
+          <span class="task-file">scanner.l</span>
+        </div>
+        <div class="task-body">
+          <p>Add a single scanner rule that matches the string <code>"for"</code> and returns the token <code>FOR</code>. The rule must be placed in the same block as the other keyword rules. The return value should be consistent with how other keywords (<code>IF</code>, <code>WHILE</code>, etc.) are returned — look at those patterns to confirm the style.</p>
+
+          <div class="callout">
+            <strong>Note</strong>
+            You cannot test this in isolation — the scanner depends on the token being declared in the parser. Complete Task 2.1 (token declaration) before attempting to rebuild.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- PART 2: PARSER -->
+  <div class="part">
+    <div class="part-header">
+      <div class="part-num">2</div>
+      <div class="part-title">Part 2 — Parser: Grammar Rules for the For-Loop</div>
+      <span class="part-time">25 min</span>
+    </div>
+    <div class="part-body">
+
+      <p>The parser defines the syntactic structure of valid programs using a context-free grammar. You will add the <code>FOR</code> token declaration, four new non-terminal types, and the production rules that describe how a for-loop is structured.</p>
+
+      <div class="task">
+        <div class="task-head">
+          <span class="task-num">2.1</span>
+          <span class="task-title">Declare the FOR token and new non-terminals</span>
+          <span class="task-file">parser.y</span>
+        </div>
+        <div class="task-body">
+          <p>At the top of <code>parser.y</code>, find the <code>%token</code> line that declares existing keywords such as <code>INT PRINT RETURN IF ELSE WHILE</code>. Add <code>FOR</code> to this list.</p>
+          <p>Then find the <code>%type &lt;node&gt;</code> line that includes <code>if_stmt while_stmt</code> and similar non-terminals. Add the four new non-terminals to this line: <code>for_stmt for_init for_cond for_update</code>.</p>
+
+          <div class="callout warn">
+            <strong>Easy to Miss</strong>
+            Forgetting to add a non-terminal to the <code>%type</code> declaration causes a Bison error: <em>"$$ of 'for_stmt' has no declared type"</em>. Both the <code>%token</code> and <code>%type</code> lines must be updated before adding the rules.
+          </div>
+        </div>
+      </div>
+
+      <div class="task">
+        <div class="task-head">
+          <span class="task-num">2.2</span>
+          <span class="task-title">Add for_stmt to the stmt rule</span>
+          <span class="task-file">parser.y</span>
+        </div>
+        <div class="task-body">
+          <p>Find the <code>stmt</code> production rule — it lists all valid statement types as alternatives separated by <code>|</code>. Add <code>| for_stmt</code> as a new alternative. Look at how <code>while_stmt</code> is added as a reference for the correct syntax.</p>
+          <p>Think about: does the order of alternatives in the <code>stmt</code> rule matter for Bison? Why or why not?</p>
+        </div>
+      </div>
+
+      <div class="task">
+        <div class="task-head">
+          <span class="task-num">2.3</span>
+          <span class="task-title">Write the four grammar productions</span>
+          <span class="task-file">parser.y</span>
+        </div>
+        <div class="task-body">
+          <p>Add the four production rules after the <code>while_stmt</code> rule. The structure of a Bison rule is:</p>
+          <pre><code>rule_name:
+    production_one { <span class="cmt">/* action */</span> $$ <span class="cmt">=</span> ...<span class="cmt">;</span> }
+    | production_two { <span class="cmt">/* action */</span> $$ <span class="cmt">=</span> ...<span class="cmt">;</span> }
+    <span class="cmt">;</span></code></pre>
+
+          <p>For each rule:</p>
+          <ul>
+            <li><strong>for_stmt</strong>: <code>FOR '(' for_init ';' for_cond ';' for_update ')' stmt</code>. The action calls <code>createFor()</code> with four arguments. Before writing <code>$3, $5, $7, $9</code>, count the positional indices from left to right to verify those are correct for each component.</li>
+            <li><strong>for_init</strong>: Two alternatives — an empty production (set <code>$$</code> to <code>NULL</code>), and a scalar assignment without a trailing semicolon. Look at the existing <code>assign</code> rule in the parser to see the assignment pattern, but omit the trailing <code>';'</code>.</li>
+            <li><strong>for_cond</strong>: Two alternatives — empty (set <code>$$</code> to <code>NULL</code> to signal "always true") and <code>expr</code>.</li>
+            <li><strong>for_update</strong>: Mirror <code>for_init</code> — empty or scalar assignment without semicolon.</li>
+          </ul>
+
+          <div class="callout">
+            <strong>Counting Positional Indices</strong>
+            In the rule <code>FOR '(' for_init ';' for_cond ';' for_update ')' stmt</code>, each token (including punctuation) occupies a position. <code>FOR</code> is position 1, <code>'('</code> is position 2, <code>for_init</code> is position 3, and so on. Write out all 9 positions and their values before writing the action.
+          </div>
+
+          <div class="questions">
+            <h4>Discussion Question</h4>
+            <ol>
+              <li>Why does the empty production for <code>for_init</code> set <code>$$</code> to <code>NULL</code> rather than, for example, creating a special "empty" AST node? What would happen in later phases if you chose to create an empty node instead?</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <div class="task">
+        <div class="task-head">
+          <span class="task-num">2.4</span>
+          <span class="task-title">First build attempt — parser only</span>
+        </div>
+        <div class="task-body">
+          <p>Run <code>make</code> from the <code>CST-405-for-loop/</code> directory. The build will likely fail at the linking stage because <code>createFor()</code> is not yet declared or implemented. That is expected. Focus on the Bison output first:</p>
+          <ul>
+            <li>If Bison reports <strong>syntax errors</strong> in <code>parser.y</code>, a production rule has a typo or structural error — re-examine your grammar rules.</li>
+            <li>If Bison reports <strong>new shift/reduce conflicts</strong> beyond the existing 1 (the dangling-else), your grammar is ambiguous — re-examine the optional productions.</li>
+            <li>If Bison reports <strong>undeclared type</strong> errors, you missed a <code>%type</code> declaration.</li>
+          </ul>
+
+          <div class="callout tip">
+            <strong>Interpreting Bison Conflicts</strong>
+            One pre-existing shift/reduce conflict exists in this grammar (the dangling-else). If <code>make</code> reports exactly 1 conflict after your changes, your grammar is correct. Any new conflicts indicate an ambiguity in the rules you added.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- PART 3: AST -->
+  <div class="part">
+    <div class="part-header">
+      <div class="part-num">3</div>
+      <div class="part-title">Part 3 — AST: Node Type, Struct &amp; Constructor</div>
+      <span class="part-time">20 min</span>
+    </div>
+    <div class="part-body">
+
+      <p>The AST is the compiler's internal model of the program. Every construct in the source language maps to a node type. You must define the for-loop's node type, its data layout, a constructor function, and a print case.</p>
+
+      <div class="task">
+        <div class="task-head">
+          <span class="task-num">3.1</span>
+          <span class="task-title">Add NODE_FOR to the NodeType enum</span>
+          <span class="task-file">ast.h</span>
+        </div>
+        <div class="task-body">
+          <p>Open <code>ast.h</code> and find the <code>NodeType</code> enum. It lists all node types (e.g., <code>NODE_IF</code>, <code>NODE_WHILE</code>, <code>NODE_BLOCK</code>). Add <code>NODE_FOR</code> adjacent to <code>NODE_WHILE</code> to keep related items together. A comment describing the node's purpose is expected.</p>
+          <p>Note: the enum value itself is just an integer tag. The compiler will not enforce its meaning — that is your job in the constructor and in each phase that handles it.</p>
+        </div>
+      </div>
+
+      <div class="task">
+        <div class="task-head">
+          <span class="task-num">3.2</span>
+          <span class="task-title">Add the for_stmt struct to the ASTNode union</span>
+          <span class="task-file">ast.h</span>
+        </div>
+        <div class="task-body">
+          <p>Inside <code>ASTNode</code>, there is a <code>union</code> that contains one struct per node type. Find the <code>while_stmt</code> struct — it has two pointer fields (<code>condition</code> and <code>body</code>). Add a new struct for <code>for_stmt</code> directly after it.</p>
+          <p>The <code>for_stmt</code> struct requires four <code>struct ASTNode*</code> fields:</p>
+          <ul>
+            <li><code>init</code> — the initialization statement; may be <code>NULL</code></li>
+            <li><code>condition</code> — the loop condition; may be <code>NULL</code> (meaning always true)</li>
+            <li><code>update</code> — the per-iteration update; may be <code>NULL</code></li>
+            <li><code>body</code> — the loop body; should not be <code>NULL</code></li>
+          </ul>
+          <p>Include a comment for each field describing when it may be <code>NULL</code>. Other structs in the union provide the style pattern.</p>
+
+          <div class="callout warn">
+            <strong>Union Memory Sharing</strong>
+            All structs inside the union share the same memory. Naming a field in <code>for_stmt</code> the same as a field in another struct (e.g., naming it <code>body</code> when <code>while_stmt</code> also has <code>body</code>) is fine — they are in separate structs inside the union and accessed as <code>node->data.for_stmt.body</code> vs <code>node->data.while_stmt.body</code>.
+          </div>
+        </div>
+      </div>
+
+      <div class="task">
+        <div class="task-head">
+          <span class="task-num">3.3</span>
+          <span class="task-title">Declare createFor() in the header</span>
+          <span class="task-file">ast.h</span>
+        </div>
+        <div class="task-body">
+          <p>At the bottom of <code>ast.h</code>, find the section labeled "Control flow nodes" where <code>createIf()</code>, <code>createWhile()</code>, and <code>createBlock()</code> are declared. Add the declaration for <code>createFor()</code> in this section. The function takes four <code>ASTNode*</code> parameters and returns an <code>ASTNode*</code>. Follow the style of the adjacent declarations.</p>
+        </div>
+      </div>
+
+      <div class="task">
+        <div class="task-head">
+          <span class="task-num">3.4</span>
+          <span class="task-title">Implement createFor() in ast.c</span>
+          <span class="task-file">ast.c</span>
+        </div>
+        <div class="task-body">
+          <p>In <code>ast.c</code>, find the <code>createWhile()</code> function. It is the closest structural analog to what you need to write. Implement <code>createFor()</code> immediately after it. Your implementation must:</p>
+          <ol>
+            <li>Allocate a new <code>ASTNode</code> using <code>malloc(sizeof(ASTNode))</code></li>
+            <li>Set <code>node->type</code> to <code>NODE_FOR</code></li>
+            <li>Set <code>node->lineno</code> to <code>yylineno</code> (same as all other constructors)</li>
+            <li>Assign each of the four parameter values to the corresponding field in <code>node->data.for_stmt</code></li>
+            <li>Return the node pointer</li>
+          </ol>
+          <p>The function should be approximately 8–10 lines. If it is significantly longer, revisit the pattern used by <code>createWhile()</code>.</p>
+        </div>
+      </div>
+
+      <div class="task">
+        <div class="task-head">
+          <span class="task-num">3.5</span>
+          <span class="task-title">Add NODE_FOR case to printAST()</span>
+          <span class="task-file">ast.c</span>
+        </div>
+        <div class="task-body">
+          <p>Find the <code>printAST()</code> function in <code>ast.c</code>. It is a large switch statement with one case per node type. Find <code>case NODE_WHILE:</code> and add <code>case NODE_FOR:</code> immediately after it.</p>
+          <p>The print case must:</p>
+          <ul>
+            <li>Print <code>"FOR\n"</code> at the current indentation level</li>
+            <li>Print each of the four components with a labeled header (<code>"INIT:\n"</code>, <code>"CONDITION:\n"</code>, <code>"UPDATE:\n"</code>, <code>"BODY:\n"</code>)</li>
+            <li>For each component, if the pointer is non-NULL, recursively call <code>printAST()</code> at <code>level + 2</code></li>
+            <li>If a component pointer is NULL, print an informative placeholder (e.g., <code>"(empty)\n"</code> for init/update, <code>"(always true)\n"</code> for condition)</li>
+          </ul>
+          <p>Study how <code>case NODE_IF:</code> prints its optional <code>else_stmt</code> component — the same conditional-print pattern applies here.</p>
+        </div>
+      </div>
+
+      <div class="task">
+        <div class="task-head">
+          <span class="task-num">3.6</span>
+          <span class="task-title">Full build</span>
+        </div>
+        <div class="task-body">
+          <p>Run <code>make clean &amp;&amp; make</code> from the project directory. Address any compiler warnings or errors before moving to the checkpoint. Common issues at this stage:</p>
+          <ul>
+            <li><strong>Implicit function declaration</strong> for <code>createFor</code> → the declaration in <code>ast.h</code> is missing or the header was not saved</li>
+            <li><strong>Incompatible pointer types</strong> → a positional index mismatch in the parser action block</li>
+            <li><strong>Undefined reference to createFor</strong> → the implementation in <code>ast.c</code> is missing or has a typo in the function signature</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- CHECKPOINT -->
+  <div class="checkpoint">
+    <h3>✓ Day 1 Checkpoint — Verify Your AST Output</h3>
+    <p>Create a test file named <code>test_for_day1.c</code> containing the following program:</p>
+    <pre><code><span class="kw">int</span> <span class="fn">main</span>() {
+    <span class="kw">int</span> i<span class="cmt">;</span>
+    <span class="kw">int</span> sum<span class="cmt">;</span>
+    sum <span class="cmt">=</span> <span class="num">0</span><span class="cmt">;</span>
+    <span class="kw">for</span> (i <span class="cmt">=</span> <span class="num">0</span><span class="cmt">;</span> i <span class="cmt">&lt;</span> <span class="num">10</span><span class="cmt">;</span> i <span class="cmt">=</span> i <span class="cmt">+</span> <span class="num">1</span>) {
+        sum <span class="cmt">=</span> sum <span class="cmt">+</span> i<span class="cmt">;</span>
+    }
+    print(sum)<span class="cmt">;</span>
+}</code></pre>
+    <p>Run: <code>./minicompiler test_for_day1.c test_for_day1.s</code></p>
+    <p>In the output, find the AST section (Phase 2). Your output should show a <code>FOR</code> node with all four labeled sub-sections. Verify each item:</p>
+    <ul>
+      <li>The <code>INIT</code> section shows an <code>ASSIGN</code> node for <code>i = 0</code></li>
+      <li>The <code>CONDITION</code> section shows a <code>BINOP</code> node with operator <code>&lt;</code></li>
+      <li>The <code>UPDATE</code> section shows an <code>ASSIGN</code> node for <code>i = i + 1</code></li>
+      <li>The <code>BODY</code> section shows a <code>BLOCK</code> containing the sum assignment</li>
+    </ul>
+    <p>If the compiler crashes or reports errors during semantic analysis or code generation — that is expected and will be fixed on Day 2. A well-formed AST in the output means Day 1 is complete.</p>
+  </div>
+
+  <!-- BONUS -->
+  <div class="part">
+    <div class="part-header">
+      <div class="part-num">★</div>
+      <div class="part-title">Extension — Optional Parts &amp; Edge Cases</div>
+      <span class="part-time">If time allows</span>
+    </div>
+    <div class="part-body">
+      <p>If you finish early, explore these edge cases to deepen your understanding of the grammar you designed.</p>
+
+      <div class="task">
+        <div class="task-head">
+          <span class="task-num">E.1</span>
+          <span class="task-title">Test omitted for-loop components</span>
+        </div>
+        <div class="task-body">
+          <p>Write a second test file that uses a for-loop with all three header parts omitted: <code>for (;;) { ... }</code>. Run it through the compiler and inspect the AST output. What does your <code>printAST()</code> display for each NULL component? Does it match what you expected?</p>
+        </div>
+      </div>
+
+      <div class="task">
+        <div class="task-head">
+          <span class="task-num">E.2</span>
+          <span class="task-title">Array index in for_init</span>
+        </div>
+        <div class="task-body">
+          <p>Your <code>for_init</code> production currently supports scalar assignments. Extend it to also accept array element assignments (e.g., <code>arr[0] = 0</code>). What does the existing <code>assign</code> rule do to support this in the statement context? Apply the same approach to <code>for_init</code> and <code>for_update</code>.</p>
+        </div>
+      </div>
+
+      <div class="questions">
+        <h4>Day 1 Reflection Questions — submit before Day 2</h4>
+        <ol>
+          <li>The compiler's <code>while_stmt</code> node has two fields. The <code>for_stmt</code> node has four. Could you have implemented a for-loop by creating a while-loop AST node internally (i.e., desugaring in the parser)? What would be the tradeoffs vs. a dedicated <code>NODE_FOR</code>?</li>
+          <li>If a student accidentally put their <code>for_init</code> grammar rule <em>after</em> the general <code>expr</code> rule in the parser, what error (if any) would Bison report? What runtime behavior would result?</li>
+          <li>The <code>for_cond</code> empty production sets <code>$$</code> to <code>NULL</code>. In Phase 3 (semantic analysis, Day 2), how will you detect and handle this NULL when analyzing the for-loop's condition?</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;color:var(--muted);font-size:.8rem;margin-top:3rem;border-top:1px solid var(--border);padding-top:1.5rem">
+    CST-405 · Compiler Design · For-Loop Activity — Day 1 of 2
+  </div>
+
+</div>
+</body>
+</html>
