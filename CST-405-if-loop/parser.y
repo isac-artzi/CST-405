@@ -143,7 +143,7 @@ stmt:
 /* DECLARATION - int x; or int arr[10]; */
 decl:
     INT ID ';' {
-        $$ = createDecl($2);
+        $$ = createDecl("int", $2);
         free($2);
     }
     | INT ID '[' NUM ']' ';' {

@@ -238,7 +238,7 @@ static void generateTACStmt(ASTNode* node) {
 
     switch(node->type) {
         case NODE_DECL:
-            appendTAC(createTAC(TAC_DECL, NULL, NULL, node->data.name));
+            appendTAC(createTAC(TAC_DECL, node->data.decl.varType, NULL, node->data.decl.name));
             break;
 
         case NODE_ASSIGN: {

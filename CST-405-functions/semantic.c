@@ -407,19 +407,19 @@ static void checkStmt(ASTNode* node) {
 
     switch(node->type) {
         case NODE_DECL:
-            if (addVarToScope(node->data.name) == -1) {
+            if (addVarToScope(node->data.decl.name) == -1) {
                 fprintf(stderr, "\n╔════════════════════════════════════════════════════════════╗\n");
                 fprintf(stderr, "║ SEMANTIC ERROR - Duplicate Variable Declaration           ║\n");
                 fprintf(stderr, "╚════════════════════════════════════════════════════════════╝\n");
                 fprintf(stderr, "  📍 Location: Line %d\n", node->lineno);
-                fprintf(stderr, "  ❌ Error: Variable '%s' is already declared in the current scope\n", node->data.name);
+                fprintf(stderr, "  ❌ Error: Variable '%s' is already declared in the current scope\n", node->data.decl.name);
                 fprintf(stderr, "  💡 Suggestion: Choose a different variable name or remove the duplicate declaration\n");
                 fprintf(stderr, "  📖 Note: Each variable can only be declared once per scope\n");
                 fprintf(stderr, "     → Use assignment (=) to change the value of an existing variable\n");
-                fprintf(stderr, "     → Or use a different name: %s2, my%s, etc.\n\n", node->data.name, node->data.name);
+                fprintf(stderr, "     → Or use a different name: %s2, my%s, etc.\n\n", node->data.decl.name, node->data.decl.name);
                 semInfo.errorCount++;
             } else {
-                printf("  ✓ Variable '%s' declared (line %d)\n", node->data.name, node->lineno);
+                printf("  ✓ Variable '%s' declared (line %d)\n", node->data.decl.name, node->lineno);
             }
             break;
 
@@ -652,12 +652,12 @@ static void checkFunctions(ASTNode* node) {
         printf("\n");
     } else if (node->type == NODE_DECL) {
         extern SemanticInfo semInfo;  /* Access global */
-        if (addVarToScope(node->data.name) == -1) {
+        if (addVarToScope(node->data.decl.name) == -1) {
             fprintf(stderr, "  ✗ SEMANTIC ERROR: Global variable '%s' already declared\n",
-                    node->data.name);
+                    node->data.decl.name);
             semInfo.errorCount++;
         } else {
-            printf("  ✓ Global variable '%s' declared\n", node->data.name);
+            printf("  ✓ Global variable '%s' declared\n", node->data.decl.name);
         }
     } else {
         checkStmt(node);

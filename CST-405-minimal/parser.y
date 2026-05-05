@@ -76,7 +76,7 @@ stmt:
 decl:
     INT ID ';' {
         /* Create declaration node and free the identifier string */
-        $$ = createDecl($2);  /* $2 is the ID token's string value */
+        $$ = createDecl("int", $2);  /* "int" = type, $2 = ID string */
         free($2);             /* Free the string copy from scanner */
     }
     | INT ID error {

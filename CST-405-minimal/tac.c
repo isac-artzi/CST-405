@@ -84,7 +84,7 @@ void generateTAC(ASTNode* node) {
     
     switch(node->type) {
         case NODE_DECL:
-            appendTAC(createTAC(TAC_DECL, NULL, NULL, node->data.name));
+            appendTAC(createTAC(TAC_DECL, node->data.decl.varType, NULL, node->data.decl.name));
             break;
             
         case NODE_ASSIGN: {
@@ -118,8 +118,8 @@ void printTAC() {
         printf("%2d: ", lineNum++);
         switch(curr->op) {
             case TAC_DECL:
-                printf("DECL %s", curr->result);
-                printf("          // Declare variable '%s'\n", curr->result);
+                printf("DECL %s %s", curr->arg1 ? curr->arg1 : "", curr->result);
+                printf("       // Declare variable '%s' (type: %s)\n", curr->result, curr->arg1 ? curr->arg1 : "unknown");
                 break;
             case TAC_ADD:
                 printf("%s = %s + %s", curr->result, curr->arg1, curr->arg2);

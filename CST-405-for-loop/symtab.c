@@ -19,7 +19,7 @@ void initSymTab() {
 }
 
 /* Add a new variable to the symbol table */
-int addVar(char* name) {
+int addVar(char* name, char* type) {
     /* Check for duplicate declaration */
     if (isVarDeclared(name)) {
         printf("SYMBOL TABLE: ✗ Failed to add '%s' - already declared\n", name);
@@ -28,6 +28,7 @@ int addVar(char* name) {
 
     /* Add new symbol entry */
     symtab.vars[symtab.count].name = strdup(name);
+    symtab.vars[symtab.count].type = strdup(type);
     symtab.vars[symtab.count].offset = symtab.nextOffset;
     symtab.vars[symtab.count].isArray = 0;     /* Scalar variable */
     symtab.vars[symtab.count].arraySize = 0;   /* Not an array */
@@ -53,6 +54,7 @@ int addArray(char* name, int size) {
 
     /* Add new symbol entry */
     symtab.vars[symtab.count].name = strdup(name);
+    symtab.vars[symtab.count].type = strdup("int");
     symtab.vars[symtab.count].offset = symtab.nextOffset;
     symtab.vars[symtab.count].isArray = 1;      /* This is an array */
     symtab.vars[symtab.count].arraySize = size; /* Store element count */

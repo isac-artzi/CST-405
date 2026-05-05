@@ -62,15 +62,16 @@ void analyzeStmt(ASTNode* node) {
     switch(node->type) {
         case NODE_DECL: {
             /* Check if variable is already declared */
-            if (isVarDeclared(node->data.name)) {
+            if (isVarDeclared(node->data.decl.name)) {
                 char errorMsg[256];
-                sprintf(errorMsg, "Variable '%s' already declared", node->data.name);
+                sprintf(errorMsg, "Variable '%s' already declared", node->data.decl.name);
                 reportSemanticError(errorMsg);
             } else {
-                /* Add variable to symbol table */
-                int offset = addVar(node->data.name);
+                /* Add variable to symbol table with its type */
+                int offset = addVar(node->data.decl.name, node->data.decl.varType);
                 if (offset != -1) {
-                    printf("  ✓ Variable '%s' declared successfully\n", node->data.name);
+                    printf("  ✓ Variable '%s' (type: %s) declared successfully\n",
+                           node->data.decl.name, node->data.decl.varType);
                 }
             }
             break;

@@ -49,12 +49,12 @@ void genStmt(ASTNode* node) {
     
     switch(node->type) {
         case NODE_DECL: {
-            int offset = addVar(node->data.name);
+            int offset = addVar(node->data.decl.name, node->data.decl.varType);
             if (offset == -1) {
-                fprintf(stderr, "Error: Variable %s already declared\n", node->data.name);
+                fprintf(stderr, "Error: Variable %s already declared\n", node->data.decl.name);
                 exit(1);
             }
-            fprintf(output, "    # Declared %s at offset %d\n", node->data.name, offset);
+            fprintf(output, "    # Declared %s %s at offset %d\n", node->data.decl.varType, node->data.decl.name, offset);
             break;
         }
         

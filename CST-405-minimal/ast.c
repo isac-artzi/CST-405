@@ -34,23 +34,13 @@ ASTNode* createBinOp(char op, ASTNode* left, ASTNode* right) {
 }
 
 /* Create a variable declaration node */
-ASTNode* createDecl(char* name) {
+ASTNode* createDecl(char* type, char* name) {
     ASTNode* node = malloc(sizeof(ASTNode));
     node->type = NODE_DECL;
-    node->data.name = strdup(name);  /* Store variable name */
+    node->data.decl.name = strdup(name);      /* Store variable name */
+    node->data.decl.varType = strdup(type);   /* Store type (e.g., "int") */
     return node;
 }
-
-/*
-ASTNode* createDeclWithAssgn(char* name, int value) {
-    ASTNode* node = malloc(sizeof(ASTNode));
-    node->type = NODE_DECL;
-    node->data.name = strdup(name); 
-    node->data.value = value;
-    return node;
-}
-
-*/
 
 /* Create an assignment statement node */
 ASTNode* createAssign(char* var, ASTNode* value) {
@@ -99,7 +89,7 @@ void printAST(ASTNode* node, int level) {
             printAST(node->data.binop.right, level + 1);
             break;
         case NODE_DECL:
-            printf("DECL: %s\n", node->data.name);
+            printf("DECL: %s %s\n", node->data.decl.varType, node->data.decl.name);
             break;
         case NODE_ASSIGN:
             printf("ASSIGN: %s\n", node->data.assign.var);
