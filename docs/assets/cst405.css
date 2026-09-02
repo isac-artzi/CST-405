@@ -244,3 +244,46 @@ footer.pagefoot a { color: var(--muted); }
   details.reveal[open] summary { color: #000; }
   details.reveal { break-inside: avoid; }
 }
+
+/* ── figures and diagrams ───────────────────────────────────────────────── */
+figure.dia {
+  margin: 0 0 1.6rem; padding: 1rem 1rem .6rem;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--surface);
+}
+figure.dia svg { width: 100%; height: auto; display: block; }
+figure.dia figcaption {
+  margin-top: .7rem; padding-top: .6rem; border-top: 1px solid var(--border);
+  font-size: .85rem; color: var(--muted);
+}
+figure.dia figcaption b { color: var(--text); font-weight: 600; }
+
+/* shared diagram primitives */
+.d-box   { fill: var(--surface-2); stroke: var(--border); }
+.d-box.on{ fill: color-mix(in srgb, var(--accent) 16%, var(--surface)); stroke: var(--accent); }
+.d-box.alt{ fill: color-mix(in srgb, var(--ok) 13%, var(--surface)); stroke: color-mix(in srgb, var(--ok) 55%, var(--border)); }
+.d-t     { fill: var(--text); font: 600 12px var(--sans); }
+.d-s     { fill: var(--muted); font: 11px var(--mono); }
+.d-s2    { fill: var(--muted); font: 10px var(--sans); font-style: italic; }
+.d-line  { stroke: var(--border); fill: none; stroke-width: 1.2; }
+.d-line.hot { stroke: var(--accent); stroke-width: 1.6; }
+.d-dash  { stroke: var(--muted); fill: none; stroke-dasharray: 4 3; stroke-width: 1; }
+.d-state { fill: var(--surface); stroke: var(--text); stroke-width: 1.4; }
+.d-state.acc { stroke: var(--ok); stroke-width: 2; }
+.d-state.start { fill: color-mix(in srgb, var(--accent) 14%, var(--surface)); }
+.d-lbl   { fill: var(--text); font: 600 11px var(--mono); }
+.d-edge  { fill: var(--muted); font: 10px var(--mono); }
+
+/* readings box */
+.readings {
+  border: 1px solid var(--border); border-left: 3px solid var(--ok);
+  border-radius: 0 6px 6px 0; background: var(--surface);
+  padding: .85rem 1rem; margin: 0 0 1.4rem;
+}
+.readings b { display: block; font: 600 .74rem var(--mono); letter-spacing: .1em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: .45rem; }
+.readings ul { margin-bottom: 0; }
+.readings cite { font-style: normal; font-weight: 600; }
+
+/* numbered section headings */
+h2 .secnum { font-family: var(--mono); font-size: .78em; color: var(--accent);
+  margin-right: .5rem; font-weight: 700; }
