@@ -21,7 +21,7 @@
 <p>Before you let a tool tokenize for you, tokenize by hand. Every disagreement between your answer and the machine's is a rule you had not noticed you were assuming.</p>
 <h2>Do this</h2>
 <ol class="steps"><li><b>On paper, alone, five minutes.</b> Write the token stream for the line below. One token per line: KIND, then the text that matched. Do not run anything yet.<pre><code class="lang-">x=y&lt;=z*2;  // done!</code></pre>
-</li><li><b>Compare with your partner.</b> Where you differ, decide which of you is right and why <i>before</i> you look at any output. Write down each disagreement in one sentence.</li><li><b>Now run it.</b> Put that line in a file and run the instructor's lexer over it:<pre><code class="lang-">cd instructor/topic-1-lexical-analysis/lexer
+</li><li><b>Compare with your partner.</b> Where you differ, decide which of you is right and why <i>before</i> you look at any output. Write down each disagreement in one sentence.</li><li><b>Now run it.</b> Put that line in a file and run a scanner over it. On day one you have two options: your instructor will run the reference lexer on the projector, or — if you brought a working scanner forward from CST-301 — use your own:<pre><code class="lang-">cd student/topic-1-lexical-analysis/lexer
 make
 ./lexer yourfile.cm</code></pre>
 </li><li><b>Account for every difference</b> between your hand answer and the machine's. For each one, name the rule that explains it: longest match, first match, or 'that is not the scanner's job'.</li><li><b>Then break it.</b> Add a second line containing a character the language does not have — <code>x = y @ z;</code> — and confirm the error names the right line AND the right column. Count the columns by hand to check.</li></ol>

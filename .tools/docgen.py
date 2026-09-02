@@ -360,8 +360,8 @@ def build():
             "<code>student/topic-N/</code> — the compiler you start from, with "
             "this topic's work removed and replaced by numbered TODOs. It builds "
             "and runs before you touch it.",
-            "<code>instructor/topic-N/</code> — the complete milestone, used in "
-            "class demonstrations.",
+            "<code>instructor/</code> — the complete milestone for each topic, "
+            "kept on the instructor's machine and deliberately not published here.",
             "<code>docs/</code> — this site.",
         ]) +
         note("note", "Running the compiler",

@@ -1,4 +1,0 @@
-// Test 2: Missing semicolon after assignment
-int y;
-y = 10
-print(y);

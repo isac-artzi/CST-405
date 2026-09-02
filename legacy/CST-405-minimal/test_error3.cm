@@ -1,4 +1,0 @@
-// Test 3: Missing closing parenthesis in print
-int z;
-z = 15;
-print(z;

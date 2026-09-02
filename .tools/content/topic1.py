@@ -209,9 +209,11 @@ def _a1():
             "<b>Compare with your partner.</b> Where you differ, decide which of you "
             "is right and why <i>before</i> you look at any output. Write down each "
             "disagreement in one sentence.",
-            "<b>Now run it.</b> Put that line in a file and run the instructor's "
-            "lexer over it:"
-            + code("cd instructor/topic-1-lexical-analysis/lexer\nmake\n./lexer yourfile.cm"),
+            "<b>Now run it.</b> Put that line in a file and run a scanner over "
+            "it. On day one you have two options: your instructor will run the "
+            "reference lexer on the projector, or — if you brought a working "
+            "scanner forward from CST-301 — use your own:"
+            + code("cd student/topic-1-lexical-analysis/lexer\nmake\n./lexer yourfile.cm"),
             "<b>Account for every difference</b> between your hand answer and the "
             "machine's. For each one, name the rule that explains it: longest match, "
             "first match, or 'that is not the scanner's job'.",
@@ -250,8 +252,13 @@ def _a2():
           "more than three that you got right, so write the prediction down before "
           "you run anything — otherwise you will remember having predicted correctly.") +
         note("note", "Work on a copy",
-             p("<code>cp -r instructor/topic-1-lexical-analysis/lexer /tmp/broken</code> "
-               "and vandalise that. You want the original intact for comparison.")) +
+             p("Every experiment below breaks the scanner on purpose, so work on a "
+               "copy and keep the original intact for comparison:") +
+             code("cp -r student/topic-1-lexical-analysis/lexer /tmp/broken\ncd /tmp/broken && make") +
+             p("Use YOUR scanner, not a reference one. Project 1 is due tomorrow, so "
+               "by now you should have enough of it working to break — and breaking "
+               "your own code teaches considerably more than breaking someone "
+               "else's.")) +
         h2("The experiments") +
         steps_list([
             "<b>Move the identifier rule above the keyword rules.</b> Predict what "

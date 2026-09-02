@@ -42,9 +42,6 @@ student/topic-N-.../       the compiler students start from:
                            removed and replaced by numbered TODOs.
                            It builds and runs before they touch it.
 
-instructor/topic-N-.../    the complete milestone, for class demonstrations,
-                           plus teaching notes and the failure modes to expect.
-
 docs/                      the course site: lecture notes, 30 class activities,
                            the six assignment .docx files, and the grammar
                            reference. This is what GitHub Pages serves.
@@ -52,8 +49,10 @@ docs/                      the course site: lecture notes, 30 class activities,
 .tools/                    the generators. One annotated master compiler that
                            every topic folder is cut from. See below.
 
-legacy/                    the previous version of these materials, kept for
-                           reference. Nothing current depends on it.
+instructor/                NOT IN THIS REPOSITORY. The complete milestone for
+                           each topic, plus teaching notes. It lives on the
+                           instructor's machine and is regenerated on demand
+                           with `python3 .tools/stagegen.py --check`.
 ```
 
 ## Quick start
@@ -77,8 +76,9 @@ Passing `-q` silences the trace and prints only errors and the summary.
 
 ## Regenerating everything
 
-All twelve code folders come from **one** annotated master, so a bug is fixed once
-and propagates everywhere:
+All twelve code folders — the six published `student/` ones and the six local
+`instructor/` ones — come from **one** annotated master, so a bug is fixed once and
+propagates everywhere:
 
 ```bash
 python3 .tools/stagegen.py --check    # 12 code folders; builds and tests them

@@ -1,5 +1,8 @@
 # .tools — how the course materials are generated
 
+`instructor/` and `legacy/` are deliberately excluded from this repository (see
+`.gitignore`) — `instructor/` is regenerated locally by `stagegen.py`.
+
 Nothing in `student/`, `instructor/` or `docs/` is edited by hand. All of it is cut
 from sources in this directory. That is deliberate: there are twelve nearly
 identical copies of one compiler in this repository, and hand-maintaining twelve
