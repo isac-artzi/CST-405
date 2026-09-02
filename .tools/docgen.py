@@ -33,7 +33,7 @@ COURSE = "CST-405 · Principles of Compiler Design"
 #
 #   REPO_URL = "https://github.com/your-user/your-repo/tree/main"
 # ---------------------------------------------------------------------------
-REPO_URL = ""
+REPO_URL = "https://github.com/isac-artzi/CST-405/tree/main"
 
 # ---------------------------------------------------------------------------
 # The six topics, in the order the syllabus runs them.

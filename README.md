@@ -5,7 +5,7 @@
 Course materials for CST-405: six compiler milestones, interactive lecture notes,
 thirty class activities, and the assignment descriptions.
 
-📖 **Course site:** https://\<your-github-username\>.github.io/\<repo\>/
+📖 **Course site:** https://isac-artzi.github.io/CST-405/
 (GitHub Pages, served from `/docs` — see [Publishing](#publishing-the-course-site))
 
 ---
@@ -97,22 +97,15 @@ The `docs/` directory is a complete static site with no build step.
 1. Push to GitHub.
 2. **Settings → Pages → Source: Deploy from a branch**, branch `main`, folder
    `/docs`.
-3. The site appears at `https://<user>.github.io/<repo>/`.
+3. The site appears at https://isac-artzi.github.io/CST-405/
 
 Everything is relative-linked, so it also works by opening `docs/index.html`
 straight off disk.
 
-One knob: GitHub Pages serves `docs/` as the site root, so a page in there cannot
-link to `student/` or `instructor/` — they sit above it. Set `REPO_URL` at the top
-of `.tools/docgen.py` to your repository and re-run it, and the "your starter code"
-cards become working links into the GitHub file browser:
-
-```python
-REPO_URL = "https://github.com/your-user/your-repo/tree/main"
-```
-
-Left empty, those cards show the path as plain text instead — correct but not
-clickable.
+Nothing else to configure. (`REPO_URL` in `.tools/docgen.py` is already set to this
+repository; it is what makes the "your starter code" cards link into the GitHub file
+browser. GitHub Pages serves `docs/` as the site root, so those folders cannot be
+reached with a relative link — they sit above it.)
 
 ## What the compiler can and cannot do
 
