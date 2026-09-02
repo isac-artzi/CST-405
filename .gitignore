@@ -50,3 +50,8 @@ legacy/
 # folder is cut from, the content sources for the course site, and the
 # generators. Instructor-only.
 .tools/
+
+# Notes for whoever teaches this, and the git directory of the private
+# instructor repository that shares this working directory.
+INSTRUCTOR.md
+.git-instructor/
