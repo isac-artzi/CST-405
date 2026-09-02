@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Decisions, the Dangling Else, and switch · CST-405</title>
+<link rel="stylesheet" href="../assets/cst405.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">Topic 5 · Lecture notes · Weeks 12–14</p>
+    <h1>Decisions, the Dangling Else, and switch</h1>
+    <p class="lede">if and else are two rules and one famous ambiguity. switch is one rule and one genuinely interesting code-generation choice.</p>
+    <nav class="crumbs"><a href="../index.html">All topics</a> &nbsp;›&nbsp; <a href="index.html">Topic 5</a> &nbsp;›&nbsp; Lecture notes</nav>
+  </div>
+</header>
+<main class="wrap">
+<h2>if is the loop you already wrote, without the back edge</h2>
+<div class="pipeline"><svg viewBox="0 0 1010 92" role="img" aria-label="The six phases of the compiler, left to right"><rect class="ph-box done" x="6" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="80" y="39" text-anchor="middle">1. Lexical</text><text class="ph-s" x="80" y="53" text-anchor="middle">chars → tokens</text><text class="ph-lbl" x="80" y="77" text-anchor="middle">scanner.l</text><path class="ph-arrow" d="M157 42 L173 42 M168 38 L173 42 L168 46"/><rect class="ph-box done" x="176" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="250" y="39" text-anchor="middle">2. Syntax</text><text class="ph-s" x="250" y="53" text-anchor="middle">tokens → AST</text><text class="ph-lbl" x="250" y="77" text-anchor="middle">parser.y</text><path class="ph-arrow" d="M327 42 L343 42 M338 38 L343 42 L338 46"/><rect class="ph-box done" x="346" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="420" y="39" text-anchor="middle">3. Semantic</text><text class="ph-s" x="420" y="53" text-anchor="middle">AST → checked AST</text><text class="ph-lbl" x="420" y="77" text-anchor="middle">semantic.c</text><path class="ph-arrow" d="M497 42 L513 42 M508 38 L513 42 L508 46"/><rect class="ph-box on" x="516" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="590" y="39" text-anchor="middle">4. IR</text><text class="ph-s" x="590" y="53" text-anchor="middle">AST → TAC</text><text class="ph-lbl" x="590" y="77" text-anchor="middle">tac.c</text><path class="ph-arrow" d="M667 42 L683 42 M678 38 L683 42 L678 46"/><rect class="ph-box" x="686" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="760" y="39" text-anchor="middle">5. Optimize</text><text class="ph-s" x="760" y="53" text-anchor="middle">TAC → better TAC</text><text class="ph-lbl" x="760" y="77" text-anchor="middle">tac.c</text><path class="ph-arrow" d="M837 42 L853 42 M848 38 L853 42 L848 46"/><rect class="ph-box" x="856" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="930" y="39" text-anchor="middle">6. CodeGen</text><text class="ph-s" x="930" y="53" text-anchor="middle">TAC → MIPS</text><text class="ph-lbl" x="930" y="77" text-anchor="middle">codegen.c</text></svg></div>
+<pre><code class="lang-">    if (c) T                       if (c) T else E
+    ────────                       ───────────────
+        t = &lt;c&gt;                        t = &lt;c&gt;
+        IF_FALSE t GOTO Lend           IF_FALSE t GOTO Lelse
+        &lt;T&gt;                            &lt;T&gt;
+    Lend:                              GOTO Lend
+                                   Lelse:
+                                       &lt;E&gt;
+                                   Lend:</code></pre>
+<p>If you built loops in Topic 4, you have already written every mechanism this needs. Which is the point: the fourth construct you lower is much cheaper than the first, and that is what the layered structure of this course was for.</p>
+<div class="key"><b>The one thing to get right</b><p>The <code>GOTO Lend</code> at the end of the then-branch. Leave it out and control falls from the then-branch straight into the else-branch, so both run. The program still compiles, still runs, and is wrong in a way that a test with a false condition will not catch.</p>
+</div>
+<h2>The dangling else</h2>
+<p>This is the most famous ambiguity in programming languages, and your grammar has it right now whether or not you have noticed.</p>
+<pre><code class="lang-">    if (a) if (b) X else Y
+
+    reading 1:   if (a) { if (b) X else Y }        &lt;- else belongs to the INNER if
+    reading 2:   if (a) { if (b) X } else Y        &lt;- else belongs to the OUTER if</code></pre>
+<p>Both are valid derivations from the obvious grammar. They mean different things: with <code>a</code> true and <code>b</code> false, reading 1 runs <code>Y</code> and reading 2 runs nothing.</p>
+<p>Every mainstream language picks reading 1 — <b>else binds to the nearest if</b>. Bison, left alone, also picks reading 1, because when it must choose between shifting the <code>ELSE</code> and reducing the inner <code>if</code>, it shifts. So the default is already correct. What is not correct is leaving a shift/reduce conflict in your grammar and hoping.</p>
+<div class="tabs"><div class="tabbar" role="tablist"><button role="tab" aria-selected="false">the conflict</button><button role="tab" aria-selected="false">the fix</button><button role="tab" aria-selected="false">what it says</button></div><div class="panel" hidden><pre><code class="lang-">$ bison -d parser.y
+parser.y: warning: 1 shift/reduce conflict
+
+# bison resolved it by shifting, which happens to be what you wanted.
+# It will resolve the NEXT one by shifting too — including the one you
+# did not want. A grammar with unexplained conflicts is a grammar you
+# have stopped reading.</code></pre>
+</div><div class="panel" hidden><pre><code class="lang-">%nonassoc LOWER_THAN_ELSE   /* a pseudo-token, lower precedence */
+%nonassoc ELSE              /* declared later, so higher       */
+
+if_stmt : IF '(' expr ')' stmt %prec LOWER_THAN_ELSE
+        | IF '(' expr ')' stmt ELSE stmt
+        ;</code></pre>
+</div><div class="panel" hidden><pre><code class="lang-">The rule  IF '(' expr ')' stmt  is given LOWER precedence
+than the token ELSE.
+
+So when the parser is sitting on a complete
+    IF '(' expr ')' stmt
+and the lookahead is ELSE, it compares:
+
+    reduce using this rule   (precedence: LOWER_THAN_ELSE)
+    shift the ELSE           (precedence: ELSE, which is higher)
+
+Higher wins -&gt; SHIFT -&gt; the else attaches to the inner if.
+Same outcome as the default, but now it is DECLARED, and
+bison reports no conflict.</code></pre>
+</div></div>
+<div class="quiz"><p class="q">Why must <code>%nonassoc LOWER_THAN_ELSE</code> be written BEFORE <code>%nonassoc ELSE</code>?</p><button class="opt" data-correct="0" data-feedback="Bison has no such requirement. The order carries meaning.">Alphabetical order is required by bison</button><button class="opt" data-correct="1" data-feedback="Exactly. Precedence in bison is positional: each successive &lt;code&gt;%left&lt;/code&gt;/&lt;code&gt;%right&lt;/code&gt;/&lt;code&gt;%nonassoc&lt;/code&gt; line binds tighter than the one above. Swap these two and ELSE becomes lower, the parser reduces instead of shifting, and every else binds to the OUTER if.">Later declarations have HIGHER precedence, and ELSE must outrank the rule</button><button class="opt" data-correct="0" data-feedback="It is a pseudo-token — it is never returned by the scanner. It exists solely to occupy a slot in the precedence table.">LOWER_THAN_ELSE is a real token that must be declared first</button><button class="opt" data-correct="0" data-feedback="&lt;code&gt;%prec&lt;/code&gt; says WHICH precedence the rule takes. The order of the declarations is what gives those precedences their values.">It does not matter; %prec overrides the order</button><p class="fb"></p></div>
+<h2>Boolean operators, and the decision you are making by accident</h2>
+<p><code>&amp;&amp;</code> and <code>||</code> have a property that <code>+</code> does not: in most languages they <b>short-circuit</b>. <code>a &amp;&amp; b</code> does not evaluate <code>b</code> when <code>a</code> is false.</p>
+<div class="tabs"><div class="tabbar" role="tablist"><button role="tab" aria-selected="false">eager (what we implement)</button><button role="tab" aria-selected="false">short-circuit (what C does)</button></div><div class="panel" hidden><pre><code class="lang-">t0 = &lt;a&gt;
+t1 = &lt;b&gt;            &lt;- always evaluated
+t2 = t0 &amp;&amp; t1
+
+MIPS, because `and` is BITWISE:
+    sne  $t3, $t0, $zero      # normalise a to 0/1
+    sne  $t4, $t1, $zero      # normalise b to 0/1
+    and  $t5, $t3, $t4</code></pre>
+</div><div class="panel" hidden><pre><code class="lang-">t0 = &lt;a&gt;
+t2 = 0
+IF_FALSE t0 GOTO Lend       &lt;- b is never evaluated if a is false
+t1 = &lt;b&gt;
+t2 = t1
+Lend:
+
+More instructions in the listing.
+Fewer executed, whenever a is false.</code></pre>
+</div></div>
+<p>Ours is eager, and that is a legitimate choice for a language with no side effects in expressions — no assignment operator, no <code>++</code>. But the moment your language gains a function call in an expression, eager evaluation becomes observable: <code>n != 0 &amp;&amp; divide(x, n)</code> will call <code>divide</code> with zero. Say in your write-up which you implemented and what would force you to change.</p>
+<div class="warn"><b>MIPS and/or are bitwise</b><p><code>2 &amp; 1</code> is 0, but <code>2 &amp;&amp; 1</code> is 1. If you emit <code>and</code> directly on the operands you will get the wrong answer for every value that is truthy but not exactly 1. Normalise each operand with <code>sne $t, $x, $zero</code> first. <code>!x</code> is just <code>seq $d, $x, $zero</code>.</p>
+</div>
+<h2>switch, and the fall-through that falls out for free</h2>
+<p>A <code>switch</code> lowers naturally into two sections: a DISPATCH section that decides where to go, and a BODY section that is just the case bodies laid out one after another.</p>
+<div class="stepper" tabindex="0"><div class="bar"><button data-act="prev">← back</button><button data-act="next">next →</button><button data-act="reset">restart</button><span class="count"></span></div><div class="body"><div class="step" hidden><p class="caption">The source.</p><pre><code class="lang-">switch (x) {
+    case 1: print(10); break;
+    case 2:
+    case 3: print(23); break;
+    default: print(0); break;
+}</code></pre>
+</div><div class="step" hidden><p class="caption">Evaluate the controlling expression ONCE, into a hidden variable. If you re-evaluate it per case, a switch on a function call would call it n times.</p><pre><code class="lang-"><span class="hi">DECL __sw0</span>
+<span class="hi">__sw0 = x</span></code></pre>
+</div><div class="step" hidden><p class="caption">The dispatch chain: one comparison per case label, in source order.</p><pre><code class="lang-">DECL __sw0
+__sw0 = x
+<span class="hi">t0 = __sw0 == 1</span>
+<span class="hi">IF_FALSE t0 GOTO Ltest1</span>
+<span class="hi">GOTO Lbody1</span></code></pre>
+</div><div class="step" hidden><p class="caption">...and so on for every case. Note case 2 and case 3 get separate tests, even though they will share a body.</p><pre><code class="lang-">Ltest1:
+    t1 = __sw0 == 2
+    IF_FALSE t1 GOTO Ltest2
+    GOTO Lbody2
+Ltest2:
+    t2 = __sw0 == 3
+    IF_FALSE t2 GOTO Ltest3
+    GOTO Lbody3</code></pre>
+</div><div class="step" hidden><p class="caption">If nothing matched, go to the default — or straight to the end if there is no default.</p><pre><code class="lang-">Ltest3:
+<span class="hi">    GOTO Ldefault</span></code></pre>
+</div><div class="step" hidden><p class="caption">Now the bodies, in source order, with NO jump between them. That absence is fall-through: control simply runs off the end of one body into the next.</p><pre><code class="lang-">Lbody1: PRINT 10
+        GOTO Lend        &lt;- this is the `break`
+<span class="hi">Lbody2:                  &lt;- empty body: case 2 falls straight into case 3</span>
+Lbody3: PRINT 23
+        GOTO Lend
+Ldefault: PRINT 0
+        GOTO Lend
+Lend:</code></pre>
+</div><div class="step" hidden><p class="caption"><code>break</code> is a GOTO to Lend, taken from the same label stack the loops use. Which is why a break inside a switch inside a loop leaves the SWITCH and not the loop — the switch pushed its label more recently.</p><pre><code class="lang-">push Lend_loop
+    push Lend_switch
+        break;   -&gt;  GOTO Lend_switch
+    pop
+pop</code></pre>
+</div></div></div>
+<h3>The alternative: a jump table</h3>
+<p>Instead of n comparisons, build an array of addresses indexed by the case value and jump indirectly. One bounds check and one indirect jump, regardless of how many cases.</p>
+<div class="tablewrap"><table><thead><tr><th></th><th>Linear chain</th><th>Jump table</th></tr></thead><tbody><tr><td>Cost of dispatch</td><td>O(n) comparisons</td><td>O(1)</td></tr><tr><td>Cost in space</td><td>O(n) instructions</td><td>O(range) words</td></tr><tr><td><code>case 1,2,3</code></td><td>3 comparisons</td><td>3-word table</td></tr><tr><td><code>case 1, 1000, 50000</code></td><td>3 comparisons</td><td>a 50,000-word table</td></tr><tr><td>Good when</td><td>few cases, or sparse values</td><td>many cases, dense values</td></tr></tbody></table></div>
+<p>Real compilers choose per switch, and often build a hybrid: a table for the dense cluster and comparisons for the outliers. We implement the linear chain because it is correct for every case-value distribution and it is twenty lines. Knowing why the other one exists is the part that matters.</p>
+<h2>MIPS vs ARM — what would actually change</h2>
+<div class="pipeline"><svg viewBox="0 0 1010 92" role="img" aria-label="The six phases of the compiler, left to right"><rect class="ph-box done" x="6" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="80" y="39" text-anchor="middle">1. Lexical</text><text class="ph-s" x="80" y="53" text-anchor="middle">chars → tokens</text><text class="ph-lbl" x="80" y="77" text-anchor="middle">scanner.l</text><path class="ph-arrow" d="M157 42 L173 42 M168 38 L173 42 L168 46"/><rect class="ph-box done" x="176" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="250" y="39" text-anchor="middle">2. Syntax</text><text class="ph-s" x="250" y="53" text-anchor="middle">tokens → AST</text><text class="ph-lbl" x="250" y="77" text-anchor="middle">parser.y</text><path class="ph-arrow" d="M327 42 L343 42 M338 38 L343 42 L338 46"/><rect class="ph-box done" x="346" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="420" y="39" text-anchor="middle">3. Semantic</text><text class="ph-s" x="420" y="53" text-anchor="middle">AST → checked AST</text><text class="ph-lbl" x="420" y="77" text-anchor="middle">semantic.c</text><path class="ph-arrow" d="M497 42 L513 42 M508 38 L513 42 L508 46"/><rect class="ph-box done" x="516" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="590" y="39" text-anchor="middle">4. IR</text><text class="ph-s" x="590" y="53" text-anchor="middle">AST → TAC</text><text class="ph-lbl" x="590" y="77" text-anchor="middle">tac.c</text><path class="ph-arrow" d="M667 42 L683 42 M678 38 L683 42 L678 46"/><rect class="ph-box done" x="686" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="760" y="39" text-anchor="middle">5. Optimize</text><text class="ph-s" x="760" y="53" text-anchor="middle">TAC → better TAC</text><text class="ph-lbl" x="760" y="77" text-anchor="middle">tac.c</text><path class="ph-arrow" d="M837 42 L853 42 M848 38 L853 42 L848 46"/><rect class="ph-box on" x="856" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="930" y="39" text-anchor="middle">6. CodeGen</text><text class="ph-s" x="930" y="53" text-anchor="middle">TAC → MIPS</text><text class="ph-lbl" x="930" y="77" text-anchor="middle">codegen.c</text></svg></div>
+<p>Topic 5 asks you to compare code generation for the two. The useful answer is not a list of mnemonics; it is which parts of your compiler you would have to touch.</p>
+<div class="tablewrap"><table><thead><tr><th></th><th>MIPS (what we emit)</th><th>ARM (AArch32/64)</th></tr></thead><tbody><tr><td>Registers</td><td>32, by convention $t/$a/$s/$v</td><td>16 (A32) or 31 (A64), similar conventions</td></tr><tr><td>Comparison</td><td><code>slt $d,$a,$b</code> produces 0/1 in a register</td><td><code>cmp a, b</code> sets FLAGS; no result register</td></tr><tr><td>Branch</td><td><code>beq $t, $zero, L</code> on a register</td><td><code>b.eq L</code> on the flags set by the last cmp</td></tr><tr><td>Conditional execution</td><td>none — every conditional is a branch</td><td>A32 predicates most instructions: <code>addne</code>, <code>movgt</code></td></tr><tr><td>Calls</td><td><code>jal</code> puts the return address in $ra</td><td><code>bl</code> puts it in LR — same idea, different name</td></tr></tbody></table></div>
+<p>So: your scanner, parser, AST, semantic analyzer, TAC generator and optimizer are all unchanged. Only <code>codegen.c</code> is rewritten — and within it, mostly <code>mnemonicFor</code>, the branch cases and the prologue/epilogue. That is the payoff for having an IR at all, and it is the single best thing to be able to say about your compiler's architecture.</p>
+<details class="reveal"><summary>The one place ARM changes more than the mnemonics</summary><p>Conditional execution. On A32, <code>if (a) x = 1;</code> can compile to two instructions with no branch at all: <code>cmp</code> then <code>movne</code>. A back end that exploits that is not a transliteration of the MIPS one — it needs an if-conversion pass that decides when a branch is worth replacing with predicated code. That is a genuine architectural difference, not a naming one.</p>
+</details>
+<h2>Where the code lives</h2>
+<p><code>student/topic-5-decisions/compiler/</code>. TODOs cover: the if/else rules and their precedence declarations, the switch grammar, three AST nodes, the switch semantic checks, the lowering for both, and the logical operators in the back end. Every Topic 3 and Topic 4 test must still pass.</p>
+
+<footer class="pagefoot">
+  <span>CST-405 · Principles of Compiler Design · Grand Canyon University</span>
+  <span><a href="../index.html">All topics</a></span>
+</footer>
+</main>
+<script src="../assets/cst405.js"></script>
+</body>
+</html>

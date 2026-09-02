@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Draw the Activation Record · CST-405</title>
+<link rel="stylesheet" href="../assets/cst405.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">Topic 3 · Class activity 3 · Week 7 · Wednesday</p>
+    <h1>Draw the Activation Record</h1>
+    <p class="lede">Predict the stack frame, check it against the generated assembly, then sabotage the epilogue.</p>
+    <nav class="crumbs"><a href="../index.html">All topics</a> &nbsp;›&nbsp; <a href="index.html">Topic 3</a> &nbsp;›&nbsp; Activity 3</nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="meta"><span><b>Format</b> pairs</span><span><b>Time</b> 50 min</span></div>
+<h2>The point</h2>
+<p>Draw the stack frame you expect, then hold the generated assembly up against it. This is the activity that makes function calls stop being magic.</p>
+<h2>Do this</h2>
+<ol class="steps"><li><b>Draw the frame</b> you expect the compiler to build for<pre><code class="lang-">int addUp(int a, int b) {
+    int t;
+    t = a + b;
+    return t;
+}</code></pre>
+Label every slot with its offset from <code>$sp</code> and say how many bytes the whole frame is. Do not forget the temporaries.</li><li><b>Compile it</b> WITHOUT <code>-q</code> and find the line that says <code>Activation record for 'addUp': N bytes</code>, followed by the symbol table. Compare with your drawing.</li><li><b>Read the prologue and epilogue</b> in the generated <code>.s</code>. Account for every instruction. There should be no line you cannot explain.</li><li><b>Now sabotage the epilogue.</b> Comment out the <code>lw $ra</code> restore in <code>emitEpilogue</code>. Predict what happens, then rebuild and run. Where does control actually go?</li><li><b>Sabotage differently.</b> Restore that, and instead make <code>TAC_RETURN</code> NOT jump to the epilogue — just set <code>$v0</code> and fall through. Test with a function that has a return in the middle. Explain the result.</li></ol>
+<div class="deliverable"><h3>Deliverable</h3><p>Your predicted frame diagram next to the compiler's symbol table, an annotated prologue/epilogue, and one paragraph for each sabotage explaining the failure mode. Step 5 is exactly the bug that broke <code>return</code> inside a switch in an earlier version of this compiler.</p>
+</div>
+
+<footer class="pagefoot">
+  <span>CST-405 · Principles of Compiler Design · Grand Canyon University</span>
+  <span><a href="../index.html">All topics</a></span>
+</footer>
+</main>
+<script src="../assets/cst405.js"></script>
+</body>
+</html>

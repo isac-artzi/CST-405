@@ -1,431 +1,141 @@
-# C-Minus Compiler
-## CST-405 Compiler Design Course
+# CST-405 · Principles of Compiler Design
 
-A complete compiler implementation for the C-Minus language, demonstrating all phases of compilation from source code to MIPS assembly.
+**Grand Canyon University · Fall 2026 · Sep 8 – Dec 20**
 
-## Overview
+Course materials for CST-405: six compiler milestones, interactive lecture notes,
+thirty class activities, and the assignment descriptions.
 
-This project implements a full compiler for C-Minus, a simplified subset of C, using traditional compiler construction tools (Flex and Bison) along with hand-written components for semantic analysis, code generation, and optimization.
+📖 **Course site:** https://\<your-github-username\>.github.io/\<repo\>/
+(GitHub Pages, served from `/docs` — see [Publishing](#publishing-the-course-site))
 
-### Compilation Phases
+---
 
-1. **Lexical Analysis** (Flex) - Tokenizes the source code
-2. **Syntax Analysis** (Bison) - Parses tokens and builds parse tree
-3. **AST Construction** - Builds abstract syntax tree
-4. **Semantic Analysis** - Type checking and symbol table management
-5. **Intermediate Code Generation** - Generates three-address code
-6. **Optimization** - Performs various code optimizations
-7. **Target Code Generation** - Produces MIPS assembly code
+## The idea
 
-## Project Structure
+This course does not build one compiler in six pieces. It builds **six compilers**,
+each one the previous one with a new language feature threaded through all six
+phases. Students write the front end six times, and that repetition is the point:
+the second time you add a construct, you already know which files it touches.
 
 ```
-cminus-compiler/
-├── src/                 # Source files
-│   ├── lexer.l         # Flex lexer specification
-│   ├── parser.y        # Bison parser specification
-│   ├── ast.c           # AST implementation
-│   ├── symtab.c        # Symbol table
-│   ├── semantic.c      # Semantic analyzer
-│   ├── codegen.c       # 3-address code generator
-│   ├── optimize.c      # Optimizer
-│   ├── mips.c          # MIPS code generator
-│   ├── main.c          # Main driver
-│   └── util.c          # Utility functions
-├── include/            # Header files
-│   ├── globals.h       # Global definitions
-│   ├── ast.h           # AST declarations
-│   ├── symtab.h        # Symbol table declarations
-│   ├── semantic.h      # Semantic analyzer declarations
-│   ├── codegen.h       # Code generation declarations
-│   ├── optimize.h      # Optimizer declarations
-│   ├── mips.h          # MIPS generator declarations
-│   └── util.h          # Utility declarations
-├── tests/              # Sample C-Minus programs
-│   ├── simple.cm       # Basic arithmetic
-│   ├── factorial.cm    # Recursive factorial
-│   ├── fibonacci.cm    # Fibonacci sequence
-│   ├── gcd.cm          # Greatest common divisor
-│   └── sort.cm         # Bubble sort
-├── docs/               # Documentation
-│   └── grammar.txt     # C-Minus grammar specification
-├── Makefile            # Build configuration
-└── README.md           # This file
+scanner.l  ->  parser.y  ->  semantic.c  ->  tac.c  ->  tac.c  ->  codegen.c
+ lexical       syntax        semantic        IR        optimize    codegen
 ```
 
-## Building the Compiler
+| Topic | Milestone | Language gains | Weeks | Project |
+|---|---|---|---|---|
+| 1 | Lexical analysis | the token set, error locations | 1 | Project 1 |
+| 2 | A whole compiler | `int`, assignment, `+`, `print` | 2–5 | Project 2 |
+| 3 | Variables and functions | arrays, `- * /`, functions, scope | 6–8 | Project 3 |
+| 4 | Loops | `while`, `for`, `break`, relational ops, real optimization | 9–11 | Project 4 |
+| 5 | Decisions | `if`/`else`, `&& \|\| !`, `switch` | 12–14 | Project 5 |
+| 6 | Complete compiler | no new syntax — measurement and documentation | 15 | Project 6 |
 
-### Prerequisites
+The target is MIPS32, run under [SPIM](http://spimsimulator.sourceforge.net/) or
+QtSPIM.
 
-- GCC compiler
-- Flex (lexical analyzer generator)
-- Bison (parser generator)
-- Make build tool
+## Layout
 
-### Build Instructions
+```
+student/topic-N-.../       the compiler students start from:
+                           the previous milestone, with this topic's work
+                           removed and replaced by numbered TODOs.
+                           It builds and runs before they touch it.
+
+instructor/topic-N-.../    the complete milestone, for class demonstrations,
+                           plus teaching notes and the failure modes to expect.
+
+docs/                      the course site: lecture notes, 30 class activities,
+                           the six assignment .docx files, and the grammar
+                           reference. This is what GitHub Pages serves.
+
+.tools/                    the generators. One annotated master compiler that
+                           every topic folder is cut from. See below.
+
+legacy/                    the previous version of these materials, kept for
+                           reference. Nothing current depends on it.
+```
+
+## Quick start
 
 ```bash
-# Build the compiler
+# requirements
+flex --version && bison --version && gcc --version && which spim
+
+# build and test every milestone
+python3 .tools/stagegen.py --check
+
+# or build one by hand
+cd instructor/topic-4-loops/compiler
 make
-
-# Clean build artifacts
-make clean
-
-# Run tests
 make test
+./minicompiler tests/t4_02_for.cm out.s     # full six-phase trace
+spim -file out.s
 ```
 
-## Using the Compiler
+Passing `-q` silences the trace and prints only errors and the summary.
 
-### Basic Usage
+## Regenerating everything
+
+All twelve code folders come from **one** annotated master, so a bug is fixed once
+and propagates everywhere:
 
 ```bash
-# Compile a C-Minus program
-./cminus source.cm
-
-# This generates source.s (MIPS assembly)
+python3 .tools/stagegen.py --check    # 12 code folders; builds and tests them
+python3 .tools/docgen.py              # 43 pages of lecture notes and activities
+python3 .tools/readmegen.py           # every topic README
+python3 .tools/docxgen.py             # the six assignment .docx  (needs python-docx)
 ```
 
-### Command Line Options
+Edit `.tools/master/` — never the generated folders. Full explanation in
+[`.tools/README.md`](.tools/README.md).
 
-```bash
-./cminus [options] source_file.cm
+## Publishing the course site
 
-Options:
-  -h, --help         Show help message
-  -s, --trace-scan   Enable scanner tracing
-  -p, --trace-parse  Enable parser tracing and show AST
-  -a, --trace-sem    Enable semantic analysis tracing
-  -c, --trace-code   Enable code generation tracing
-  -O<level>          Set optimization level (0-2)
-  -n, --no-code      Disable code generation
-  -o <file>          Specify output file
+The `docs/` directory is a complete static site with no build step.
 
-Examples:
-  ./cminus -p test.cm        # Show AST
-  ./cminus -O2 test.cm       # Optimize level 2
-  ./cminus -spac test.cm     # Enable all tracing
+1. Push to GitHub.
+2. **Settings → Pages → Source: Deploy from a branch**, branch `main`, folder
+   `/docs`.
+3. The site appears at `https://<user>.github.io/<repo>/`.
+
+Everything is relative-linked, so it also works by opening `docs/index.html`
+straight off disk.
+
+One knob: GitHub Pages serves `docs/` as the site root, so a page in there cannot
+link to `student/` or `instructor/` — they sit above it. Set `REPO_URL` at the top
+of `.tools/docgen.py` to your repository and re-run it, and the "your starter code"
+cards become working links into the GitHub file browser:
+
+```python
+REPO_URL = "https://github.com/your-user/your-repo/tree/main"
 ```
 
-## C-Minus Language Features
+Left empty, those cards show the path as plain text instead — correct but not
+clickable.
 
-### Data Types
-- `int` - Integer type
-- `void` - Void type (for functions)
-- Arrays of integers
+## What the compiler can and cannot do
 
-### Statements
-- Variable declarations
-- Function declarations
-- Assignment statements
-- If-else statements
-- While loops
-- Return statements
-- Compound statements (blocks)
+Worth knowing before you assign it. Each limit is deliberate and is discussed in
+the topic where it bites.
 
-### Expressions
-- Arithmetic: `+`, `-`, `*`, `/`
-- Relational: `<`, `<=`, `>`, `>=`, `==`, `!=`
-- Function calls
-- Array indexing
+| Limit | Why |
+|---|---|
+| `int` is the only type | no type system; the type is not tracked past declaration |
+| at most 4 arguments per call | arguments are passed only in `$a0`–`$a3` |
+| no array bounds checking | no length information survives to run time |
+| registers flushed at every branch | the allocator does not track liveness across blocks |
+| optimizer forgets facts at a label | no analysis across basic blocks |
+| `t0`, `L0` … are reserved identifiers | they would collide with generated names; the semantic analyzer rejects them with an explanation |
 
-### Built-in Functions
-- `input()` - Read integer from user
-- `output(int)` - Print integer to console
+Lifting any of these is a good optional extension, and each is named as one in the
+relevant assignment description.
 
-## Example Programs
+## Requirements
 
-### Factorial (Recursive)
-```c
-int factorial(int n) {
-    if (n <= 1) {
-        return 1;
-    } else {
-        return n * factorial(n - 1);
-    }
-}
-
-void main(void) {
-    int num;
-    num = input();
-    output(factorial(num));
-}
-```
-
-### Fibonacci Sequence
-```c
-void main(void) {
-    int n;
-    int fib[20];
-    int i;
-    
-    n = input();
-    fib[0] = 0;
-    fib[1] = 1;
-    
-    i = 2;
-    while (i < n) {
-        fib[i] = fib[i-1] + fib[i-2];
-        i = i + 1;
-    }
-    
-    i = 0;
-    while (i < n) {
-        output(fib[i]);
-        i = i + 1;
-    }
-}
-```
-
-## Compiler Internals
-
-### Abstract Syntax Tree (AST)
-
-The compiler builds an AST from the parse tree, removing syntactic details and focusing on semantic structure. This makes subsequent analysis and code generation more efficient.
-
-**Parse Tree vs AST Example:**
-```
-Expression: x = 2 + 3 * 4
-
-Parse Tree (detailed):              AST (simplified):
-     assignment                          ASSIGN
-     /    |    \                         /    \
-   var   '='  expr                    ID:x     +
-    |           |                             /   \
-   ID:x    add-expr                        NUM:2   *
-           /   |   \                              /   \
-        term  '+'  term                       NUM:3  NUM:4
-         |          |
-       NUM:2   term * factor
-                |       |
-              NUM:3   NUM:4
-```
-
-### Symbol Table
-
-Hierarchical scope-based symbol table with support for:
-- Global and local scopes
-- Function parameters
-- Array declarations
-- Type checking
-- Memory allocation tracking
-
-### Three-Address Code (TAC) Generation
-
-**Overview:**
-Three-Address Code is an intermediate representation where each instruction has at most three operands (result = arg1 op arg2). This simplifies both optimization and final code generation.
-
-**TAC Generation Process:**
-1. **AST to TAC Conversion**: Each AST node type maps to specific TAC instructions
-   - Declarations: `NODE_DECL` → `TAC_DECL`
-   - Assignments: `NODE_ASSIGN` → `TAC_ASSIGN`
-   - Expressions: `NODE_BINOP` → `TAC_ADD` with temporary variables
-   - Print statements: `NODE_PRINT` → `TAC_PRINT`
-
-2. **Expression Handling**: Complex expressions use temporary variables
-   - Numbers: Converted to string literals
-   - Variables: Referenced by name
-   - Binary operations: Create temporary variables (t0, t1, t2...)
-
-**Example TAC Generation:**
-```c
-// Source Code:
-int x; int y;
-x = 10; y = 20;
-print(x + y);
-
-// Generated TAC:
-1: DECL x          // Declare variable 'x'
-2: DECL y          // Declare variable 'y'
-3: x = 10          // Assign constant to x
-4: y = 20          // Assign constant to y
-5: t0 = x + y      // Add: store result in temp t0
-6: PRINT t0        // Output value of t0
-```
-
-### TAC Optimization Implementation
-
-**Optimization Techniques:**
-1. **Constant Folding** - Evaluates compile-time constant expressions
-   - `10 + 20` becomes `30` directly
-2. **Copy Propagation** - Replaces variable references with their known values
-   - Uses a value propagation table to track variable-value mappings
-
-**Optimization Process:**
-1. **Track assignments**: Store variable-value mappings in propagation table
-2. **Substitute references**: Replace variables with known values
-3. **Fold constants**: Evaluate constant expressions at compile-time
-4. **Propagate results**: Update the propagation table with new constants
-
-**Optimization Example:**
-```c
-// Original TAC:
-1: DECL x
-2: DECL y
-3: x = 10          // x now maps to "10"
-4: y = 20          // y now maps to "20"
-5: t0 = x + y      // Substitute: t0 = 10 + 20
-6: PRINT t0
-
-// Optimized TAC:
-1: DECL x
-2: DECL y
-3: x = 10          // Constant value: 10
-4: y = 20          // Constant value: 20
-5: t0 = 30         // Folded: 10 + 20 = 30
-6: PRINT 30        // Propagated constant
-```
-
-**Additional Optimization Techniques (for advanced implementations):**
-1. **Dead Code Elimination** - Remove unreachable or unused code
-2. **Algebraic Simplification** - Simplify expressions (x+0 → x, x*1 → x)
-3. **Common Subexpression Elimination** - Reuse computed values
-
-### MIPS Code Generation Implementation
-
-**Overview:**
-The final phase converts the AST directly to MIPS assembly, using the symbol table for variable memory management and register allocation for temporary values.
-
-**MIPS Architecture Used:**
-- **Registers:**
-  - `$sp`: Stack pointer (points to top of stack)
-  - `$t0-$t7`: Temporary registers for computations
-  - `$a0`: Argument register for system calls
-  - `$v0`: System call number register
-- **Memory Layout:**
-  - Variables stored on stack with negative offsets from `$sp`
-  - Stack grows downward (decreasing addresses)
-  - Each integer variable occupies 4 bytes
-
-**Code Generation Process:**
-
-**1. Program Initialization:**
-```mips
-.data                    # Data section (empty for simple language)
-.text                    # Code section
-.globl main             # Make main globally visible
-main:                   # Program entry point
-    addi $sp, $sp, -400 # Allocate 400 bytes stack space
-```
-
-**2. Variable Operations:**
-- **Declaration**: Adds to symbol table, generates comment
-- **Assignment**: `li $t0, 10; sw $t0, 0($sp)` (load immediate, store word)
-- **Variable Access**: `lw $t1, 0($sp)` (load word from stack offset)
-- **Addition**: `lw $t0, 0($sp); lw $t1, 4($sp); add $t0, $t0, $t1`
-
-**3. Print Statement:**
-```mips
-move $a0, $t0     # Move value to argument register
-li $v0, 1         # System call number for print integer
-syscall           # Execute system call
-li $v0, 11        # System call for print character
-li $a0, 10        # ASCII newline character
-syscall           # Print newline
-```
-
-**Complete MIPS Example:**
-```c
-// Source: int x; int y; x = 10; y = 20; print(x + y);
-```
-```mips
-.data
-.text
-.globl main
-main:
-    addi $sp, $sp, -400    # Allocate stack
-
-    # x = 10;
-    li $t0, 10
-    sw $t0, 0($sp)
-
-    # y = 20;
-    li $t1, 20
-    sw $t1, 4($sp)
-
-    # print(x + y);
-    lw $t0, 0($sp)         # Load x
-    lw $t1, 4($sp)         # Load y
-    add $t0, $t0, $t1      # x + y
-    move $a0, $t0          # Prepare for print
-    li $v0, 1              # Print integer
-    syscall
-
-    # Exit program
-    addi $sp, $sp, 400
-    li $v0, 10
-    syscall
-```
-
-**Symbol Table Integration:**
-The MIPS generator uses the symbol table for:
-- Variable declarations: Add to symbol table, get stack offset
-- Variable access: Look up stack offset for load/store operations
-- Error detection: Verify variables are declared before use
-
-**Advanced Features (for full compiler):**
-- Register allocation (using $t0-$t7, $s0-$s7)
-- Stack frame management
-- Function calling conventions
-- System calls for I/O
-
-## Educational Value
-
-This compiler demonstrates:
-
-1. **Lexical Analysis** - Pattern matching with regular expressions
-2. **Parsing** - Context-free grammars and LALR parsing
-3. **AST Construction** - Tree data structures and traversal
-4. **Symbol Tables** - Hash tables and scope management
-5. **Type Checking** - Static semantic analysis
-6. **Code Generation** - Instruction selection and register allocation
-7. **Optimization** - Data flow analysis and transformation
-8. **Target Architecture** - MIPS assembly and calling conventions
-
-## Testing
-
-Run the test suite:
-```bash
-make test
-```
-
-Individual test programs:
-```bash
-./cminus tests/factorial.cm
-./cminus tests/fibonacci.cm
-./cminus tests/sort.cm
-```
-
-## Limitations
-
-- No floating-point support
-- No string support
-- No dynamic memory allocation
-- Limited to 32-bit integers
-- No preprocessor directives
-- No separate compilation/linking
-
-## Future Enhancements
-
-- Add support for more data types (char, float)
-- Implement more optimization passes
-- Add register allocation with graph coloring
-- Support for multiple source files
-- Generate x86 or ARM assembly
-- Add debugging information
-- Implement error recovery
-
-## References
-
-- Aho, Sethi, Ullman - "Compilers: Principles, Techniques, and Tools" (Dragon Book)
-- Flex & Bison documentation
-- MIPS assembly language reference
-- C-Minus language specification
-
-## Author
-
-Created for CST-405 Compiler Design Course
-
-## License
-
-Educational use only
+- `flex` 2.6+
+- `bison` 2.3+ (also builds with 3.x)
+- `gcc` or `clang`
+- `make`
+- SPIM or QtSPIM
+- Python 3.8+ to run the generators; `python-docx` only for the `.docx` files

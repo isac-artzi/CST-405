@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>First Contact with Bison · CST-405</title>
+<link rel="stylesheet" href="../assets/cst405.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">Topic 2 · Class activity 2 · Week 2 · Friday</p>
+    <h1>First Contact with Bison</h1>
+    <p class="lede">One rule at a time, and a deliberate conflict so you learn to read parser.output.</p>
+    <nav class="crumbs"><a href="../index.html">All topics</a> &nbsp;›&nbsp; <a href="index.html">Topic 2</a> &nbsp;›&nbsp; Activity 2</nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="meta"><span><b>Format</b> pairs, at a laptop</span><span><b>Time</b> 50 min</span></div>
+<h2>The point</h2>
+<p>Get bison to talk to you. Its conflict reports are the most useful and least read output in this course.</p>
+<h2>Do this</h2>
+<ol class="steps"><li><b>Build the given skeleton</b> and confirm it compiles:<pre><code class="lang-">cd student/topic-2-minimal-compiler/compiler
+make
+./minicompiler tests/t2_01_basics.cm out.s</code></pre>
+It will fail — the grammar is a placeholder. Read the message.</li><li><b>Write ONE rule:</b> <code>program : stmt_list { root = $1; }</code> and <code>stmt_list : stmt | stmt_list stmt</code>, with <code>stmt : decl</code> and <code>decl : INT ID ';'</code>. Nothing else. Build.</li><li><b>Feed it a file containing only declarations.</b> Confirm it parses.</li><li><b>Now deliberately create a conflict.</b> Add a second rule <code>stmt : INT ID ';'</code> alongside <code>stmt : decl</code>. Rebuild and read what bison says.</li><li><b>Get the full report.</b> Run <code>bison -d -v parser.y</code> and open <code>parser.output</code>. Find the state with the conflict. It shows you the exact item set — which symbols it had seen and what it could not decide between.</li><li><b>Remove the conflict</b> and add the remaining rules for <code>assign</code> and <code>print_stmt</code>.</li></ol>
+<div class="note"><b>parser.output is a gift</b><p>Nearly everyone in this course will, at some point, have a grammar with a conflict they do not understand. The answer is always in <code>parser.output</code>. Learning to read it today costs 15 minutes and saves an evening in Topic 5, where the dangling-else conflict arrives on schedule.</p>
+</div>
+<div class="deliverable"><h3>Deliverable</h3><p>Your <code>parser.y</code> with all four statement forms parsing, plus the excerpt from <code>parser.output</code> showing the conflict you created in step 4 and one sentence explaining what bison could not decide.</p>
+</div>
+
+<footer class="pagefoot">
+  <span>CST-405 · Principles of Compiler Design · Grand Canyon University</span>
+  <span><a href="../index.html">All topics</a></span>
+</footer>
+</main>
+<script src="../assets/cst405.js"></script>
+</body>
+</html>

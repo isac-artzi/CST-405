@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Derivations, Parse Trees, and Ambiguity · CST-405</title>
+<link rel="stylesheet" href="../assets/cst405.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">Topic 2 · Class activity 1 · Week 2 · Wednesday</p>
+    <h1>Derivations, Parse Trees, and Ambiguity</h1>
+    <p class="lede">Derive by hand, then find two trees for one string — and fix it two different ways.</p>
+    <nav class="crumbs"><a href="../index.html">All topics</a> &nbsp;›&nbsp; <a href="index.html">Topic 2</a> &nbsp;›&nbsp; Activity 1</nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="meta"><span><b>Format</b> pairs</span><span><b>Time</b> 45 min</span><span><b>Bring</b> paper</span></div>
+<h2>The point</h2>
+<p>Before touching bison, derive some sentences by hand. Ambiguity is easy to define and hard to recognise, and the only reliable way to recognise it is to have once found two different trees for the same string.</p>
+<h2>Do this</h2>
+<ol class="steps"><li><b>Derive.</b> Using the starter grammar, write a leftmost derivation for<pre><code class="lang-">int x;
+x = 1 + 2;</code></pre>
+Show every step: <code>program ⇒ stmt_list ⇒ ...</code></li><li><b>Draw the parse tree</b> for that derivation.</li><li><b>Now the interesting one.</b> Take this grammar fragment, which has no precedence declarations at all:<pre><code class="lang-">expr -&gt; expr '+' expr | expr '*' expr | NUM</code></pre>
+Draw <b>two different parse trees</b> for <code>1 + 2 * 3</code>. Evaluate both. You should get two different numbers.</li><li><b>Fix it two ways.</b> (a) By rewriting the grammar into layers (<code>expr → term → factor</code>). (b) By keeping the ambiguous grammar and adding <code>%left</code> declarations. Write both.</li><li><b>Argue.</b> Which fix would you ship, and why? There is a real answer here and it is not obvious — write down the trade-off you actually believe, not the one you think is expected.</li></ol>
+<details class="reveal"><summary>If you are stuck on step 5</summary><p>Layering is portable: it works with any parser generator, and the grammar itself documents the precedence. Precedence declarations are shorter, easier to change, and keep the grammar readable — but they are a bison feature, and they hide the precedence somewhere other than the rules. Both arguments are good. Pick one and mean it.</p>
+</details>
+<div class="deliverable"><h3>Deliverable</h3><p>A photo or scan of your worked pages, plus a short paragraph answering step 5. This is most of Lab Question 3.</p>
+</div>
+
+<footer class="pagefoot">
+  <span>CST-405 · Principles of Compiler Design · Grand Canyon University</span>
+  <span><a href="../index.html">All topics</a></span>
+</footer>
+</main>
+<script src="../assets/cst405.js"></script>
+</body>
+</html>

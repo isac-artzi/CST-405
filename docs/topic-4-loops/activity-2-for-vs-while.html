@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>for vs while — a Design Decision · CST-405</title>
+<link rel="stylesheet" href="../assets/cst405.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">Topic 4 · Class activity 2 · Week 9 · Friday</p>
+    <h1>for vs while — a Design Decision</h1>
+    <p class="lede">Lower it directly or desugar it? Write both, decide the degenerate cases, then defend your choice.</p>
+    <nav class="crumbs"><a href="../index.html">All topics</a> &nbsp;›&nbsp; <a href="index.html">Topic 4</a> &nbsp;›&nbsp; Activity 2</nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="meta"><span><b>Format</b> pairs, at a laptop</span><span><b>Time</b> 50 min</span></div>
+<h2>The point</h2>
+<p><code>for</code> is a design decision, not a feature. Make it deliberately.</p>
+<h2>Do this</h2>
+<ol class="steps"><li><b>Two implementations, on paper.</b> (a) Lower <code>for</code> directly, with its own case in <code>generateTACStmt</code>. (b) Desugar it in the parser: build a <code>NODE_WHILE</code> whose body is <code>{ B; upd; }</code>, preceded by <code>init</code>. Write the TAC each approach produces for the same loop.</li><li><b>Compare the two listings.</b> Are they identical? If not, which is shorter, and does the difference survive optimization?</li><li><b>Decide the awkward cases</b> before you code. What does your language do for each of these, and is it a parse error or a legal program?<pre><code class="lang-">for (; i &lt; 5; i = i + 1) ...     no init
+for (i = 0; ; i = i + 1) ...     no condition
+for (i = 0; i &lt; 5; ) ...         no update
+for (;;) ...                     nothing at all</code></pre>
+</li><li><b>Implement your choice.</b> Then write a test file that exercises all four cases above and confirm each behaves as you decided.</li><li><b>Argue.</b> In two sentences: which implementation would you ship, and what would change your mind?</li></ol>
+<div class="note"><b>There is no wrong answer to step 5</b><p>Desugaring keeps the back end smaller and guarantees the two loop forms cannot drift apart. A dedicated case keeps the TAC readable and lets you optimize <code>for</code> specifically later. Real compilers do both. What matters is that you can say which you did and why.</p>
+</div>
+<div class="deliverable"><h3>Deliverable</h3><p>Both TAC listings from step 1, your decision table for the four degenerate forms, a working implementation, and your two-sentence argument. Feeds Lab Question 18.</p>
+</div>
+
+<footer class="pagefoot">
+  <span>CST-405 · Principles of Compiler Design · Grand Canyon University</span>
+  <span><a href="../index.html">All topics</a></span>
+</footer>
+</main>
+<script src="../assets/cst405.js"></script>
+</body>
+</html>

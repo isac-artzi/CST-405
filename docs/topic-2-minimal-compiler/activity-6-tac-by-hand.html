@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Three-Address Code by Hand · CST-405</title>
+<link rel="stylesheet" href="../assets/cst405.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">Topic 2 · Class activity 6 · Week 4 · Friday</p>
+    <h1>Three-Address Code by Hand</h1>
+    <p class="lede">Translate an AST yourself, then make the compiler agree with you.</p>
+    <nav class="crumbs"><a href="../index.html">All topics</a> &nbsp;›&nbsp; <a href="index.html">Topic 2</a> &nbsp;›&nbsp; Activity 6</nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="meta"><span><b>Format</b> pairs</span><span><b>Time</b> 50 min</span></div>
+<h2>The point</h2>
+<p>Translate an AST to three-address code by hand, then make the compiler agree with you. If it does not, one of you is wrong and it is worth knowing which.</p>
+<h2>Do this</h2>
+<ol class="steps"><li><b>By hand.</b> Write the TAC for<pre><code class="lang-">int a; int b; int c;
+a = 1 + 2;
+b = a + a;
+c = a + b + 3;
+print(c);</code></pre>
+Use <code>t0, t1, ...</code> for temporaries. Number every instruction.</li><li><b>Count your temporaries.</b> How many did you use? How many were live at once? Those are different numbers, and the second one is what a register allocator cares about.</li><li><b>Compare with a partner.</b> If your instruction counts differ, you made different choices — find out what they were.</li><li><b>Now the compiler.</b> Implement <code>generateTACExpr</code> and <code>generateTACStmt</code>, compile that program, and read <code>out.tac</code>.</li><li><b>Reconcile.</b> Any difference between your listing and the compiler's is either your mistake or a design choice you did not know you had made. Which is it?</li><li><b>Hand-execute the TAC.</b> With a table of variable values, step through your listing and confirm it prints what the source program should. This is how you will debug phase 6 next week.</li></ol>
+<div class="deliverable"><h3>Deliverable</h3><p>Your handwritten TAC, the compiler's <code>out.tac</code>, and a numbered list of the differences with an explanation for each. This is Lab Question 8.</p>
+</div>
+
+<footer class="pagefoot">
+  <span>CST-405 · Principles of Compiler Design · Grand Canyon University</span>
+  <span><a href="../index.html">All topics</a></span>
+</footer>
+</main>
+<script src="../assets/cst405.js"></script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parse Tree vs AST · CST-405</title>
+<link rel="stylesheet" href="../assets/cst405.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">Topic 2 · Class activity 3 · Week 3 · Wednesday</p>
+    <h1>Parse Tree vs AST</h1>
+    <p class="lede">Draw both, count the difference, and decide what your statement list should look like.</p>
+    <nav class="crumbs"><a href="../index.html">All topics</a> &nbsp;›&nbsp; <a href="index.html">Topic 2</a> &nbsp;›&nbsp; Activity 3</nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="meta"><span><b>Format</b> individual, then compare</span><span><b>Time</b> 40 min</span></div>
+<h2>The point</h2>
+<p>You are about to design a data structure that five later phases have to live with. Design it on paper first.</p>
+<h2>Do this</h2>
+<ol class="steps"><li><b>Draw the parse tree AND the AST</b> for<pre><code class="lang-">int a;
+int b;
+a = 1 + 2;
+b = a + a;
+print(b);</code></pre>
+</li><li><b>Count the nodes in each.</b> Write both numbers down.</li><li><b>For every node in the parse tree that is NOT in the AST</b>, say in one phrase what it was for and why nothing downstream needs it.</li><li><b>Design decision.</b> Our <code>NODE_STMT_LIST</code> holds two children — a statement and 'the rest'. An alternative is a single node holding an array of statements. Sketch both for the five-statement program above.</li><li><b>Argue it.</b> Which is easier to build in a bison action? Which is easier to WALK in <code>generateTAC</code>? They may not be the same answer, and noticing that is the point.</li></ol>
+<details class="reveal"><summary>A nudge on step 5</summary><p>A left-recursive rule reduces one statement at a time, so an action naturally builds a linked structure — the array version has to grow and copy. But walking a linked list of lists means every visitor needs a special case for 'the child is itself a list', which is exactly the bug that will make your compiler silently skip statements. Look at how <code>checkStmtList</code> and <code>generateTACStmtList</code> handle it in the given code.</p>
+</details>
+<div class="deliverable"><h3>Deliverable</h3><p>Both trees, both node counts, your list from step 3, and a short paragraph on step 5. This is Lab Question 6 nearly verbatim.</p>
+</div>
+
+<footer class="pagefoot">
+  <span>CST-405 · Principles of Compiler Design · Grand Canyon University</span>
+  <span><a href="../index.html">All topics</a></span>
+</footer>
+</main>
+<script src="../assets/cst405.js"></script>
+</body>
+</html>

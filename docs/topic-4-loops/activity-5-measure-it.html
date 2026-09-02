@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Measure It, and Defend the Number · CST-405</title>
+<link rel="stylesheet" href="../assets/cst405.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">Topic 4 · Class activity 5 · Week 11 · Wednesday</p>
+    <h1>Measure It, and Defend the Number</h1>
+    <p class="lede">Code size and work done are different numbers. Get both, repeat the run, and state a threshold you can justify.</p>
+    <nav class="crumbs"><a href="../index.html">All topics</a> &nbsp;›&nbsp; <a href="index.html">Topic 4</a> &nbsp;›&nbsp; Activity 5</nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="meta"><span><b>Format</b> pairs, at a laptop</span><span><b>Time</b> 50 min</span><span><b>Need</b> SPIM, and your machine's specs</span></div>
+<h2>The point</h2>
+<p>Produce a number you would be willing to defend. Most reported speedups do not survive the question <i>compared to what, measured how?</i></p>
+<h2>Do this</h2>
+<ol class="steps"><li><b>Write a benchmark</b> with a hot loop — a nested loop running a few thousand iterations. <code>tests/t6_07_benchmark.cm</code> is a starting point if you want one.</li><li><b>Get the code-size numbers.</b> Compile it and record the TAC instruction count before and after optimization, plus the per-technique scorecard.</li><li><b>Get the work-done numbers.</b> Run both versions in SPIM and record the executed instruction count for each. To get an unoptimized <code>.s</code>, temporarily point <code>generateMIPSFromTAC</code> at <code>getUnoptimizedTAC()</code>.</li><li><b>Put the four numbers in a table</b> and compute both percentages. They will not match. Explain the gap in one sentence.</li><li><b>Repeat the run three times.</b> How much do the numbers move? Anything smaller than that spread is not a result.</li><li><b>State a threshold.</b> Given your machine and your measurement noise, what reduction would you call significant? Justify it with the numbers from step 5, not with a feeling.</li></ol>
+<div class="deliverable"><h3>Deliverable</h3><p>A results table with all four numbers and both percentages, three repeated runs, your noise estimate, and a defended threshold. This is Lab Question 22 and a large part of the Project 6 performance section — do it properly now and reuse it in December.</p>
+</div>
+
+<footer class="pagefoot">
+  <span>CST-405 · Principles of Compiler Design · Grand Canyon University</span>
+  <span><a href="../index.html">All topics</a></span>
+</footer>
+</main>
+<script src="../assets/cst405.js"></script>
+</body>
+</html>

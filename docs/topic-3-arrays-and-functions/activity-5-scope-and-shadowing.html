@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scope and Shadowing · CST-405</title>
+<link rel="stylesheet" href="../assets/cst405.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">Topic 3 · Class activity 5 · Week 8 · Wednesday</p>
+    <h1>Scope and Shadowing</h1>
+    <p class="lede">Predict the output, draw the scope stack, then break exitScope on purpose.</p>
+    <nav class="crumbs"><a href="../index.html">All topics</a> &nbsp;›&nbsp; <a href="index.html">Topic 3</a> &nbsp;›&nbsp; Activity 5</nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="meta"><span><b>Format</b> pairs</span><span><b>Time</b> 40 min</span></div>
+<h2>The point</h2>
+<p>Shadowing is easy to describe and easy to get wrong. Predict, then verify.</p>
+<h2>Do this</h2>
+<ol class="steps"><li><b>Predict the output</b> of this program, line by line, before running it.<pre><code class="lang-">int n;
+int twice(int n) { return n + n; }
+int main() {
+    int m;
+    n = 10;
+    m = twice(3);
+    print(n);
+    print(m);
+    { int n; n = 99; print(n); }
+    print(n);
+    return 0;
+}</code></pre>
+</li><li><b>Draw the scope stack</b> at each <code>print</code>. Which entry does the lookup find, and how many scopes did it search?</li><li><b>Run it</b> without <code>-q</code> and find the scope-stack traces in the semantic analyzer output. Reconcile.</li><li><b>Break it.</b> Make <code>exitScope()</code> a no-op. Predict what now goes wrong, then run and confirm. What error appears, and is it the error you predicted?</li><li><b>Break it the other way.</b> Restore <code>exitScope</code>, and change <code>isVarDeclaredInScope</code> to search only the OUTERMOST scope. Which of the two symbol tables did you just break — the visibility one or the storage one?</li></ol>
+<div class="deliverable"><h3>Deliverable</h3><p>Your line-by-line prediction, five scope-stack diagrams, and a paragraph on each sabotage. Feeds Lab Questions 11 and 16.</p>
+</div>
+
+<footer class="pagefoot">
+  <span>CST-405 · Principles of Compiler Design · Grand Canyon University</span>
+  <span><a href="../index.html">All topics</a></span>
+</footer>
+</main>
+<script src="../assets/cst405.js"></script>
+</body>
+</html>

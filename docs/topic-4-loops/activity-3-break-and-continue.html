@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>break, and the continue You Are Not Implementing · CST-405</title>
+<link rel="stylesheet" href="../assets/cst405.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">Topic 4 · Class activity 3 · Week 10 · Wednesday</p>
+    <h1>break, and the continue You Are Not Implementing</h1>
+    <p class="lede">A label stack, a depth counter, and why continue in a for loop surprises people.</p>
+    <nav class="crumbs"><a href="../index.html">All topics</a> &nbsp;›&nbsp; <a href="index.html">Topic 4</a> &nbsp;›&nbsp; Activity 3</nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="meta"><span><b>Format</b> pairs</span><span><b>Time</b> 45 min</span></div>
+<h2>The point</h2>
+<p><code>break</code> looks trivial and is the first construct whose meaning depends on context rather than on its own text.</p>
+<h2>Do this</h2>
+<ol class="steps"><li><b>Predict the target</b> of each <code>break</code> below, then implement the break-label stack and check.<pre><code class="lang-">while (a) {
+    while (b) {
+        break;        &lt;- which loop does this leave?
+    }
+    break;            &lt;- and this one?
+}</code></pre>
+</li><li><b>Implement the semantic check.</b> A <code>break</code> outside any loop must be an error with a line number. Use a depth counter incremented around loop BODIES only — not around loop conditions. Explain why the condition is excluded.</li><li><b>Test the error.</b> Write a file with a top-level <code>break;</code> and confirm the message names the line.</li><li><b>Design <code>continue</code>.</b> You do not have to implement it. On paper: what label would it jump to in a <code>while</code>? In a <code>for</code>? The answers differ, and the difference is the reason <code>continue</code> in a <code>for</code> loop surprises people.</li><li><b>Design labelled break.</b> Java has <code>break outer;</code>. What would that require of your label stack? Two sentences.</li></ol>
+<details class="reveal"><summary>On step 4</summary><p>In a <code>while</code>, <code>continue</code> jumps to the top — the same label the back-edge targets. In a <code>for</code>, it must jump to the UPDATE, not the top, or the loop variable never advances and you have written an infinite loop. This is why <code>for</code> needs its own continue label even if you desugared it into a <code>while</code>.</p>
+</details>
+<div class="deliverable"><h3>Deliverable</h3><p>Your predictions, a working break with a working error message, and written answers to steps 4 and 5.</p>
+</div>
+
+<footer class="pagefoot">
+  <span>CST-405 · Principles of Compiler Design · Grand Canyon University</span>
+  <span><a href="../index.html">All topics</a></span>
+</footer>
+</main>
+<script src="../assets/cst405.js"></script>
+</body>
+</html>

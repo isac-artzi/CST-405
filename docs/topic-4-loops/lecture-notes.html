@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loops, Labels, and What Optimization Is Actually Worth · CST-405</title>
+<link rel="stylesheet" href="../assets/cst405.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">Topic 4 · Lecture notes · Weeks 9–11</p>
+    <h1>Loops, Labels, and What Optimization Is Actually Worth</h1>
+    <p class="lede">Structured control flow becomes labels and jumps — and then the optimizer stops being a lecture topic and starts producing numbers you can quote.</p>
+    <nav class="crumbs"><a href="../index.html">All topics</a> &nbsp;›&nbsp; <a href="index.html">Topic 4</a> &nbsp;›&nbsp; Lecture notes</nav>
+  </div>
+</header>
+<main class="wrap">
+<h2>There are no loops in a machine</h2>
+<p>A CPU has exactly two control-flow instructions: jump somewhere, and jump somewhere <i>if</i> a register is zero. Every <code>while</code>, <code>for</code>, <code>if</code> and <code>switch</code> in every language you have used is a pattern of those two. Building them is called <b>lowering</b>, and it happens in phase 4.</p>
+<div class="pipeline"><svg viewBox="0 0 1010 92" role="img" aria-label="The six phases of the compiler, left to right"><rect class="ph-box done" x="6" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="80" y="39" text-anchor="middle">1. Lexical</text><text class="ph-s" x="80" y="53" text-anchor="middle">chars → tokens</text><text class="ph-lbl" x="80" y="77" text-anchor="middle">scanner.l</text><path class="ph-arrow" d="M157 42 L173 42 M168 38 L173 42 L168 46"/><rect class="ph-box done" x="176" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="250" y="39" text-anchor="middle">2. Syntax</text><text class="ph-s" x="250" y="53" text-anchor="middle">tokens → AST</text><text class="ph-lbl" x="250" y="77" text-anchor="middle">parser.y</text><path class="ph-arrow" d="M327 42 L343 42 M338 38 L343 42 L338 46"/><rect class="ph-box done" x="346" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="420" y="39" text-anchor="middle">3. Semantic</text><text class="ph-s" x="420" y="53" text-anchor="middle">AST → checked AST</text><text class="ph-lbl" x="420" y="77" text-anchor="middle">semantic.c</text><path class="ph-arrow" d="M497 42 L513 42 M508 38 L513 42 L508 46"/><rect class="ph-box on" x="516" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="590" y="39" text-anchor="middle">4. IR</text><text class="ph-s" x="590" y="53" text-anchor="middle">AST → TAC</text><text class="ph-lbl" x="590" y="77" text-anchor="middle">tac.c</text><path class="ph-arrow" d="M667 42 L683 42 M678 38 L683 42 L678 46"/><rect class="ph-box" x="686" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="760" y="39" text-anchor="middle">5. Optimize</text><text class="ph-s" x="760" y="53" text-anchor="middle">TAC → better TAC</text><text class="ph-lbl" x="760" y="77" text-anchor="middle">tac.c</text><path class="ph-arrow" d="M837 42 L853 42 M848 38 L853 42 L848 46"/><rect class="ph-box" x="856" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="930" y="39" text-anchor="middle">6. CodeGen</text><text class="ph-s" x="930" y="53" text-anchor="middle">TAC → MIPS</text><text class="ph-lbl" x="930" y="77" text-anchor="middle">codegen.c</text></svg></div>
+<pre><code class="lang-">    while (c) B                    for (init; c; upd) B
+    ───────────                    ────────────────────
+                                     &lt;init&gt;
+  Lstart:                          Lstart:
+      t = &lt;c&gt;                          t = &lt;c&gt;
+      IF_FALSE t GOTO Lend             IF_FALSE t GOTO Lend
+      &lt;B&gt;                              &lt;B&gt;
+      GOTO Lstart                      &lt;upd&gt;
+  Lend:                                GOTO Lstart
+                                   Lend:</code></pre>
+<p>Read those two side by side. A <code>for</code> loop is a <code>while</code> loop with two extra pieces bolted on, which is why many compilers desugar <code>for</code> into <code>while</code> in the front end and reuse one lowering. Either approach is fine; be able to say which you chose and why.</p>
+<h2>Watch a loop lower</h2>
+<div class="stepper" tabindex="0"><div class="bar"><button data-act="prev">← back</button><button data-act="next">next →</button><button data-act="reset">restart</button><span class="count"></span></div><div class="body"><div class="step" hidden><p class="caption">The source. Three lines that will become eleven instructions.</p><pre><code class="lang-">i = 0;
+while (i &lt; 3) {
+    print(i);
+    i = i + 1;
+}</code></pre>
+</div><div class="step" hidden><p class="caption">Anything before the loop is emitted first, unchanged.</p><pre><code class="lang-"><span class="hi">i = 0</span></code></pre>
+</div><div class="step" hidden><p class="caption">A label marks the top. Every iteration will come back here.</p><pre><code class="lang-">i = 0
+<span class="hi">Lstart:</span></code></pre>
+</div><div class="step" hidden><p class="caption">The condition is an ordinary expression, so it produces a temporary holding 1 or 0.</p><pre><code class="lang-">i = 0
+Lstart:
+<span class="hi">    t0 = i &lt; 3</span></code></pre>
+</div><div class="step" hidden><p class="caption">The test. This is the ONLY thing that makes it a loop rather than a straight line.</p><pre><code class="lang-">i = 0
+Lstart:
+    t0 = i &lt; 3
+<span class="hi">    IF_FALSE t0 GOTO Lend</span></code></pre>
+</div><div class="step" hidden><p class="caption">The body, lowered normally. Nothing about it knows it is inside a loop.</p><pre><code class="lang-">i = 0
+Lstart:
+    t0 = i &lt; 3
+    IF_FALSE t0 GOTO Lend
+<span class="hi">    PRINT i</span>
+<span class="hi">    t1 = i + 1</span>
+<span class="hi">    i = t1</span></code></pre>
+</div><div class="step" hidden><p class="caption">The jump back, and the exit label. Done.</p><pre><code class="lang-">i = 0
+Lstart:
+    t0 = i &lt; 3
+    IF_FALSE t0 GOTO Lend
+    PRINT i
+    t1 = i + 1
+    i = t1
+<span class="hi">    GOTO Lstart</span>
+<span class="hi">Lend:</span></code></pre>
+</div></div></div>
+<div class="key"><b>Test at the top, not the bottom</b><p>The condition is evaluated BEFORE the body, so a loop whose condition is false initially executes zero times. That is what <code>while</code> means. Emit the test at the bottom instead and you have accidentally implemented <code>do-while</code> — a real language, but not the one you documented.</p>
+</div>
+<h2>break is a stack, and that is the whole implementation</h2>
+<p><code>break</code> means <i>jump to the exit label of the innermost thing I am inside</i>. The compiler does not need to analyse anything to work that out: when it starts lowering a loop it pushes that loop's exit label, and when it finishes it pops. A <code>break</code> anywhere in between emits a jump to whatever is on top.</p>
+<pre><code class="lang-">    push Lend_outer
+        push Lend_inner
+            break;      -&gt;   GOTO Lend_inner      (top of stack)
+        pop
+        break;          -&gt;   GOTO Lend_outer      (top of stack now)
+    pop</code></pre>
+<p>Nesting falls out for free. So does the error case: if the stack is empty when a <code>break</code> is lowered, the program had a <code>break</code> outside any loop — and the semantic analyzer should already have said so, with a line number, using the same idea as a depth counter.</p>
+<div class="quiz"><p class="q">Where should 'break outside a loop' be reported?</p><button class="opt" data-correct="0" data-feedback="No grammar can express it. The grammar says &lt;code&gt;break_stmt : BREAK &#x27;;&#x27;&lt;/code&gt;, which is satisfied wherever the statement appears.">The parser — it is a syntax error</button><button class="opt" data-correct="1" data-feedback="Right, and it is the smallest possible example of a context-sensitive rule: whether the statement is legal depends entirely on what encloses it. That is precisely the territory no context-free grammar can reach.">The semantic analyzer — it is context-sensitive</button><button class="opt" data-correct="0" data-feedback="It CAN detect it there, and ours does as a backstop. But by then you have lost the line number, and an error with no location is barely an error.">The TAC generator — that is where the label stack lives</button><button class="opt" data-correct="0" data-feedback="Far too late. By phase 6 the program has been through four transformations and the connection to source text is gone.">The code generator</button><p class="fb"></p></div>
+<h2>Now the optimizer earns its keep</h2>
+<div class="pipeline"><svg viewBox="0 0 1010 92" role="img" aria-label="The six phases of the compiler, left to right"><rect class="ph-box done" x="6" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="80" y="39" text-anchor="middle">1. Lexical</text><text class="ph-s" x="80" y="53" text-anchor="middle">chars → tokens</text><text class="ph-lbl" x="80" y="77" text-anchor="middle">scanner.l</text><path class="ph-arrow" d="M157 42 L173 42 M168 38 L173 42 L168 46"/><rect class="ph-box done" x="176" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="250" y="39" text-anchor="middle">2. Syntax</text><text class="ph-s" x="250" y="53" text-anchor="middle">tokens → AST</text><text class="ph-lbl" x="250" y="77" text-anchor="middle">parser.y</text><path class="ph-arrow" d="M327 42 L343 42 M338 38 L343 42 L338 46"/><rect class="ph-box done" x="346" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="420" y="39" text-anchor="middle">3. Semantic</text><text class="ph-s" x="420" y="53" text-anchor="middle">AST → checked AST</text><text class="ph-lbl" x="420" y="77" text-anchor="middle">semantic.c</text><path class="ph-arrow" d="M497 42 L513 42 M508 38 L513 42 L508 46"/><rect class="ph-box done" x="516" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="590" y="39" text-anchor="middle">4. IR</text><text class="ph-s" x="590" y="53" text-anchor="middle">AST → TAC</text><text class="ph-lbl" x="590" y="77" text-anchor="middle">tac.c</text><path class="ph-arrow" d="M667 42 L683 42 M678 38 L683 42 L678 46"/><rect class="ph-box on" x="686" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="760" y="39" text-anchor="middle">5. Optimize</text><text class="ph-s" x="760" y="53" text-anchor="middle">TAC → better TAC</text><text class="ph-lbl" x="760" y="77" text-anchor="middle">tac.c</text><path class="ph-arrow" d="M837 42 L853 42 M848 38 L853 42 L848 46"/><rect class="ph-box" x="856" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="930" y="39" text-anchor="middle">6. CodeGen</text><text class="ph-s" x="930" y="53" text-anchor="middle">TAC → MIPS</text><text class="ph-lbl" x="930" y="77" text-anchor="middle">codegen.c</text></svg></div>
+<p>Until this topic, optimization was a formality — straight-line code has little to remove. Loops change that, because an instruction inside a loop that runs 1,000 times costs 1,000 instructions.</p>
+<h3>The techniques, in the order a pass applies them</h3>
+<div class="tablewrap"><table><thead><tr><th>Technique</th><th>Before</th><th>After</th><th>Why it is safe</th></tr></thead><tbody><tr><td>Algebraic simplification</td><td><code>t = x + 0</code></td><td><code>t = x</code></td><td>true for every integer x</td></tr><tr><td>Constant folding</td><td><code>t = 2 * 3</code></td><td><code>t = 6</code></td><td>both operands are literals</td></tr><tr><td>Constant propagation</td><td><code>x = 5; y = x + 1</code></td><td><code>x = 5; y = 5 + 1</code></td><td>x provably holds 5 at that point</td></tr><tr><td>Copy propagation</td><td><code>t1 = x; y = t1</code></td><td><code>y = x</code></td><td>t1 is only a copy</td></tr><tr><td>Dead code elimination</td><td><code>t0 = a + b</code> (never read)</td><td>—</td><td>no later instruction reads t0</td></tr><tr><td>Unreachable code</td><td>code after <code>GOTO</code></td><td>—</td><td>control can never arrive</td></tr><tr><td>Branch simplification</td><td><code>IF_FALSE 0 GOTO L</code></td><td><code>GOTO L</code></td><td>the condition is a known constant</td></tr></tbody></table></div>
+<h3>Why one pass is not enough</h3>
+<p>The techniques feed each other. Watch three passes turn six instructions into two:</p>
+<div class="tabs"><div class="tabbar" role="tablist"><button role="tab" aria-selected="false">original</button><button role="tab" aria-selected="false">after pass 1</button><button role="tab" aria-selected="false">after pass 2</button><button role="tab" aria-selected="false">after pass 3</button></div><div class="panel" hidden><pre><code class="lang-">t0 = 2 * 3
+x  = t0
+t1 = x + 0
+y  = t1
+t2 = y * 1
+print t2</code></pre>
+</div><div class="panel" hidden><pre><code class="lang-"><span class="hi">t0 = 6            folded</span>
+x  = 6            propagated
+<span class="hi">t1 = x            algebraic (x + 0)</span>
+y  = x
+t2 = y            algebraic (y * 1)
+print t2</code></pre>
+</div><div class="panel" hidden><pre><code class="lang-">x = 6
+y = 6             propagated through the copies
+t2 = 6
+print 6           propagated into the print</code></pre>
+</div><div class="panel" hidden><pre><code class="lang-"><span class="hi">print 6            everything else was dead</span>
+
+no changes on pass 4 — fixed point reached</code></pre>
+</div></div>
+<p>This is why <code>optimizeTAC</code> loops until a pass reports zero changes. Running to a <b>fixed point</b> is how real optimizers are structured, and it is why the order of techniques within a pass matters less than you would expect.</p>
+<div class="warn"><b>The safety rule you must not break</b><p>At a LABEL, forget every value you thought you knew. Control can arrive at a label from anywhere, so a fact established on one path is not a fact on another. Propagate a constant across a loop back-edge and you will produce a compiler that is correct on straight-line code and silently wrong on loops — the worst possible failure mode, because the tests you wrote in Topic 2 still pass.</p>
+</div>
+<h2>Measuring it</h2>
+<p>Topic 4 asks you to <i>quantify</i> the gain. Two numbers are available and they measure different things:</p>
+<div class="tablewrap"><table><thead><tr><th>Metric</th><th>Where to get it</th><th>What it tells you</th></tr></thead><tbody><tr><td>TAC instruction count</td><td>the optimizer's own report</td><td>how much smaller the program got</td></tr><tr><td>Executed instruction count</td><td>SPIM's statistics after a run</td><td>how much less work it actually does</td></tr></tbody></table></div>
+<p>They can diverge sharply. Removing one instruction from inside a loop that runs 300 times shrinks the code by one and the execution by 300. Removing twenty instructions of setup code that runs once shrinks the code by twenty and the execution by twenty. Say which you measured.</p>
+<pre><code class="lang-">    # code size, from the compiler's own report
+    TAC instructions   48 -&gt; 31  (17 removed, 35.4% smaller)
+
+    # work done, from SPIM
+    spim -file bench.s
+    # (QtSPIM shows an instruction count; spim -exception_file ... likewise)</code></pre>
+<details class="reveal"><summary>What counts as a significant gain?</summary><p>Lab Question 22 asks you to say, with reference to your own machine. Some anchors: a 5% reduction is inside the noise of most measurement setups and you should not claim it without repeating the run. A 30% reduction in executed instructions is a real result. A 10× result usually means you removed something that should not have been generated in the first place — which is a fine outcome, but the honest report says so rather than crediting the optimizer.</p>
+</details>
+<h2>Two more techniques worth discussing (Lab Questions 21)</h2>
+<h3>Loop unrolling</h3>
+<pre><code class="lang-">    for (i = 0; i &lt; 4; i = i + 1)      s = s + a[0];
+        s = s + a[i];              -&gt;      s = s + a[1];
+                                           s = s + a[2];
+                                           s = s + a[3];</code></pre>
+<p>Removes four condition tests and four jumps, at the cost of four times the code. Worth it when the trip count is small and known; harmful when the loop body no longer fits in the instruction cache. Note that it requires knowing the trip count at compile time — which is why it pairs so naturally with constant propagation.</p>
+<h3>Strength reduction</h3>
+<p>Replace an expensive operation with a cheap one that computes the same thing: <code>i * 4</code> becomes <code>i << 2</code>; a multiply inside a loop becomes an add on each iteration. Your array indexing already does the first one — find it in <code>elementAddrReg</code>.</p>
+<h2>Where the code lives</h2>
+<p><code>student/topic-4-loops/compiler/</code>. It is your working Topic 3 compiler; the TODOs cover the scanner, the grammar, two AST nodes, the break-depth check, the lowering, the branch codegen, and the branch simplification pass. The Topic 3 tests must still pass when you are done.</p>
+
+<footer class="pagefoot">
+  <span>CST-405 · Principles of Compiler Design · Grand Canyon University</span>
+  <span><a href="../index.html">All topics</a></span>
+</footer>
+</main>
+<script src="../assets/cst405.js"></script>
+</body>
+</html>

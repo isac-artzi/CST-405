@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Create the Dangling-Else Conflict, Then Fix It · CST-405</title>
+<link rel="stylesheet" href="../assets/cst405.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">Topic 5 · Class activity 1 · Week 12 · Wednesday</p>
+    <h1>Create the Dangling-Else Conflict, Then Fix It</h1>
+    <p class="lede">Build the conflict on purpose, read parser.output, fix it three ways, and swap the declarations to see it break.</p>
+    <nav class="crumbs"><a href="../index.html">All topics</a> &nbsp;›&nbsp; <a href="index.html">Topic 5</a> &nbsp;›&nbsp; Activity 1</nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="meta"><span><b>Format</b> pairs, at a laptop</span><span><b>Time</b> 45 min</span></div>
+<h2>The point</h2>
+<p>Create the dangling-else conflict deliberately, read bison's report on it, then fix it two different ways and observe that only one of them is honest.</p>
+<h2>Do this</h2>
+<ol class="steps"><li><b>Add the two if rules WITHOUT any precedence declarations.</b> Build with <code>bison -d -v parser.y</code> and read the warning.</li><li><b>Open <code>parser.output</code></b> and find the conflicted state. It shows the item set — what the parser had seen and what it could not decide. Copy that state into your notes.</li><li><b>Test which way bison resolved it.</b> Compile and run<pre><code class="lang-">int main() {
+    int x; int y;
+    x = 1; y = 0;
+    if (x &gt; 0) if (y &gt; 0) print(1); else print(2);
+    return 0;
+}</code></pre>
+It prints 2 if the else bound to the inner if, and nothing at all if it bound to the outer one. Which happened?</li><li><b>Fix it properly</b> with <code>%nonassoc LOWER_THAN_ELSE</code> and <code>%nonassoc ELSE</code>. Rebuild. The warning should be gone and the behaviour unchanged.</li><li><b>Swap the two declarations.</b> Predict what the test program prints now, then run it.</li><li><b>Fix it a third way, on paper only:</b> rewrite the grammar with <code>matched_stmt</code> and <code>unmatched_stmt</code> so that it is unambiguous with no precedence declarations at all. This is the classic textbook solution — write it out and say why you would or would not ship it.</li></ol>
+<div class="deliverable"><h3>Deliverable</h3><p>The <code>parser.output</code> excerpt, what the test printed at each stage, and your unambiguous grammar from step 6 with a one-paragraph judgement. This is Lab Question 25 nearly verbatim.</p>
+</div>
+
+<footer class="pagefoot">
+  <span>CST-405 · Principles of Compiler Design · Grand Canyon University</span>
+  <span><a href="../index.html">All topics</a></span>
+</footer>
+</main>
+<script src="../assets/cst405.js"></script>
+</body>
+</html>

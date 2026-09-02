@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Short-Circuit or Not — Decide It · CST-405</title>
+<link rel="stylesheet" href="../assets/cst405.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">Topic 5 · Class activity 3 · Week 13 · Wednesday</p>
+    <h1>Short-Circuit or Not — Decide It</h1>
+    <p class="lede">Two lowerings, a truth table, the bitwise-and trap, and a measurement.</p>
+    <nav class="crumbs"><a href="../index.html">All topics</a> &nbsp;›&nbsp; <a href="index.html">Topic 5</a> &nbsp;›&nbsp; Activity 3</nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="meta"><span><b>Format</b> pairs</span><span><b>Time</b> 50 min</span></div>
+<h2>The point</h2>
+<p>Short-circuit evaluation is a language design decision that most people inherit without noticing. Make it consciously, and measure what it costs.</p>
+<h2>Do this</h2>
+<ol class="steps"><li><b>Write both lowerings on paper</b> for <code>a &amp;&amp; b</code>: the eager one and the short-circuiting one. Count instructions in each listing and instructions EXECUTED when <code>a</code> is false.</li><li><b>Implement the eager version</b> (this is what the TODOs describe) and confirm the truth tables:<pre><code class="lang-">print(1 &amp;&amp; 1);  print(1 &amp;&amp; 0);  print(0 &amp;&amp; 1);  print(0 &amp;&amp; 0);
+print(1 || 0);  print(0 || 0);  print(!0);  print(!5);</code></pre>
+</li><li><b>Test the trap.</b> <code>print(2 &amp;&amp; 1);</code> must print 1, not 0. If it prints 0 you emitted a bitwise <code>and</code> without normalising. Fix it and explain the fix in one sentence.</li><li><b>Measure.</b> Write a loop that evaluates <code>i &gt; 100 &amp;&amp; i &lt; 200</code> ten thousand times where <code>i</code> is always 5. Record SPIM's executed-instruction count. How many of those instructions were wasted evaluating the second operand?</li><li><b>Decide.</b> Would you implement short-circuiting in your compiler? Under what change to the language would it stop being optional? Two sentences.</li></ol>
+<details class="reveal"><summary>The answer to the second half of step 5</summary><p>The moment expressions can have side effects. Add function calls in expressions — which you already have — and <code>n != 0 &amp;&amp; safeDivide(x, n)</code> becomes a program whose correctness depends on the answer. At that point short-circuiting is not an optimization, it is part of the language's meaning.</p>
+</details>
+<div class="deliverable"><h3>Deliverable</h3><p>Both lowerings with instruction counts, your eight truth-table results, your one-sentence fix for step 3, your measurement, and your two-sentence decision. Feeds Lab Question 24.</p>
+</div>
+
+<footer class="pagefoot">
+  <span>CST-405 · Principles of Compiler Design · Grand Canyon University</span>
+  <span><a href="../index.html">All topics</a></span>
+</footer>
+</main>
+<script src="../assets/cst405.js"></script>
+</body>
+</html>

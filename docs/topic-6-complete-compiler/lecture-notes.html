@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Measure It, Document It, Defend It · CST-405</title>
+<link rel="stylesheet" href="../assets/cst405.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">Topic 6 · Lecture notes · Week 15</p>
+    <h1>Measure It, Document It, Defend It</h1>
+    <p class="lede">No new syntax this week. The compiler is finished; the question is whether you can say anything true about it.</p>
+    <nav class="crumbs"><a href="../index.html">All topics</a> &nbsp;›&nbsp; <a href="index.html">Topic 6</a> &nbsp;›&nbsp; Lecture notes</nav>
+  </div>
+</header>
+<main class="wrap">
+<h2>What is left</h2>
+<p>Every language feature is in. Topic 6 adds nothing to the grammar. What it adds is the three things that separate a project from a piece of engineering: <b>numbers</b>, <b>documentation</b>, and an honest account of the <b>limits</b>.</p>
+<div class="pipeline"><svg viewBox="0 0 1010 92" role="img" aria-label="The six phases of the compiler, left to right"><rect class="ph-box done" x="6" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="80" y="39" text-anchor="middle">1. Lexical</text><text class="ph-s" x="80" y="53" text-anchor="middle">chars → tokens</text><text class="ph-lbl" x="80" y="77" text-anchor="middle">scanner.l</text><path class="ph-arrow" d="M157 42 L173 42 M168 38 L173 42 L168 46"/><rect class="ph-box done" x="176" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="250" y="39" text-anchor="middle">2. Syntax</text><text class="ph-s" x="250" y="53" text-anchor="middle">tokens → AST</text><text class="ph-lbl" x="250" y="77" text-anchor="middle">parser.y</text><path class="ph-arrow" d="M327 42 L343 42 M338 38 L343 42 L338 46"/><rect class="ph-box done" x="346" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="420" y="39" text-anchor="middle">3. Semantic</text><text class="ph-s" x="420" y="53" text-anchor="middle">AST → checked AST</text><text class="ph-lbl" x="420" y="77" text-anchor="middle">semantic.c</text><path class="ph-arrow" d="M497 42 L513 42 M508 38 L513 42 L508 46"/><rect class="ph-box done" x="516" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="590" y="39" text-anchor="middle">4. IR</text><text class="ph-s" x="590" y="53" text-anchor="middle">AST → TAC</text><text class="ph-lbl" x="590" y="77" text-anchor="middle">tac.c</text><path class="ph-arrow" d="M667 42 L683 42 M678 38 L683 42 L678 46"/><rect class="ph-box done" x="686" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="760" y="39" text-anchor="middle">5. Optimize</text><text class="ph-s" x="760" y="53" text-anchor="middle">TAC → better TAC</text><text class="ph-lbl" x="760" y="77" text-anchor="middle">tac.c</text><path class="ph-arrow" d="M837 42 L853 42 M848 38 L853 42 L848 46"/><rect class="ph-box done" x="856" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="930" y="39" text-anchor="middle">6. CodeGen</text><text class="ph-s" x="930" y="53" text-anchor="middle">TAC → MIPS</text><text class="ph-lbl" x="930" y="77" text-anchor="middle">codegen.c</text></svg></div>
+<h2>Two different performance questions</h2>
+<p>The Benchmark project asks for compilation time and execution time. They measure different things and they are answered with different tools.</p>
+<div class="tablewrap"><table><thead><tr><th>Question</th><th>What you measure</th><th>How</th></tr></thead><tbody><tr><td>How fast does the compiler run?</td><td>wall-clock time per phase</td><td>the timing table the driver already prints</td></tr><tr><td>How fast does the compiled code run?</td><td>instructions executed</td><td>SPIM's instruction count, optimized vs unoptimized</td></tr><tr><td>How big is the compiled code?</td><td>TAC and MIPS instruction counts</td><td>the optimizer's own scorecard</td></tr></tbody></table></div>
+<h3>Compilation time</h3>
+<p>The driver already reports it. Run it on inputs of several sizes and look at the SHAPE of the curve, not one number:</p>
+<pre><code class="lang-">  Compilation time by phase
+    1. Lexical + syntax analysis      0.07 ms
+    2. AST construction               0.00 ms
+    3. Semantic analysis              0.10 ms
+    4. Intermediate code (TAC)        0.65 ms
+    5. Optimization                   0.33 ms
+    6. MIPS code generation           0.36 ms
+    TOTAL                             1.55 ms</code></pre>
+<div class="note"><b>The question worth asking about that table</b><p>Which phase grows fastest as the input grows? Compile a 10-line, a 100-line and a 1000-line program and plot it. Most phases here are linear in program size. The optimizer is not — it runs to a fixed point, and <code>isReadLater()</code> scans forward from every instruction, which makes dead-code elimination quadratic. Finding that yourself, in your own compiler, is a much better write-up than repeating that optimization is expensive.</p>
+</div>
+<h3>Execution time</h3>
+<p>Instruction count is the right metric here — it is deterministic, and SPIM is not a timing-accurate simulator, so wall-clock numbers from it mean very little.</p>
+<pre><code class="lang-">  # optimized vs unoptimized, same source
+  TAC instructions       48 -&gt; 31       35.4% smaller
+  MIPS instructions     112 -&gt; 74       33.9% smaller
+  Instructions executed  8,431 -&gt; 5,102 39.5% fewer</code></pre>
+<p>Report all three. They will not agree, and the disagreement is informative: code size and work done diverge exactly in proportion to how much of the removed code was inside a loop.</p>
+<h2>Honest measurement</h2>
+<p>Three rules that separate a number you can defend from a number you cannot:</p>
+<ol><li><b>Repeat the run.</b> Three times, minimum. If the spread is 8%, then a 5% improvement is not a result.</li><li><b>Say what you compared.</b> 'Optimized vs unoptimized, same source, same machine, same simulator' — not 'my compiler is 30% faster', which is faster than what?</li><li><b>Report the benchmark.</b> A speedup on a program with a hot loop tells you about hot loops. Include the source you measured.</li></ol>
+<div class="quiz"><p class="q">Your optimizer reports 35% fewer TAC instructions, but SPIM reports only 4% fewer instructions executed. What is the most likely explanation?</p><button class="opt" data-correct="0" data-feedback="Possible, but a broken optimizer usually produces wrong ANSWERS, not disappointing ratios. Check correctness separately.">The optimizer is broken</button><button class="opt" data-correct="1" data-feedback="Exactly. Code size counts each instruction once; execution counts it per iteration. Removing 17 instructions of straight-line setup saves 17 executions. Removing one instruction from a loop running 300 times saves 300. This is the single most important thing to understand about optimization measurement.">Most of what it removed was setup code that runs once, while the hot loop was untouched</button><button class="opt" data-correct="0" data-feedback="It is deterministic and exact. It is wall-clock time that SPIM cannot tell you anything useful about.">SPIM's instruction count is unreliable</button><button class="opt" data-correct="0" data-feedback="It cannot — it consumes the optimized TAC. Though it is worth checking that it really does; pointing it at the unoptimized list by mistake is a real bug people hit.">The MIPS back end undid the optimizations</button><p class="fb"></p></div>
+<h2>Knowing your own limits</h2>
+<p>Every compiler has them. Being able to list your own — precisely, with the reason — is worth more in a viva than pretending there are none. Here are the ones this design has. Verify each on your own build; some of yours will differ.</p>
+<div class="tablewrap"><table><thead><tr><th>Limit</th><th>Why it exists</th><th>What it would take to lift</th></tr></thead><tbody><tr><td>At most 4 arguments per call</td><td>arguments are passed only in $a0–$a3</td><td>push the rest on the stack; decide who pops them</td></tr><tr><td>No bounds checking on arrays</td><td>no size information survives to run time</td><td>pass a length with every array, or store it before element 0</td></tr><tr><td><code>int</code> is the only type</td><td>the type is never recorded past the declaration</td><td>a real type field in the symbol table, and type rules in phase 3</td></tr><tr><td>Registers flushed at every branch</td><td>the allocator does not track liveness across blocks</td><td>a control-flow graph and live-variable analysis</td></tr><tr><td>Optimizer forgets everything at a label</td><td>no analysis across basic blocks</td><td>the same CFG; then reaching-definitions</td></tr><tr><td>Identifiers <code>t0</code>, <code>L0</code> are reserved</td><td>they collide with generated names</td><td>prefix generated names with a character the scanner cannot produce</td></tr></tbody></table></div>
+<div class="key"><b>This table is the answer to Lab Question 29</b><p>'Three things you would do differently' is not a confession, it is a design review. Pick one from the compiler's architecture, one from the language's features, and one from your implementation — and for each, say what it would have cost to do differently and why you did not.</p>
+</div>
+<h2>What a README has to contain</h2>
+<p>Somebody who has never seen your compiler must be able to build and run it from your README alone. That is the whole test.</p>
+<div class="tabs"><div class="tabbar" role="tablist"><button role="tab" aria-selected="false">required</button><button role="tab" aria-selected="false">what makes one bad</button></div><div class="panel" hidden><pre><code class="lang-"># &lt;name&gt; — a compiler for &lt;language&gt;
+
+## What it does
+One paragraph. What language it accepts, what it emits.
+
+## Requirements
+flex 2.6+, bison 2.3+ (or byacc), gcc, SPIM or QtSPIM
+Tested on: &lt;your OS and versions&gt;
+
+## Build
+    make
+
+## Run
+    ./minicompiler input.cm output.s
+    spim -file output.s
+
+## The language
+The grammar, in BNF. Every construct with one example.
+
+## How it works
+The six phases, one paragraph each, naming the file.
+
+## Performance
+The measurement table. Say what you compared and on what.
+
+## Known limitations
+The honest list. Each with a reason.
+
+## Team
+Who wrote which phase.</code></pre>
+</div><div class="panel" hidden><pre><code class="lang-">No exact build command       "just run make" is fine; "compile the
+                             files" is not
+
+No versions                  bison 2.3 and bison 3.x differ in ways
+                             that break grammars. Say which you used.
+
+No example input             a README with no runnable example cannot
+                             be verified by the reader
+
+Limitations section absent   the reader concludes you did not look
+
+Performance with no baseline "30% faster" — than what?</code></pre>
+</div></div>
+<h2>The video</h2>
+<p>Each team member records their own. The rubric asks for the compiler working, plus decisions about language design and implementation approach. A structure that works:</p>
+<ol><li><b>Show it run</b> (60s). A non-trivial program, compiled, then executed in SPIM. Start here — everything after this is commentary on something the viewer has already seen work.</li><li><b>Follow one construct through all six phases</b> (3–4 min). Pick something with structure — a loop or a switch — and show it as source, tokens, AST, TAC, optimized TAC, and MIPS. This is the single most convincing thing you can do.</li><li><b>Your part</b> (2 min). Which phases you wrote, and one problem you had to solve, with the code on screen.</li><li><b>A decision you made</b> (2 min). Short-circuit or eager? Jump table or linear chain? Desugar <code>for</code> or lower it directly? Say what you chose and what would change your mind.</li><li><b>Numbers and limits</b> (1–2 min). The measurement table, and two limitations with reasons.</li></ol>
+<div class="warn"><b>The failure mode to avoid</b><p>Reading the code aloud. The viewer can read. What they cannot get from the repository is WHY it is shaped that way — which alternatives you considered, what broke, what you would do differently. Ten minutes of that is worth an hour of narration.</p>
+</div>
+<h2>A last look back</h2>
+<p>Fifteen weeks ago the scanner returned a token. Everything since has been the same move repeated: choose a representation, define what the phase before must hand you, and translate. The compiler is now about 3,000 lines. Roughly 85% of it does not know what machine it targets, and that is the part worth being proud of.</p>
+<details class="reveal"><summary>If you want to keep going</summary><ul><li><b>Types.</b> Add <code>bool</code> or <code>float</code>. The work is almost entirely in phase 3, and it will show you why real compilers have a type system rather than a type field.</li><li><b>A control-flow graph.</b> Build one from the TAC. Then liveness, then register allocation by graph colouring — the textbook path, and each step is visibly better than what you have.</li><li><b>An ARM back end.</b> You already know it is one file.</li><li><b>LLVM IR instead of MIPS.</b> Emit textual LLVM from your TAC and let <code>clang</code> do the rest. Two hundred lines, and suddenly your language runs natively on any machine LLVM targets.</li></ul>
+</details>
+<h2>Where the code lives</h2>
+<p><code>student/topic-6-complete-compiler/compiler/</code> — the same compiler, with the full test suite. Nothing is removed this topic; <code>tests/t6_06_everything.cm</code> exercises every feature at once, and <code>tests/t6_07_benchmark.cm</code> is a starting point for your measurements.</p>
+
+<footer class="pagefoot">
+  <span>CST-405 · Principles of Compiler Design · Grand Canyon University</span>
+  <span><a href="../index.html">All topics</a></span>
+</footer>
+</main>
+<script src="../assets/cst405.js"></script>
+</body>
+</html>

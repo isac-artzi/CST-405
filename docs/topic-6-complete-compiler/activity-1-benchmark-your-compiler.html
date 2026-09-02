@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Benchmark Your Compiler · CST-405</title>
+<link rel="stylesheet" href="../assets/cst405.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">Topic 6 · Class activity 1 · Week 15 · Wednesday</p>
+    <h1>Benchmark Your Compiler</h1>
+    <p class="lede">Three benchmarks, four metrics, three repeated runs — and a number you could defend to a sceptic.</p>
+    <nav class="crumbs"><a href="../index.html">All topics</a> &nbsp;›&nbsp; <a href="index.html">Topic 6</a> &nbsp;›&nbsp; Activity 1</nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="meta"><span><b>Format</b> pairs</span><span><b>Time</b> 50 min</span><span><b>Need</b> SPIM and your compiler</span></div>
+<h2>The point</h2>
+<p>Produce the performance section of your Benchmark submission, with numbers you could defend to somebody who wanted to disagree.</p>
+<h2>Do this</h2>
+<ol class="steps"><li><b>Pick three benchmarks</b> of different shapes: one straight-line arithmetic program, one with a hot nested loop, one heavy on function calls (recursion is good). Each should run long enough to give a six-figure instruction count.</li><li><b>Compilation time.</b> For each, record the per-phase timing table. Then make a 10×-longer version of one benchmark and record it again. Which phase grew fastest? Is anything super-linear?</li><li><b>Code size.</b> Record TAC instructions before and after optimization, and MIPS instruction count, for all three.</li><li><b>Work done.</b> Run each in SPIM, optimized and unoptimized, and record instructions executed. To get an unoptimized <code>.s</code>, temporarily point <code>generateMIPSFromTAC</code> at <code>getUnoptimizedTAC()</code>.</li><li><b>Repeat three times</b> and record the spread.</li><li><b>Build the table</b> and write three sentences: what you measured, what you compared it to, and what the numbers show. Then one more sentence on where they disagree and why.</li></ol>
+<div class="note"><b>Where to look if a number surprises you</b><p>The register allocator reports spills and reloads. A benchmark with far more executed instructions than you expected usually has a spill inside the hot loop — which is a real finding, and a good thing to put in your write-up.</p>
+</div>
+<div class="deliverable"><h3>Deliverable</h3><p>A performance table covering all three benchmarks with all four metrics, the repeated-run spread, the benchmark sources, and your four sentences. This IS the performance section of Project 6 — write it once, well.</p>
+</div>
+
+<footer class="pagefoot">
+  <span>CST-405 · Principles of Compiler Design · Grand Canyon University</span>
+  <span><a href="../index.html">All topics</a></span>
+</footer>
+</main>
+<script src="../assets/cst405.js"></script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arrays, Functions, and the Activation Record · CST-405</title>
+<link rel="stylesheet" href="../assets/cst405.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">Topic 3 · Lecture notes · Weeks 6–8</p>
+    <h1>Arrays, Functions, and the Activation Record</h1>
+    <p class="lede">Three new language features, one new idea — and the new idea is where every call, every local variable and every recursion lives.</p>
+    <nav class="crumbs"><a href="../index.html">All topics</a> &nbsp;›&nbsp; <a href="index.html">Topic 3</a> &nbsp;›&nbsp; Lecture notes</nav>
+  </div>
+</header>
+<main class="wrap">
+<h2>What the language gains</h2>
+<div class="tablewrap"><table><thead><tr><th>New</th><th>Looks like</th><th>Costs you</th></tr></thead><tbody><tr><td>Full arithmetic</td><td><code>a * b - c / 2</code>, parentheses, unary minus</td><td>four grammar rules and a precedence table</td></tr><tr><td>Arrays</td><td><code>int scores[10]; scores[i] = 3;</code></td><td>two AST nodes, address arithmetic in the back end</td></tr><tr><td>Functions</td><td><code>int f(int a, int b[]) { return a; }</code></td><td>a second symbol table, and the activation record</td></tr><tr><td>Scope</td><td>parameters and locals shadow globals</td><td>a scope STACK instead of one flat scope</td></tr></tbody></table></div>
+<p>The first three are additive: new cases in switch statements you already wrote. The fourth is not. Scope changes what the symbol table <i>is</i>, and functions change what the code generator has to promise.</p>
+<h2>Precedence is a table, not a grammar rewrite</h2>
+<div class="pipeline"><svg viewBox="0 0 1010 92" role="img" aria-label="The six phases of the compiler, left to right"><rect class="ph-box done" x="6" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="80" y="39" text-anchor="middle">1. Lexical</text><text class="ph-s" x="80" y="53" text-anchor="middle">chars → tokens</text><text class="ph-lbl" x="80" y="77" text-anchor="middle">scanner.l</text><path class="ph-arrow" d="M157 42 L173 42 M168 38 L173 42 L168 46"/><rect class="ph-box on" x="176" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="250" y="39" text-anchor="middle">2. Syntax</text><text class="ph-s" x="250" y="53" text-anchor="middle">tokens → AST</text><text class="ph-lbl" x="250" y="77" text-anchor="middle">parser.y</text><path class="ph-arrow" d="M327 42 L343 42 M338 38 L343 42 L338 46"/><rect class="ph-box" x="346" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="420" y="39" text-anchor="middle">3. Semantic</text><text class="ph-s" x="420" y="53" text-anchor="middle">AST → checked AST</text><text class="ph-lbl" x="420" y="77" text-anchor="middle">semantic.c</text><path class="ph-arrow" d="M497 42 L513 42 M508 38 L513 42 L508 46"/><rect class="ph-box" x="516" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="590" y="39" text-anchor="middle">4. IR</text><text class="ph-s" x="590" y="53" text-anchor="middle">AST → TAC</text><text class="ph-lbl" x="590" y="77" text-anchor="middle">tac.c</text><path class="ph-arrow" d="M667 42 L683 42 M678 38 L683 42 L678 46"/><rect class="ph-box" x="686" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="760" y="39" text-anchor="middle">5. Optimize</text><text class="ph-s" x="760" y="53" text-anchor="middle">TAC → better TAC</text><text class="ph-lbl" x="760" y="77" text-anchor="middle">tac.c</text><path class="ph-arrow" d="M837 42 L853 42 M848 38 L853 42 L848 46"/><rect class="ph-box" x="856" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="930" y="39" text-anchor="middle">6. CodeGen</text><text class="ph-s" x="930" y="53" text-anchor="middle">TAC → MIPS</text><text class="ph-lbl" x="930" y="77" text-anchor="middle">codegen.c</text></svg></div>
+<p>You could encode precedence by layering the grammar — <code>expr → term → factor</code>. Bison lets you keep one flat rule and declare the precedence instead. Both work; the declaration is shorter and keeps the grammar readable.</p>
+<pre><code class="lang-">%left  '+' '-'      /* lowest  — and LEFT associative     */
+%left  '*' '/'      /* higher                                */
+%right UMINUS       /* highest — and RIGHT associative        */
+
+expr : expr '+' expr | expr '-' expr
+     | expr '*' expr | expr '/' expr
+     | '-' expr %prec UMINUS
+     | '(' expr ')'  | NUM | ID ;</code></pre>
+<p>Two things are being declared at once, and they are independent:</p>
+<ul><li><b>Precedence</b> — later lines bind tighter. This is what makes <code>2 + 3 * 4</code> parse as <code>2 + (3 * 4)</code>.</li><li><b>Associativity</b> — <code>%left</code> makes <code>17-5-3</code> group as <code>(17-5)-3</code>, which is 9. <code>%right</code> would give <code>17-(5-3)</code>, which is 15. Subtraction is not associative, so this choice is not cosmetic.</li></ul>
+<div class="warn"><b>%prec UMINUS is not decoration</b><p>Without it, the rule <code>'-' expr</code> inherits the precedence of BINARY minus, which is lower than <code>*</code>. Then <code>-2 * 3</code> parses as <code>-(2 * 3)</code>. For multiplication the answer happens to be the same; for a function call with side effects, or for division, it is not. Try removing it and parsing <code>-8 / 2 / 2</code>.</p>
+</div>
+<div class="quiz"><p class="q">Given <code>%left '+' '-'</code> then <code>%left '*' '/'</code>, how does <code>a - b * c - d</code> parse?</p><button class="opt" data-correct="0" data-feedback="That would need &lt;code&gt;*&lt;/code&gt; to bind LOOSER than &lt;code&gt;-&lt;/code&gt;. It is declared later, so it binds tighter."><code>((a - b) * c) - d</code></button><button class="opt" data-correct="1" data-feedback="Right on both counts: &lt;code&gt;*&lt;/code&gt; binds tighter because it is declared later, and the two &lt;code&gt;-&lt;/code&gt; operators group left because they are &lt;code&gt;%left&lt;/code&gt;."><code>(a - (b * c)) - d</code></button><button class="opt" data-correct="0" data-feedback="That is right-associative subtraction. &lt;code&gt;%left&lt;/code&gt; says otherwise — and this is exactly why the choice matters."><code>a - ((b * c) - d)</code></button><button class="opt" data-correct="0" data-feedback="It would be, without the precedence declarations. That is what they are for: the grammar stays ambiguous and the declarations resolve it.">It is ambiguous; bison reports a conflict</button><p class="fb"></p></div>
+<h2>Arrays are address arithmetic</h2>
+<div class="pipeline"><svg viewBox="0 0 1010 92" role="img" aria-label="The six phases of the compiler, left to right"><rect class="ph-box done" x="6" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="80" y="39" text-anchor="middle">1. Lexical</text><text class="ph-s" x="80" y="53" text-anchor="middle">chars → tokens</text><text class="ph-lbl" x="80" y="77" text-anchor="middle">scanner.l</text><path class="ph-arrow" d="M157 42 L173 42 M168 38 L173 42 L168 46"/><rect class="ph-box done" x="176" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="250" y="39" text-anchor="middle">2. Syntax</text><text class="ph-s" x="250" y="53" text-anchor="middle">tokens → AST</text><text class="ph-lbl" x="250" y="77" text-anchor="middle">parser.y</text><path class="ph-arrow" d="M327 42 L343 42 M338 38 L343 42 L338 46"/><rect class="ph-box done" x="346" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="420" y="39" text-anchor="middle">3. Semantic</text><text class="ph-s" x="420" y="53" text-anchor="middle">AST → checked AST</text><text class="ph-lbl" x="420" y="77" text-anchor="middle">semantic.c</text><path class="ph-arrow" d="M497 42 L513 42 M508 38 L513 42 L508 46"/><rect class="ph-box done" x="516" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="590" y="39" text-anchor="middle">4. IR</text><text class="ph-s" x="590" y="53" text-anchor="middle">AST → TAC</text><text class="ph-lbl" x="590" y="77" text-anchor="middle">tac.c</text><path class="ph-arrow" d="M667 42 L683 42 M678 38 L683 42 L678 46"/><rect class="ph-box done" x="686" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="760" y="39" text-anchor="middle">5. Optimize</text><text class="ph-s" x="760" y="53" text-anchor="middle">TAC → better TAC</text><text class="ph-lbl" x="760" y="77" text-anchor="middle">tac.c</text><path class="ph-arrow" d="M837 42 L853 42 M848 38 L853 42 L848 46"/><rect class="ph-box on" x="856" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="930" y="39" text-anchor="middle">6. CodeGen</text><text class="ph-s" x="930" y="53" text-anchor="middle">TAC → MIPS</text><text class="ph-lbl" x="930" y="77" text-anchor="middle">codegen.c</text></svg></div>
+<p>An array is a block of consecutive words. <code>a[i]</code> means <i>the word at (base of a) + i×4</i>. That is the whole idea; everything else is bookkeeping about where the base is.</p>
+<pre><code class="lang-">int scores[4];        scores lives at  8($sp)
+
+   memory:      8($sp)   12($sp)   16($sp)   20($sp)
+                ┌───────┬─────────┬─────────┬─────────┐
+                │ [0]   │ [1]     │ [2]     │ [3]     │
+                └───────┴─────────┴─────────┴─────────┘
+
+   scores[i]  -&gt;   addi $t0, $sp, 8      # base
+                   sll  $t1, $ti, 2      # i * 4
+                   add  $t0, $t0, $t1    # base + offset
+                   lw   $t2, 0($t0)</code></pre>
+<p>The interesting part is that the base is found three different ways depending on what kind of array it is — and telling those apart is most of the array work in <code>codegen.c</code>:</p>
+<div class="tablewrap"><table><thead><tr><th>Kind</th><th>Where the elements are</th><th>How to get the base</th></tr></thead><tbody><tr><td>global <code>int g[4];</code></td><td>the <code>.data</code> section</td><td><code>la $t0, g_g</code></td></tr><tr><td>local <code>int a[4];</code></td><td>this function's frame</td><td><code>addi $t0, $sp, off</code></td></tr><tr><td>parameter <code>int a[]</code></td><td>somebody else's frame or .data</td><td><code>lw $t0, off($sp)</code></td></tr></tbody></table></div>
+<div class="key"><b>Why an array parameter has no size</b><p>Arrays are passed by REFERENCE: the caller hands over the base address, one word, and the callee's slot holds that address rather than the data. That is why <code>int a[]</code> takes 4 bytes in the frame no matter how big the array is, and why the callee cannot know its length — which is why every function that takes an array in this language also takes a count.</p>
+</div>
+<h2>The activation record</h2>
+<p>This is the one genuinely new idea in Topic 3. Every call needs somewhere to put its parameters, its locals, and the address to return to. That somewhere is a block of stack pushed on entry and popped on exit.</p>
+<pre><code class="lang-">        high address
+        ┌──────────────────────────────┐
+        │ saved $ra                    │   frameSize-4($sp)
+        ├──────────────────────────────┤
+        │ (alignment)                  │
+        ├──────────────────────────────┤
+        │ parameters                   │
+        │ locals and arrays            │   0($sp) .. localBytes-1
+        │ compiler temporaries         │
+        └──────────────────────────────┘   &lt;- $sp
+        low address</code></pre>
+<div class="stepper" tabindex="0"><div class="bar"><button data-act="prev">← back</button><button data-act="next">next →</button><button data-act="reset">restart</button><span class="count"></span></div><div class="body"><div class="step" hidden><p class="caption"><code>main</code> is running. Its frame holds its own locals.</p><pre><code class="lang-">$sp ──&gt; ┌──────────────┐
+        │ main's frame │
+        └──────────────┘</code></pre>
+</div><div class="step" hidden><p class="caption"><code>main</code> calls <code>sum(a, 4)</code>. First the arguments go into $a0-$a3, while the $t registers are still valid.</p><pre><code class="lang-">    move $a0, $t3      # base address of a
+    li   $a1, 4
+
+$sp ──&gt; ┌──────────────┐
+        │ main's frame │
+        └──────────────┘</code></pre>
+</div><div class="step" hidden><p class="caption">Then everything live is written back to memory, because $t0-$t9 are caller-saved: the callee is free to clobber them all.</p><pre><code class="lang-">    sw   $t2, 4($sp)   # write back before the call
+    jal  fn_sum</code></pre>
+</div><div class="step" hidden><p class="caption">The prologue of <code>sum</code> pushes a NEW frame and saves the return address into it. Now two frames are live.</p><pre><code class="lang-">    addi $sp, $sp, -24
+    sw   $ra, 20($sp)
+
+$sp ──&gt; ┌──────────────┐
+        │ sum's frame  │   locals of sum
+        ├──────────────┤
+        │ main's frame │   untouched
+        └──────────────┘</code></pre>
+</div><div class="step" hidden><p class="caption"><code>sum</code> stores its parameters from $a0-$a3 into its own frame, because it will need $a0-$a3 again if it calls anything.</p><pre><code class="lang-"><span class="hi">    sw   $a0, 0($sp)   # parameter a</span>
+<span class="hi">    sw   $a1, 4($sp)   # parameter n</span></code></pre>
+</div><div class="step" hidden><p class="caption">On <code>return</code>: the value goes in $v0, then control jumps to the epilogue — it does not fall through.</p><pre><code class="lang-">    move $v0, $t1
+    j    fn_sum__epilogue</code></pre>
+</div><div class="step" hidden><p class="caption">The epilogue restores $ra, pops the frame, and returns. main's frame is exactly as it was.</p><pre><code class="lang-">fn_sum__epilogue:
+    lw   $ra, 20($sp)
+    addi $sp, $sp, 24
+    jr   $ra
+
+$sp ──&gt; ┌──────────────┐
+        │ main's frame │
+        └──────────────┘</code></pre>
+</div></div></div>
+<div class="warn"><b>Three bugs that all look like 'my compiler is haunted'</b><ul><li><b>Not saving $ra.</b> Works for one call. Breaks the moment a function calls another function, and breaks spectacularly on recursion, because <code>jal</code> overwrites $ra every time.</li><li><b>Not pushing a new frame.</b> The callee's locals land on top of the caller's. Your variables change value across a call for no visible reason.</li><li><b>Falling through on <code>return</code> instead of jumping to the epilogue.</b> A <code>return</code> in the middle of a function silently continues into the code after it. Symptom: a function that always returns whatever its LAST return statement says.</li></ul>
+</div>
+<h2>Scope is a stack</h2>
+<div class="pipeline"><svg viewBox="0 0 1010 92" role="img" aria-label="The six phases of the compiler, left to right"><rect class="ph-box done" x="6" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="80" y="39" text-anchor="middle">1. Lexical</text><text class="ph-s" x="80" y="53" text-anchor="middle">chars → tokens</text><text class="ph-lbl" x="80" y="77" text-anchor="middle">scanner.l</text><path class="ph-arrow" d="M157 42 L173 42 M168 38 L173 42 L168 46"/><rect class="ph-box done" x="176" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="250" y="39" text-anchor="middle">2. Syntax</text><text class="ph-s" x="250" y="53" text-anchor="middle">tokens → AST</text><text class="ph-lbl" x="250" y="77" text-anchor="middle">parser.y</text><path class="ph-arrow" d="M327 42 L343 42 M338 38 L343 42 L338 46"/><rect class="ph-box on" x="346" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="420" y="39" text-anchor="middle">3. Semantic</text><text class="ph-s" x="420" y="53" text-anchor="middle">AST → checked AST</text><text class="ph-lbl" x="420" y="77" text-anchor="middle">semantic.c</text><path class="ph-arrow" d="M497 42 L513 42 M508 38 L513 42 L508 46"/><rect class="ph-box" x="516" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="590" y="39" text-anchor="middle">4. IR</text><text class="ph-s" x="590" y="53" text-anchor="middle">AST → TAC</text><text class="ph-lbl" x="590" y="77" text-anchor="middle">tac.c</text><path class="ph-arrow" d="M667 42 L683 42 M678 38 L683 42 L678 46"/><rect class="ph-box" x="686" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="760" y="39" text-anchor="middle">5. Optimize</text><text class="ph-s" x="760" y="53" text-anchor="middle">TAC → better TAC</text><text class="ph-lbl" x="760" y="77" text-anchor="middle">tac.c</text><path class="ph-arrow" d="M837 42 L853 42 M848 38 L853 42 L848 46"/><rect class="ph-box" x="856" y="20" width="148" height="44" rx="6"/><text class="ph-t" x="930" y="39" text-anchor="middle">6. CodeGen</text><text class="ph-s" x="930" y="53" text-anchor="middle">TAC → MIPS</text><text class="ph-lbl" x="930" y="77" text-anchor="middle">codegen.c</text></svg></div>
+<p>Topic 2 had one flat set of names. Now a name can mean different things in different places, and the rule is: innermost wins.</p>
+<div class="tabs"><div class="tabbar" role="tablist"><button role="tab" aria-selected="false">program</button><button role="tab" aria-selected="false">scope stack while checking show()</button><button role="tab" aria-selected="false">scope stack while checking main()</button></div><div class="panel" hidden><pre><code class="lang-">int n;                 &lt;- global
+
+int show(int n) {      &lt;- parameter shadows the global
+    return n;
+}
+
+int main() {
+    n = 1;
+    print(n);          &lt;- the global:    1
+    print(show(2));    &lt;- the parameter: 2
+    print(n);          &lt;- the global again, untouched: 1
+    return 0;
+}</code></pre>
+</div><div class="panel" hidden><pre><code class="lang-">  [1] function show : n
+  [0] global         : n, show, main
+
+  lookup("n") searches [1] first, finds the parameter, stops.</code></pre>
+</div><div class="panel" hidden><pre><code class="lang-">  [1] function main : (no locals)
+  [0] global        : n, show, main
+
+  lookup("n") searches [1], finds nothing, falls through to [0].</code></pre>
+</div></div>
+<p>Two symbol tables now exist and they answer different questions. <code>semantic.c</code> keeps a scope stack that answers <i>is this name visible here?</i> and is thrown away when analysis finishes. <code>symtab.c</code> keeps a storage map that answers <i>what address is this name?</i> and is rebuilt per function during code generation. Confusing them is the single most common source of confusion in this topic.</p>
+<h2>Two passes, not one</h2>
+<p>This program is legal, and it forces a design decision:</p>
+<pre><code class="lang-">int main() {
+    print(helper(3));       &lt;- helper is used here...
+    return 0;
+}
+int helper(int x) {         &lt;- ...and defined here
+    return x + 1;
+}</code></pre>
+<p>A single pass over the AST would reach the call before it had ever seen the definition. So <code>performSemanticAnalysis</code> runs twice: pass 1 records every function signature, pass 2 checks every body. Collapse them into one pass and the program above stops compiling — which is a perfectly defensible language design (C required forward declarations for exactly this reason), but it should be a decision, not an accident.</p>
+<details class="reveal"><summary>What pass 1 has to record, and what it does not</summary><p>It needs the name, the parameter count, and which parameters are arrays — everything needed to check a CALL. It does not need to look inside the body at all. That asymmetry is why two cheap passes beat one clever one.</p>
+</details>
+<h2>Interview questions this topic answers</h2>
+<p>Topic 3 includes a technical interview, and these are the questions it is actually about. Practise saying the answers out loud.</p>
+<ul><li>How does your parser tell a variable declaration from a function declaration? (Both start <code>int ID</code> — what is the deciding token?)</li><li>Where do local variables live, and who allocates them?</li><li>What exactly happens between <code>jal</code> and the first instruction of the callee?</li><li>Why is <code>$ra</code> saved in the frame rather than kept in a register?</li><li>Your language passes arrays by reference and integers by value. Why not both the same way?</li></ul>
+<h2>Where the code lives</h2>
+<p><code>student/topic-3-arrays-and-functions/compiler/</code> — this is your working Topic 2 compiler with the new work marked. It builds and passes the Topic 2 tests before you start. <code>tests/</code> contains the five programs it must pass when you are done.</p>
+
+<footer class="pagefoot">
+  <span>CST-405 · Principles of Compiler Design · Grand Canyon University</span>
+  <span><a href="../index.html">All topics</a></span>
+</footer>
+</main>
+<script src="../assets/cst405.js"></script>
+</body>
+</html>
