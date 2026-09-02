@@ -11,16 +11,16 @@
   <div class="wrap">
     <p class="eyebrow">Topic 3 · Class activity 5 · Week 8 · Wednesday</p>
     <h1>Scope and Shadowing</h1>
-    <p class="lede">Predict the output, draw the scope stack, then break exitScope on purpose.</p>
+    <p class="lede">Predict the output, draw the scope stack, break exitScope, then work out what dynamic scoping would have printed.</p>
     <nav class="crumbs"><a href="../index.html">All topics</a> &nbsp;›&nbsp; <a href="index.html">Topic 3</a> &nbsp;›&nbsp; Activity 5</nav>
   </div>
 </header>
 <main class="wrap">
 <div class="meta"><span><b>Format</b> pairs</span><span><b>Time</b> 40 min</span></div>
 <h2>The point</h2>
-<p>Shadowing is easy to describe and easy to get wrong. Predict, then verify.</p>
+<p>Shadowing is easy to describe and easy to get wrong. Predict, then verify, then break it on purpose.</p>
 <h2>Do this</h2>
-<ol class="steps"><li><b>Predict the output</b> of this program, line by line, before running it.<pre><code class="lang-">int n;
+<ol class="steps"><li><b>Predict the output</b> line by line before running anything.<pre><code class="lang-">int n;
 int twice(int n) { return n + n; }
 int main() {
     int m;
@@ -32,8 +32,8 @@ int main() {
     print(n);
     return 0;
 }</code></pre>
-</li><li><b>Draw the scope stack</b> at each <code>print</code>. Which entry does the lookup find, and how many scopes did it search?</li><li><b>Run it</b> without <code>-q</code> and find the scope-stack traces in the semantic analyzer output. Reconcile.</li><li><b>Break it.</b> Make <code>exitScope()</code> a no-op. Predict what now goes wrong, then run and confirm. What error appears, and is it the error you predicted?</li><li><b>Break it the other way.</b> Restore <code>exitScope</code>, and change <code>isVarDeclaredInScope</code> to search only the OUTERMOST scope. Which of the two symbol tables did you just break — the visibility one or the storage one?</li></ol>
-<div class="deliverable"><h3>Deliverable</h3><p>Your line-by-line prediction, five scope-stack diagrams, and a paragraph on each sabotage. Feeds Lab Questions 11 and 16.</p>
+</li><li><b>Draw the scope stack</b> at each <code>print</code>. Which entry does the lookup find, and how many scopes did it search? Name the rule you are applying.</li><li><b>Run it</b> without <code>-q</code>, find the scope traces, and reconcile.</li><li><b>Break it.</b> Make <code>exitScope()</code> a no-op. Predict what goes wrong, then confirm. Is the error the one you predicted?</li><li><b>Break it the other way.</b> Restore that, and make lookup search only the OUTERMOST scope. Which of the two symbol tables did you just break — the visibility one or the storage one? How can you tell from the symptom?</li><li><b>Theory question.</b> Our language is statically scoped. Write down what the program above would print under <i>dynamic</i> scoping, and say which line reveals the difference.</li></ol>
+<div class="deliverable"><h3>Deliverable</h3><p>Your line-by-line prediction; scope-stack diagrams; a paragraph on each sabotage; and your dynamic-scoping answer. Feeds Lab Questions 11 and 16.</p>
 </div>
 
 <footer class="pagefoot">

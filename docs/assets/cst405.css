@@ -250,7 +250,7 @@ figure.dia {
   margin: 0 0 1.6rem; padding: 1rem 1rem .6rem;
   border: 1px solid var(--border); border-radius: 8px; background: var(--surface);
 }
-figure.dia svg { width: 100%; height: auto; display: block; }
+figure.dia svg { width: 100%; height: auto; display: block; margin: 0 auto; }
 figure.dia figcaption {
   margin-top: .7rem; padding-top: .6rem; border-top: 1px solid var(--border);
   font-size: .85rem; color: var(--muted);

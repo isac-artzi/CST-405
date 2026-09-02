@@ -11,7 +11,7 @@
   <div class="wrap">
     <p class="eyebrow">Topic 5 · Class activity 2 · Week 12 · Friday</p>
     <h1>Lower Nested Conditionals</h1>
-    <p class="lede">Count the labels, execute all four cases, then remove one jump and see which cases still look fine.</p>
+    <p class="lede">Count the labels, draw the flow graph, execute all four cases, then remove one jump and see which cases still look fine.</p>
     <nav class="crumbs"><a href="../index.html">All topics</a> &nbsp;›&nbsp; <a href="index.html">Topic 5</a> &nbsp;›&nbsp; Activity 2</nav>
   </div>
 </header>
@@ -25,10 +25,10 @@
 } else {
     print(3);
 }</code></pre>
-</li><li><b>Count the labels.</b> How many did you need? Now write the general formula for k nested if-else statements.</li><li><b>Hand-execute all four combinations</b> of a and b being positive or not. Confirm each prints exactly one number.</li><li><b>Sabotage.</b> Remove the <code>GOTO Lend</code> at the end of the then-branch. Re-execute all four cases. Which of them now print TWO numbers, and which still look correct?</li><li><b>Implement</b> the <code>NODE_IF</code> case and confirm the compiler produces the same shape you did.</li><li><b>Then break the label generator</b> — make <code>newLabel()</code> always return <code>"L0"</code>. What does the assembler say? Is that message useful?</li></ol>
-<div class="note"><b>Why step 4 matters</b><p>The cases that still look correct are the ones a hastily written test would cover. A missing else-jump is invisible whenever the condition is false, which is why this bug survives casual testing and shows up in somebody else's program.</p>
+</li><li><b>Count the labels.</b> How many did you need? Write the general formula for <i>k</i> nested if-else statements.</li><li><b>Draw the flow graph.</b> Apply the leader rules from Topic 4 to your listing. How many basic blocks? How many paths from entry to exit?</li><li><b>Hand-execute all four combinations</b> of a and b being positive or not. Confirm each prints exactly one number.</li><li><b>Sabotage.</b> Remove the <code>goto after</code> at the end of the then-branch. Re-execute all four cases. Which now print TWO numbers, and which still look correct?</li><li><b>Implement</b> and confirm the compiler produces the same shape you did.</li><li><b>Break the label generator</b> — make it always return <code>L0</code>. What does the assembler say? Is that message enough to find the cause?</li></ol>
+<div class="note"><b>Why step 5 matters</b><p>The cases that still look correct are exactly the ones a hastily written test would cover. A missing else-jump is invisible whenever the condition is false, which is why this bug survives casual testing and turns up in somebody else's program.</p>
 </div>
-<div class="deliverable"><h3>Deliverable</h3><p>Your hand lowering, the label count and general formula, the four-case execution table, and which cases broke in step 4. Feeds Lab Question 26.</p>
+<div class="deliverable"><h3>Deliverable</h3><p>Your hand lowering; the label count and general formula; the flow graph with block and path counts; the four-case execution table; and which cases broke in step 5. Feeds Lab Question 26.</p>
 </div>
 
 <footer class="pagefoot">

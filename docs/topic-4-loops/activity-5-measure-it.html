@@ -16,12 +16,12 @@
   </div>
 </header>
 <main class="wrap">
-<div class="meta"><span><b>Format</b> pairs, at a laptop</span><span><b>Time</b> 50 min</span><span><b>Need</b> SPIM, and your machine's specs</span></div>
+<div class="meta"><span><b>Format</b> pairs, at a laptop</span><span><b>Time</b> 50 min</span><span><b>Need</b> SPIM, and your machine's specifications</span></div>
 <h2>The point</h2>
-<p>Produce a number you would be willing to defend. Most reported speedups do not survive the question <i>compared to what, measured how?</i></p>
+<p>Produce a number you would be willing to defend to someone who wanted to disagree with it.</p>
 <h2>Do this</h2>
-<ol class="steps"><li><b>Write a benchmark</b> with a hot loop — a nested loop running a few thousand iterations. <code>tests/t6_07_benchmark.cm</code> is a starting point if you want one.</li><li><b>Get the code-size numbers.</b> Compile it and record the TAC instruction count before and after optimization, plus the per-technique scorecard.</li><li><b>Get the work-done numbers.</b> Run both versions in SPIM and record the executed instruction count for each. To get an unoptimized <code>.s</code>, temporarily point <code>generateMIPSFromTAC</code> at <code>getUnoptimizedTAC()</code>.</li><li><b>Put the four numbers in a table</b> and compute both percentages. They will not match. Explain the gap in one sentence.</li><li><b>Repeat the run three times.</b> How much do the numbers move? Anything smaller than that spread is not a result.</li><li><b>State a threshold.</b> Given your machine and your measurement noise, what reduction would you call significant? Justify it with the numbers from step 5, not with a feeling.</li></ol>
-<div class="deliverable"><h3>Deliverable</h3><p>A results table with all four numbers and both percentages, three repeated runs, your noise estimate, and a defended threshold. This is Lab Question 22 and a large part of the Project 6 performance section — do it properly now and reuse it in December.</p>
+<ol class="steps"><li><b>Write a benchmark</b> with a hot nested loop running a few thousand iterations.</li><li><b>Code size.</b> Record the TAC instruction count before and after optimization, plus the per-technique scorecard.</li><li><b>Work done.</b> Run both versions in SPIM and record instructions executed. To get an unoptimized <code>.s</code>, point the back end at the unoptimized list.</li><li><b>Put the four numbers in a table</b> and compute both percentages. They will not match — explain the gap in one sentence, in terms of what was inside the loop.</li><li><b>Repeat three times.</b> How much do the numbers move? Anything smaller than that spread is not a result.</li><li><b>State a threshold.</b> Given your machine and your measured noise, what reduction would you call significant? Justify it with the spread from step 5, not with a feeling.</li></ol>
+<div class="deliverable"><h3>Deliverable</h3><p>A results table with all four numbers and both percentages; three repeated runs with the spread; the benchmark source; and a defended threshold. This is Lab Question 22 and a large part of the Project 6 performance section — do it properly now and reuse it in December.</p>
 </div>
 
 <footer class="pagefoot">

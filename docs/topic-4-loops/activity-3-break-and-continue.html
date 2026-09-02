@@ -11,25 +11,23 @@
   <div class="wrap">
     <p class="eyebrow">Topic 4 · Class activity 3 · Week 10 · Wednesday</p>
     <h1>break, and the continue You Are Not Implementing</h1>
-    <p class="lede">A label stack, a depth counter, and why continue in a for loop surprises people.</p>
+    <p class="lede">A label stack, a depth counter, and a two-sentence argument for why no grammar could have caught it.</p>
     <nav class="crumbs"><a href="../index.html">All topics</a> &nbsp;›&nbsp; <a href="index.html">Topic 4</a> &nbsp;›&nbsp; Activity 3</nav>
   </div>
 </header>
 <main class="wrap">
 <div class="meta"><span><b>Format</b> pairs</span><span><b>Time</b> 45 min</span></div>
 <h2>The point</h2>
-<p><code>break</code> looks trivial and is the first construct whose meaning depends on context rather than on its own text.</p>
+<p><code>break</code> is the first construct whose legality depends on context rather than on its own text. That makes it a small, concrete example of why phase 3 exists.</p>
 <h2>Do this</h2>
-<ol class="steps"><li><b>Predict the target</b> of each <code>break</code> below, then implement the break-label stack and check.<pre><code class="lang-">while (a) {
+<ol class="steps"><li><b>Predict the target</b> of each <code>break</code> below, then implement the label stack and check.<pre><code class="lang-">while (a) {
     while (b) {
         break;        &lt;- which loop does this leave?
     }
     break;            &lt;- and this one?
 }</code></pre>
-</li><li><b>Implement the semantic check.</b> A <code>break</code> outside any loop must be an error with a line number. Use a depth counter incremented around loop BODIES only — not around loop conditions. Explain why the condition is excluded.</li><li><b>Test the error.</b> Write a file with a top-level <code>break;</code> and confirm the message names the line.</li><li><b>Design <code>continue</code>.</b> You do not have to implement it. On paper: what label would it jump to in a <code>while</code>? In a <code>for</code>? The answers differ, and the difference is the reason <code>continue</code> in a <code>for</code> loop surprises people.</li><li><b>Design labelled break.</b> Java has <code>break outer;</code>. What would that require of your label stack? Two sentences.</li></ol>
-<details class="reveal"><summary>On step 4</summary><p>In a <code>while</code>, <code>continue</code> jumps to the top — the same label the back-edge targets. In a <code>for</code>, it must jump to the UPDATE, not the top, or the loop variable never advances and you have written an infinite loop. This is why <code>for</code> needs its own continue label even if you desugared it into a <code>while</code>.</p>
-</details>
-<div class="deliverable"><h3>Deliverable</h3><p>Your predictions, a working break with a working error message, and written answers to steps 4 and 5.</p>
+</li><li><b>Implement the semantic check.</b> A <code>break</code> outside any loop must be an error with a line number. Use a depth counter incremented around loop <i>bodies</i> only — and explain in one sentence why the condition is excluded.</li><li><b>Test the error</b> with a top-level <code>break;</code> and confirm the message names the line.</li><li><b>Argue from theory.</b> Write two sentences explaining why no context-free grammar could have caught this, referring to what the production for <code>break_stmt</code> can and cannot see.</li><li><b>Design labelled break.</b> Java has <code>break outer;</code>. What would that require of your label stack? Two sentences.</li></ol>
+<div class="deliverable"><h3>Deliverable</h3><p>Your predictions; a working <code>break</code> with a working error message; your two-sentence theory answer; and your design for labelled break.</p>
 </div>
 
 <footer class="pagefoot">
