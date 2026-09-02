@@ -9,8 +9,8 @@ everything from earlier topics carries forward unchanged.
 Notation is BNF. Terminals appear in `'single quotes'` or in `CAPITALS` when they
 come from the scanner as a token with a value; non-terminals are plain lowercase.
 
-> This document is kept in step with `.tools/master/parser.y`. If the two ever
-> disagree, the parser is right and this file is a bug.
+> This document is kept in step with the compiler's own grammar. If the two ever
+> disagree, `parser.y` is right and this file is a bug — please say so.
 
 ---
 

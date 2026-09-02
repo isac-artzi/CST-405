@@ -45,3 +45,8 @@ instructor/
 # The previous version of the course materials, superseded by the
 # generated topic folders. Kept locally for reference only.
 legacy/
+
+# The authoring system: the annotated master compiler that every topic
+# folder is cut from, the content sources for the course site, and the
+# generators. Instructor-only.
+.tools/
