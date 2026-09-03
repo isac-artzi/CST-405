@@ -279,7 +279,7 @@ figure.dia figcaption b { color: var(--text); font-weight: 600; }
   border-radius: 0 6px 6px 0; background: var(--surface);
   padding: .85rem 1rem; margin: 0 0 1.4rem;
 }
-.readings b { display: block; font: 600 .74rem var(--mono); letter-spacing: .1em;
+.readings > b { display: block; font: 600 .74rem var(--mono); letter-spacing: .1em;
   text-transform: uppercase; color: var(--muted); margin-bottom: .45rem; }
 .readings ul { margin-bottom: 0; }
 .readings cite { font-style: normal; font-weight: 600; }
