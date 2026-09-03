@@ -45,7 +45,7 @@ static SymbolTable locals;
 static SymbolTable globals;
 
 /* Set to 1 once initGlobalScope has run, so a stray lookup before that is
- * reported clearly instead of reading uninitialised memory. */
+ * reported clearly instead of reading uninitialized memory. */
 static int globalsReady = 0;
 
 /* --------------------------------------------------------------------------

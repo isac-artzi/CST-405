@@ -98,7 +98,7 @@ if_stmt : 'if' '(' expr ')' stmt %prec LOWER_THAN_ELSE
 <h3>Write the discriminating test first</h3>
 <p><code>if (a) if (b) X else Y</code> with all four combinations of a and b. It is the only test that distinguishes the two readings, and it is the test that proves your resolution rather than assuming it.</p>
 <h3>Test &lt;code&gt;2 &amp;amp;&amp;amp; 1&lt;/code&gt; the moment logical operators compile</h3>
-<p>It must print 1. If it prints 0 you have emitted a bitwise instruction on unnormalised operands, and every truthy-but-not-1 value in your language is wrong.</p>
+<p>It must print 1. If it prints 0 you have emitted a bitwise instruction on unnormalized operands, and every truthy-but-not-1 value in your language is wrong.</p>
 <h3>Lower switch on paper before coding it</h3>
 <p>The dispatch-then-bodies layout is what makes fall-through free. Draw it once and the implementation follows; start coding without it and you will find yourself trying to make fall-through happen, which is the wrong problem.</p>
 <h3>Do the retargeting analysis as an exercise, not a survey</h3>
