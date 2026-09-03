@@ -18,14 +18,28 @@
       buttons.forEach(function (b, k) { b.setAttribute('aria-selected', k === i ? 'true' : 'false'); });
       panels.forEach(function (p, k) { p.hidden = (k !== i); });
     }
-    buttons.forEach(function (b, i) { b.addEventListener('click', function () { show(i); }); });
+    buttons.forEach(function (b, i) {
+      b.addEventListener('click', function () {
+        show(i);
+        // Deep-linkable tabs: keep the URL in step so a single tab can be
+        // shared. replaceState rather than assigning location.hash, which
+        // would scroll the page to the top of the widget on every click.
+        if (b.dataset.tab) {
+          history.replaceState(null, '', '#' + b.dataset.tab);
+        }
+      });
+    });
     bar.addEventListener('keydown', function (e) {
       var i = buttons.indexOf(document.activeElement);
       if (i < 0) return;
       if (e.key === 'ArrowRight') { buttons[(i + 1) % buttons.length].focus(); show((i + 1) % buttons.length); }
       if (e.key === 'ArrowLeft')  { var j = (i - 1 + buttons.length) % buttons.length; buttons[j].focus(); show(j); }
     });
-    show(0);
+    // Arriving with a hash opens that tab.
+    var want = decodeURIComponent((location.hash || '').replace(/^#/, ''));
+    var start = 0;
+    buttons.forEach(function (b, i) { if (b.dataset.tab === want) start = i; });
+    show(start);
   }
 
   /* ── Stepper: walk one transformation one move at a time ────────────────

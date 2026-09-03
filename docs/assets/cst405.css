@@ -287,3 +287,7 @@ figure.dia figcaption b { color: var(--text); font-weight: 600; }
 /* numbered section headings */
 h2 .secnum { font-family: var(--mono); font-size: .78em; color: var(--accent);
   margin-right: .5rem; font-weight: 700; }
+
+/* Comments inside a code block, dimmed so the code itself reads first.
+   Written in the source as «…» — see code() in docgen.py. */
+pre code .cm { color: var(--muted); font-style: italic; }
