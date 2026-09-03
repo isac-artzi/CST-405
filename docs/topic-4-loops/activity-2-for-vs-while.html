@@ -20,7 +20,7 @@
 <h2>The point</h2>
 <p><code>for</code> is a design decision, not a feature. Make it deliberately, and be able to defend it.</p>
 <h2>Do this</h2>
-<ol class="steps"><li><b>Two implementations, on paper.</b> (a) Lower <code>for</code> directly. (b) Desugar it in the parser into a <code>while</code> whose body is <code>{ B; U; }</code>, preceded by <code>I</code>. Write the TAC each produces for the same loop.</li><li><b>Compare the listings.</b> Identical? If not, which is shorter, and does the difference survive optimization?</li><li><b>Decide the degenerate cases before coding.</b> For each, is it a parse error or a legal program, and what does it mean?<pre><code class="lang-">for (; i &lt; 5; i = i + 1) ...     no initialiser
+<ol class="steps"><li><b>Two implementations, on paper.</b> (a) Lower <code>for</code> directly. (b) Desugar it in the parser into a <code>while</code> whose body is <code>{ B; U; }</code>, preceded by <code>I</code>. Write the TAC each produces for the same loop.</li><li><b>Compare the listings.</b> Identical? If not, which is shorter, and does the difference survive optimization?</li><li><b>Decide the degenerate cases before coding.</b> For each, is it a parse error or a legal program, and what does it mean?<pre><code class="lang-">for (; i &lt; 5; i = i + 1) ...     no initializer
 for (i = 0; ; i = i + 1) ...     no condition
 for (i = 0; i &lt; 5; ) ...         no update
 for (;;) ...                     nothing at all</code></pre>

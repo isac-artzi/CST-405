@@ -540,7 +540,7 @@ static void checkStmt(ASTNode* node) {
  * Check NODE_WHILE and NODE_FOR.  Two things matter here:
  *   • visit every child (condition, body, and for-loop init/update)
  *   • bracket the BODY with breakDepth++ / breakDepth-- so that a
- *     `break` inside it is recognised as legal
+ *     `break` inside it is recognized as legal
  * Note the condition is NOT inside the bracket: `break` in a loop
  * condition would make no sense.
  * -------------------------------------------------------------- */

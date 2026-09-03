@@ -354,7 +354,7 @@ int main() {
   a grammar with unexplained conflicts is a grammar nobody is reading.
 - **Truthiness is C-style**: any non-zero value is true, and `&&`, `||`, `!` all
   produce exactly 0 or 1. Note that MIPS `and` and `or` are *bitwise*, so each
-  operand must be normalised to 0/1 before they are applied.
+  operand must be normalized to 0/1 before they are applied.
 - **`&&` and `||` evaluate both operands** (they do not short-circuit). This is
   observable only if an operand has a side effect — which it can, since expressions
   may contain calls. Short-circuiting is listed as an optional extension in Project 5.

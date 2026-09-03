@@ -1,5 +1,5 @@
 /* ============================================================================
-   CST-405 course site — the small amount of behaviour the pages need.
+   CST-405 course site — the small amount of behavior the pages need.
    No framework, no build step: every page is a plain file that opens from
    disk as happily as it serves from GitHub Pages.
    ==========================================================================*/

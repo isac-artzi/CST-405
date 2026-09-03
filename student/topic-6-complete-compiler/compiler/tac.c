@@ -1092,7 +1092,7 @@ static TACList optimizePass(TACList* in) {
         if (!emit) emit = createTAC(c->op, a1, a2, c->result);
 
         /* --- 5. DEAD CODE ELIMINATION ------------------------------------
-         * An assignment to a TEMPORARY that nothing reads afterwards can go.
+         * An assignment to a TEMPORARY that nothing reads afterward can go.
          * Only temporaries: a store to a user variable or a global might be
          * observed by code this simple analysis cannot see. */
         if (emit->op == TAC_ASSIGN || (mnemonicIsPure(emit->op))) {

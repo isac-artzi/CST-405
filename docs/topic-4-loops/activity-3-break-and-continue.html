@@ -26,8 +26,8 @@
     }
     break;            &lt;- and this one?
 }</code></pre>
-</li><li><b>Implement the semantic check.</b> A <code>break</code> outside any loop must be an error with a line number. Use a depth counter incremented around loop <i>bodies</i> only — and explain in one sentence why the condition is excluded.</li><li><b>Test the error</b> with a top-level <code>break;</code> and confirm the message names the line.</li><li><b>Argue from theory.</b> Write two sentences explaining why no context-free grammar could have caught this, referring to what the production for <code>break_stmt</code> can and cannot see.</li><li><b>Design labelled break.</b> Java has <code>break outer;</code>. What would that require of your label stack? Two sentences.</li></ol>
-<div class="deliverable"><h3>Deliverable</h3><p>Your predictions; a working <code>break</code> with a working error message; your two-sentence theory answer; and your design for labelled break.</p>
+</li><li><b>Implement the semantic check.</b> A <code>break</code> outside any loop must be an error with a line number. Use a depth counter incremented around loop <i>bodies</i> only — and explain in one sentence why the condition is excluded.</li><li><b>Test the error</b> with a top-level <code>break;</code> and confirm the message names the line.</li><li><b>Argue from theory.</b> Write two sentences explaining why no context-free grammar could have caught this, referring to what the production for <code>break_stmt</code> can and cannot see.</li><li><b>Design labeled break.</b> Java has <code>break outer;</code>. What would that require of your label stack? Two sentences.</li></ol>
+<div class="deliverable"><h3>Deliverable</h3><p>Your predictions; a working <code>break</code> with a working error message; your two-sentence theory answer; and your design for labeled break.</p>
 </div>
 
 <footer class="pagefoot">

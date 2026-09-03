@@ -540,12 +540,12 @@ void generateMIPSFromTAC(const char* filename) {
             /* ---------- logical operators --------------------------------
              * C-style semantics: any non-zero value is true, and the result
              * is exactly 0 or 1.  `and`/`or` are BITWISE on MIPS, so each
-             * operand is first normalised to 0/1 with `sne x, $zero`.      */
+             * operand is first normalized to 0/1 with `sne x, $zero`.      */
             case TAC_AND: case TAC_OR: {
                 int a  = operandReg(i->arg1);
                 int b  = operandReg(i->arg2);
                 int na = scratchReg(), nb = scratchReg();
-                fprintf(out, "    sne  $t%d, $t%d, $zero     # normalise to 0/1\n", na, a);
+                fprintf(out, "    sne  $t%d, $t%d, $zero     # normalize to 0/1\n", na, a);
                 fprintf(out, "    sne  $t%d, $t%d, $zero\n", nb, b);
                 int d = defReg(i->result);
                 fprintf(out, "    %-4s $t%d, $t%d, $t%d       # %s = %s %s %s\n",

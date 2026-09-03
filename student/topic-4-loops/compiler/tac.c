@@ -335,7 +335,7 @@ static void generateTACStmt(ASTNode* node) {
  * the code below.  Either approach is fine; say which you chose.
  *
  * Push Lend on the break-label stack around the BODY so that a
- * `break` inside knows where to jump, and pop it afterwards.
+ * `break` inside knows where to jump, and pop it afterward.
  * -------------------------------------------------------------- */
         case NODE_BLOCK:
             generateTACStmtList(node->data.block.stmt_list);
@@ -842,7 +842,7 @@ static TACList optimizePass(TACList* in) {
         if (!emit) emit = createTAC(c->op, a1, a2, c->result);
 
         /* --- 5. DEAD CODE ELIMINATION ------------------------------------
-         * An assignment to a TEMPORARY that nothing reads afterwards can go.
+         * An assignment to a TEMPORARY that nothing reads afterward can go.
          * Only temporaries: a store to a user variable or a global might be
          * observed by code this simple analysis cannot see. */
         if (emit->op == TAC_ASSIGN || (mnemonicIsPure(emit->op))) {

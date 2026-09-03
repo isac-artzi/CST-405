@@ -26,7 +26,7 @@
     if (x &gt; 0) if (y &gt; 0) print(1); else print(2);
     return 0;
 }</code></pre>
-It prints 2 if the else bound to the inner if, and nothing at all if it bound to the outer one. Which happened?</li><li><b>Fix it properly</b> with the two <code>%nonassoc</code> declarations. Rebuild — the warning should be gone and the behaviour unchanged.</li><li><b>Swap the two declarations.</b> Predict what the test prints now, then run it. Explain the result in terms of positional precedence.</li><li><b>Fix it a third way, on paper.</b> Write the matched/unmatched grammar from Dragon §4.3.2 for our language. Count how many rules mentioning <code>stmt</code> you had to touch, and say whether you would ship it.</li></ol>
+It prints 2 if the else bound to the inner if, and nothing at all if it bound to the outer one. Which happened?</li><li><b>Fix it properly</b> with the two <code>%nonassoc</code> declarations. Rebuild — the warning should be gone and the behavior unchanged.</li><li><b>Swap the two declarations.</b> Predict what the test prints now, then run it. Explain the result in terms of positional precedence.</li><li><b>Fix it a third way, on paper.</b> Write the matched/unmatched grammar from Dragon §4.3.2 for our language. Count how many rules mentioning <code>stmt</code> you had to touch, and say whether you would ship it.</li></ol>
 <div class="deliverable"><h3>Deliverable</h3><p>The <code>parser.output</code> excerpt with the two competing items identified; what the test printed at each stage; your matched/unmatched grammar with a rule count; and a one-paragraph judgement. This is Lab Question 25.</p>
 </div>
 

@@ -299,7 +299,7 @@ return_stmt:
  * %prec LOWER_THAN_ELSE on the first rule tells bison that when
  * the lookahead is ELSE this rule has lower precedence, so bison
  * shifts the ELSE and attaches it to the innermost if (correct
- * dangling-else behaviour).  Without this marker bison still
+ * dangling-else behavior).  Without this marker bison still
  * resolves the conflict the same way but reports it as a warning.
  */
 if_stmt:

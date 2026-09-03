@@ -20,7 +20,7 @@ make
 ## What you are building
 
 - `if` and `if`/`else`, with the dangling-else resolved by precedence
-- logical `&&`, `||`, `!` — including the operand normalisation
+- logical `&&`, `||`, `!` — including the operand normalization
 - `switch`, `case`, `default`, fall-through and `break` (optional but recommended)
 - the switch semantic checks: one `default`, no duplicate case values
 

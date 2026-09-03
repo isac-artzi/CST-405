@@ -7,7 +7,7 @@
  *                                                  ^^^^^^^  this file
  *
  * WHAT IS NEW IN TOPIC 5
- *   • Logical operators: operands normalised to 0/1 before the bitwise instruction
+ *   • Logical operators: operands normalized to 0/1 before the bitwise instruction
  *
  * WHAT COMES NEXT
  *   Topic 6 adds no new syntax: it measures, documents and hardens what you have.
@@ -540,7 +540,7 @@ void generateMIPSFromTAC(const char* filename) {
 /* --------------------------------------------------------------
  * TODO (Topic 5)
  * LOGICAL OPERATORS.  The trap here is that MIPS `and` and `or` are
- * BITWISE:  2 and 1  is 0, but in C  2 && 1  is 1.  So normalise each
+ * BITWISE:  2 and 1  is 0, but in C  2 && 1  is 1.  So normalize each
  * operand to exactly 0 or 1 first ( sne $t, $operand, $zero ) and
  * only then apply the bitwise instruction.
  *   !x  is just  seq $d, $x, $zero.
